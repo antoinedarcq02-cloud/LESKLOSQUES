@@ -8,7 +8,7 @@ Version préparée avec la demande de Greg et les deux nouvelles formules. Les a
 - **5 prestations sans tarif public** :
   1. Concert en auto-gestion sans DJ
   2. Concert en auto-gestion + DJ
-  3. Concert avec équipe technique
+  3. Concert avec équipe technique (sans DJ)
   4. Concert avec équipe technique + DJ
   5. Concert avec remorque (configuration à préciser)
 - Formulaire en deux étapes : choix de la formule dans un menu déroulant, puis coordonnées et informations sur l'événement.
