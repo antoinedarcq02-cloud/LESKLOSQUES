@@ -219,3 +219,11 @@ main::before { display: none !important; }
 @media(max-width:1100px){.member-photo{height:180px}}
 @media(max-width:800px){.member-photo{height:220px}}
 @media(max-width:480px){.member-photo{height:185px}.member.member-with-photo h3{font-size:23px}.member.member-with-photo small{font-size:8px}}
+
+
+/* Identité visuelle : logo blanc du groupe dans l'en-tête et le pied de page. */
+.brand-image-only { display:flex; align-items:center; flex-shrink:0; gap:0; letter-spacing:0; font-size:0; }
+.brand-logo-white { display:block; width:220px; max-width:min(30vw,220px); height:auto; object-fit:contain; filter:drop-shadow(0 6px 18px rgba(0,0,0,.25)); }
+footer .brand-logo-white { width:180px; max-width:min(26vw,180px); }
+@media(max-width:800px) { .brand-logo-white { width:170px; max-width:42vw; } footer .brand-logo-white {width:150px;max-width:38vw;} }
+@media(max-width:480px) { .brand-logo-white { width:145px; max-width:46vw; } footer .brand-logo-white {width:130px;max-width:44vw;} }
