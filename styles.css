@@ -204,3 +204,18 @@ main::before { display: none !important; }
 .pricing-grid > .price-card:nth-child(3) h3 > span:not(.formula-qualifier),
 .pricing-grid > .price-card:nth-child(5) h3 > span { color: inherit; }
 .pricing-grid > .price-card:nth-child(3) h3 > .formula-qualifier { color: #bbb; }
+
+
+/* Photographies des 4 membres : un portrait par carte */
+.members{align-items:stretch}
+.member.member-with-photo{padding:0 0 20px;overflow:hidden;display:flex;flex-direction:column;align-items:center;background:#111115;border-bottom:3px solid var(--red)}
+.member-photo{display:block;width:100%;height:210px;object-fit:cover;border-bottom:1px solid rgba(255,255,255,.09);background:#17171b}
+.member-greg .member-photo{object-position:49% 35%}
+.member-jeremy .member-photo{object-position:51% 39%}
+.member-antoine .member-photo{object-position:33% 38%}
+.member-galdric .member-photo{object-position:45% 36%}
+.member.member-with-photo h3{margin:13px 5px 3px;font-size:25px;line-height:1.05}
+.member.member-with-photo small{display:block;line-height:1.35;padding:0 7px;letter-spacing:1.1px;font-size:9px;color:#c7c4c4;font-weight:700}
+@media(max-width:1100px){.member-photo{height:180px}}
+@media(max-width:800px){.member-photo{height:220px}}
+@media(max-width:480px){.member-photo{height:185px}.member.member-with-photo h3{font-size:23px}.member.member-with-photo small{font-size:8px}}

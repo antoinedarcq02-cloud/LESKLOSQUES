@@ -59,3 +59,10 @@ Si l'application Google OAuth est encore en statut **Test**, une autorisation de
 - Le site n'archive pas encore les demandes dans une base de données, n'a pas d'espace privé d'approbation et n'envoie pas de devis PDF automatisé.
 - Les descriptions de « Équipe technique + DJ » et « Avec remorque » ne spécifient pas de durée ni de tarif : ces éléments restent à définir par le groupe.
 - La messagerie et l'agenda doivent être testés **sur le nouveau projet Pages** : les variables de l'ancien projet ne sont pas automatiquement transférées.
+
+
+## Portraits des membres
+
+Les photos de Greg, Jeremy, Antoine et Galdric sont enregistrées dans `assets/` sous les noms `greg-sur-scene.webp`, `jeremy-sur-scene.webp`, `antoine-sur-scene.webp` et `galdric-sur-scene.webp`. Elles sont intégrées à la section « Le groupe ».
+
+Pour une mise à jour depuis GitHub, publier `index.html`, `styles.css` et les quatre nouveaux fichiers image dans `assets/`. Les fonctions Cloudflare existantes ne sont pas modifiées.
