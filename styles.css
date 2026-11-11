@@ -109,10 +109,12 @@ footer .brand-logo{width:54px;height:54px}
 /* Précision formule 03 (sans DJ) */
 .price-card h3 .formula-qualifier{font-size:.68em;letter-spacing:.03em;color:#777}
 
-/* Ajustement demandé : conserver le logo au premier plan, descendu légèrement,
-   et supprimer la photo/logo utilisée comme arrière-plan. */
+/* Retour du fond photo comme avant, avec le logo du premier plan toujours légèrement descendu. */
 .hero {
-  background: linear-gradient(100deg, #09090c 0%, #100d12 48%, #3e121c 100%) !important;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, .90) 0%, rgba(0, 0, 0, .72) 44%, rgba(0, 0, 0, .46) 100%),
+    linear-gradient(0deg, rgba(21, 3, 9, .17), rgba(21, 3, 9, .12)),
+    url('assets/logo-les-klosques.jpg') center / cover no-repeat !important;
 }
 .hero::after {
   content: '';
@@ -130,7 +132,10 @@ footer .brand-logo{width:54px;height:54px}
 main::before { display: none !important; }
 @media (max-width: 800px) {
   .hero {
-    background: linear-gradient(110deg, #09090c 0%, #170e14 62%, #3b131c 100%) !important;
+    background:
+      linear-gradient(90deg, rgba(0, 0, 0, .83), rgba(0, 0, 0, .57)),
+      linear-gradient(0deg, rgba(21, 3, 9, .14), rgba(21, 3, 9, .10)),
+      url('assets/logo-les-klosques.jpg') center / cover no-repeat !important;
   }
   .hero::after {
     left: auto;
@@ -153,3 +158,17 @@ main::before { display: none !important; }
     display: block;
   }
 }
+
+/* Formule 3 : même couleur pour "Avec équipe technique",
+   même taille pour "(sans DJ)" tout en conservant son gris. */
+.pricing-grid > .price-card:nth-child(3) h3 > span:not(.formula-qualifier) {
+  color: inherit;
+}
+.pricing-grid > .price-card:nth-child(3) h3 > .formula-qualifier {
+  font-size: 1em;
+  letter-spacing: normal;
+  color: #777;
+}
+
+/* Formule 05 : "Formule" et "avec remorque" ont la même couleur. */
+.pricing-grid > .price-card:nth-child(5) h3 > span { color: inherit; }
