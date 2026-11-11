@@ -108,3 +108,48 @@ footer .brand-logo{width:54px;height:54px}
 
 /* Précision formule 03 (sans DJ) */
 .price-card h3 .formula-qualifier{font-size:.68em;letter-spacing:.03em;color:#777}
+
+/* Ajustement demandé : conserver le logo au premier plan, descendu légèrement,
+   et supprimer la photo/logo utilisée comme arrière-plan. */
+.hero {
+  background: linear-gradient(100deg, #09090c 0%, #100d12 48%, #3e121c 100%) !important;
+}
+.hero::after {
+  content: '';
+  left: auto;
+  right: 4%;
+  top: 62%;
+  transform: translateY(-50%) rotate(-6deg);
+  width: min(42vw, 520px);
+  height: min(42vw, 520px);
+  background: url('assets/logo-les-klosques.jpg') center / contain no-repeat;
+  opacity: .58;
+  display: block;
+  pointer-events: none;
+}
+main::before { display: none !important; }
+@media (max-width: 800px) {
+  .hero {
+    background: linear-gradient(110deg, #09090c 0%, #170e14 62%, #3b131c 100%) !important;
+  }
+  .hero::after {
+    left: auto;
+    right: -18px;
+    top: 66%;
+    width: 300px;
+    height: 300px;
+    transform: translateY(-50%) rotate(-6deg);
+    opacity: .34;
+    display: block;
+  }
+}
+@media (max-width: 480px) {
+  .hero::after {
+    right: -75px;
+    top: 70%;
+    width: 280px;
+    height: 280px;
+    opacity: .21;
+    display: block;
+  }
+}
