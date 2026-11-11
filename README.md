@@ -3,7 +3,7 @@
 Cette version ajoute :
 - des icônes Instagram et Facebook dans l'en-tête et le bas de page, sur ordinateur et mobile ;
 - un calendrier public qui affiche uniquement les jours occupés (sans révéler les titres, lieux ou détails des événements Google) ;
-- un formulaire qui envoie une demande à `antoine.darcq@laposte.net` via Resend ;
+- un formulaire qui envoie une demande à `LesKlosques@hotmail.com` via Resend ;
 - une vérification côté serveur de la date avant l'envoi ;
 - les demandes restent des demandes : aucune réservation n'est confirmée automatiquement.
 
@@ -67,7 +67,7 @@ Important : Resend ne permet pas d'envoyer librement depuis une adresse `@lapost
 
 - Ouvrir `/api/availability?month=2026-11` sur le site : la réponse doit être un JSON contenant `busyDates`.
 - Sur le site, vérifier que les jours occupés apparaissent en rouge.
-- Faire une demande test : un e-mail doit arriver à `antoine.darcq@laposte.net`.
+- Faire une demande test : un e-mail doit arriver à `LesKlosques@hotmail.com`.
 - Une date occupée est refusée par le serveur même si le formulaire est manipulé.
 
 ## Limites de cette version

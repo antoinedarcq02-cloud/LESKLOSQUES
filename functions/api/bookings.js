@@ -1,6 +1,6 @@
 import { getBusyDates } from "../_lib/google.js";
 
-const DESTINATION = "antoine.darcq@laposte.net";
+const DESTINATION = "LesKlosques@hotmail.com";
 const ALLOWED_PACKAGES = [
   "Formule auto gestion (sans DJ)",
   "Formule Auto gestion + DJ",
