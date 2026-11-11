@@ -44,14 +44,14 @@ input:disabled{opacity:.5;cursor:not-allowed}
 .hero{background:
   linear-gradient(90deg,rgba(0,0,0,.92),rgba(0,0,0,.60)),
   radial-gradient(ellipse at 78% 40%,rgba(107,23,32,.68) 0,rgba(36,16,20,.78) 33%,rgba(9,9,11,.95) 72%),
-  url('assets/logo-les-klosques.jpg') center/cover no-repeat !important}
-.hero:after{content:'';position:absolute;left:50%;right:auto;top:50%;transform:translate(-50%,-50%) rotate(-6deg);width:min(42vw,520px);height:min(42vw,520px);background:url('assets/logo-les-klosques.jpg') center/contain no-repeat;opacity:.10;filter:drop-shadow(0 14px 40px rgba(0,0,0,.35));pointer-events:none}
+  url('assets/logo-les-klosques.jpg') center 58%/cover no-repeat !important}
+.hero:after{display:none}
 main{position:relative;isolation:isolate}
 main:before{content:'';position:absolute;inset:0;background:url('assets/logo-les-klosques.jpg') center 1250px/900px auto no-repeat;opacity:.025;pointer-events:none;z-index:-1}
 .section,.contact-section,.band-section,.dark-section,.hero{position:relative}
 footer .brand-logo{width:54px;height:54px}
-@media(max-width:800px){.brand-logo{width:50px;height:50px}.hero:after{width:300px;height:300px;left:50%;right:auto;top:53%;transform:translate(-50%,-50%) rotate(-6deg);opacity:.08}}
-@media(max-width:480px){.brand-logo{width:46px;height:46px}.brand{gap:10px;font-size:12px}.hero{background-position:center top}.hero:after{display:none}main:before{background-size:650px auto;background-position:center 1180px}}
+@media(max-width:800px){.brand-logo{width:50px;height:50px}.hero{background-position:center 62% !important}}
+@media(max-width:480px){.brand-logo{width:46px;height:46px}.brand{gap:10px;font-size:12px}.hero{background-position:center 64% !important}main:before{background-size:650px auto;background-position:center 1180px}}
 
 .member-icon-wrap{display:flex;justify-content:center;align-items:center;min-height:56px}.member-icon{display:block;max-width:58px;height:auto}.bass-icon{width:58px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.28))}@media(max-width:480px){.member-icon{max-width:52px}.bass-icon{width:52px}}
 
