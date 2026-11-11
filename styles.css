@@ -54,3 +54,54 @@ footer .brand-logo{width:54px;height:54px}
 @media(max-width:480px){.brand-logo{width:46px;height:46px}.brand{gap:10px;font-size:12px}.hero{background-position:center top}.hero:after{display:none}main:before{background-size:650px auto;background-position:center 1180px}}
 
 .member-icon-wrap{display:flex;justify-content:center;align-items:center;min-height:56px}.member-icon{display:block;max-width:58px;height:auto}.bass-icon{width:58px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.28))}@media(max-width:480px){.member-icon{max-width:52px}.bass-icon{width:52px}}
+
+/* Rubrique devis — parcours en deux étapes */
+.quote-price{display:inline-flex;align-items:center;color:var(--red);font:800 19px 'Barlow Condensed',sans-serif;letter-spacing:1.5px;margin:12px 0 8px;padding:8px 11px;border:1px solid currentColor}
+.quote-section{scroll-margin-top:80px}
+.quote-intro>p:not(.eyebrow){line-height:1.8}
+.quote-benefits{display:flex;flex-direction:column;gap:13px;margin:34px 0}
+.quote-benefits>div{display:flex;align-items:center;gap:15px;padding-bottom:14px;border-bottom:1px solid #323239}
+.quote-benefits strong{color:var(--red);font:800 24px 'Barlow Condensed',sans-serif;letter-spacing:1px}
+.quote-benefits span{font-size:13px;color:#e9e5e3}
+.quote-form{background:#1a1a20;border:1px solid #34343c;border-top:4px solid var(--red);padding:32px;align-self:start}
+.form-step{display:flex;flex-direction:column;gap:16px}
+.form-step[hidden]{display:none !important}
+.form-step h3{font:800 29px/1.08 'Barlow Condensed',sans-serif;margin:0 0 8px;text-transform:uppercase}
+.form-step-label{color:var(--red);font-size:11px;font-weight:800;letter-spacing:2px;margin:0}
+.form-step-help{font-size:12px;color:#bdb8bb;margin:0}
+.required-star{color:#ff858d}
+.quote-selected{background:#26232a;border-left:3px solid var(--red);padding:10px 12px;font-size:13px;color:#f6e7e8;margin:0}
+.quote-actions{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:stretch}
+.quote-actions .button-outline{color:white;border-color:#74747c}
+.quote-form .form-note{line-height:1.65;margin-top:5px}
+.quote-form .form-note a{color:#ff9fa7;text-decoration:underline;text-underline-offset:2px}
+.quote-form .form-status{color:#f3d6d7;font-size:13px;line-height:1.5}
+#devis select{cursor:pointer}
+@media(max-width:800px){.quote-form{padding:23px}.quote-actions{grid-template-columns:1fr}.quote-section{scroll-margin-top:68px}}
+
+/* Cinq formules : cartes souples, deux rangées sur ordinateur, une colonne sur mobile */
+@media(min-width:801px){.pricing-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,265px),1fr))}}
+.price-card{display:flex;flex-direction:column;align-items:flex-start}
+.price-card .full{margin-top:auto}
+.price-card ul{padding-bottom:12px}
+.price-card .duration{margin-top:0}
+.price-card.featured{transform:none}
+@media(max-width:800px){.price-card{display:flex}}
+
+/* Photo d'accueil légèrement plus visible, texte toujours lisible */
+.hero {
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, .90) 0%, rgba(0, 0, 0, .72) 44%, rgba(0, 0, 0, .46) 100%),
+    linear-gradient(0deg, rgba(21, 3, 9, .17), rgba(21, 3, 9, .12)),
+    url('assets/logo-les-klosques.jpg') center / cover no-repeat !important;
+}
+.hero::after { opacity: .14; }
+@media (max-width: 800px) {
+  .hero {
+    background:
+      linear-gradient(90deg, rgba(0, 0, 0, .83), rgba(0, 0, 0, .57)),
+      linear-gradient(0deg, rgba(21, 3, 9, .14), rgba(21, 3, 9, .10)),
+      url('assets/logo-les-klosques.jpg') center / cover no-repeat !important;
+  }
+  .hero::after { opacity: .11; }
+}

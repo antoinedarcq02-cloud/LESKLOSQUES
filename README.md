@@ -1,79 +1,61 @@
-# Les Klosques — site avec agenda et demandes de réservation
+# Les Klosques — site avec demande de devis
 
-Cette version ajoute :
-- des icônes Instagram et Facebook dans l'en-tête et le bas de page, sur ordinateur et mobile ;
-- un calendrier public qui affiche uniquement les jours occupés (sans révéler les titres, lieux ou détails des événements Google) ;
-- un formulaire qui envoie une demande à `LesKlosques@hotmail.com` via Resend ;
-- une vérification côté serveur de la date avant l'envoi ;
-- les demandes restent des demandes : aucune réservation n'est confirmée automatiquement.
+Version préparée avec la demande de Greg et les deux nouvelles formules. Les anciens tarifs publics ont été retirés du HTML, du JavaScript et des fichiers livrés.
 
-## Réseaux sociaux : liens officiels configurés
+## Modifications visibles
 
-Les icônes Instagram et Facebook sont visibles en haut et en bas du site. Elles ouvrent les pages officielles des Klosques dans un nouvel onglet :
+- Nouvelle rubrique « Demander un devis », accessible depuis le menu, l'accueil et chaque carte de formule.
+- **5 prestations sans tarif public** :
+  1. Concert en auto-gestion sans DJ
+  2. Concert en auto-gestion + DJ
+  3. Concert avec équipe technique
+  4. Concert avec équipe technique + DJ
+  5. Concert avec remorque (configuration à préciser)
+- Formulaire en deux étapes : choix de la formule dans un menu déroulant, puis coordonnées et informations sur l'événement.
+- Les champs obligatoires sont : formule, nom / organisation, e-mail, téléphone, type d'événement, date, lieu.
+- Une fois le formulaire validé, une demande est adressée au groupe à **LesKlosques@hotmail.com**, et non un devis automatique au prospect.
+- Le groupe doit **valider** le devis avant de l'envoyer lui-même au client. La génération et l'envoi de devis par IA après accord ne sont **pas encore intégrés** ; cela nécessitera un espace de gestion sécurisé et un processus d'approbation.
+- Aucune fonction de suivi individuel des visiteurs anonymes n'a été ajoutée. Les coordonnées ne sont recueillies qu'au moment de l'envoi du formulaire.
 
-- Instagram : https://www.instagram.com/les_klosques/
-- Facebook : https://www.facebook.com/ze.klosques/
+Le logo des Klosques, l'icône basse de Galdric, les liens Facebook / Instagram, l'agenda public et les autres éléments du site sont conservés.
 
-Les liens sont intégrés à `index.html` et à `script.js`. Aucune autre configuration n'est nécessaire pour les réseaux sociaux.
+## Mise en ligne via GitHub et Cloudflare Pages
 
-Pour publier cette mise à jour, remplacer les fichiers correspondants dans le dépôt GitHub (ou redéployer le site avec Cloudflare Pages selon votre méthode habituelle). Les variables et secrets Cloudflare restent dans Cloudflare, jamais dans le ZIP ni dans GitHub.
+Décompressez le ZIP et remplacez **les fichiers à la racine du dépôt GitHub** (pas dans un dossier supplémentaire). Conservez le dossier `assets/` et `functions/`.
 
-## Déploiement Cloudflare Pages
-
-Les fichiers `index.html`, `styles.css`, `script.js` et le dossier `functions/` doivent être à la racine du dépôt GitHub.
-
-Dans Cloudflare Pages :
+Paramètres Cloudflare Pages si besoin :
+- Production branch : `main`
 - Framework preset : `None`
 - Build command : `exit 0`
 - Build output directory : `.`
-- Root directory : laisser vide (si les fichiers sont à la racine du dépôt)
 
-Les fonctions `functions/api/availability.js` et `functions/api/bookings.js` sont publiées automatiquement avec Pages Functions.
+Lors de la publication via GitHub, Cloudflare Pages doit relancer le déploiement. Les secrets Cloudflare ne sont **pas** inclus dans le ZIP. Après le déploiement, tester `https://VOTRE-SITE.pages.dev/#devis` et l'envoi d'une demande.
 
-## 1. Configurer Google Agenda (lecture seule des disponibilités)
+## Variables Cloudflare nécessaires pour recevoir les demandes
 
-Il faut autoriser l'application à consulter les périodes occupées du calendrier. Aucun mot de passe Google ne doit être communiqué ni ajouté au dépôt.
+Dans **Cloudflare Pages > projet connecté à GitHub > Settings > Variables and Secrets**, en environnement **Production** :
 
-1. Dans Google Cloud Console, créez/sélectionnez un projet et activez **Google Calendar API**.
-2. Configurez l'écran de consentement OAuth.
-3. Créez un identifiant OAuth de type **Application Web**. Ajoutez `https://developers.google.com/oauthplayground` comme URI de redirection autorisée.
-4. Ouvrez Google OAuth 2.0 Playground (`https://developers.google.com/oauthplayground`), ouvrez les paramètres (roue dentée), cochez **Use your own OAuth credentials**, puis renseignez l'identifiant et le secret OAuth.
-5. Dans Step 1, saisissez le scope `https://www.googleapis.com/auth/calendar.freebusy`, autorisez l'accès avec le compte Google qui possède/partage l'agenda des Klosques.
-6. Dans Step 2, échangez le code contre les jetons et récupérez le **Refresh token**. Conservez-le confidentiel.
-7. Dans Cloudflare Pages > votre projet > Settings > Variables and Secrets, ajoutez les variables de production suivantes (type secret pour les valeurs sensibles) :
-   - `GOOGLE_CLIENT_ID` : identifiant OAuth
-   - `GOOGLE_CLIENT_SECRET` : secret OAuth (secret)
-   - `GOOGLE_REFRESH_TOKEN` : refresh token (secret)
-   - `GOOGLE_CALENDAR_ID` : `primary` si c'est l'agenda principal du compte connecté ; sinon l'identifiant exact du calendrier partagé.
-8. Relancez un déploiement après avoir enregistré les variables.
+- `RESEND_API_KEY` : **Secret**, clé API Resend.
+- `EMAIL_FROM` : **Text**, adresse d'expédition correspondant à un **domaine vérifié dans Resend**, par exemple `Les Klosques <devis@votre-domaine.fr>`.
 
-Le compte Google autorisé doit avoir au minimum accès aux informations de disponibilité du calendrier. Si l'agenda est partagé avec un autre compte, vérifiez que ce compte peut consulter les informations de disponibilité.
+**Attention** : avec l'adresse de test `onboarding@resend.dev`, Resend ne permet généralement pas d'envoyer des messages vers une adresse Hotmail extérieure au compte Resend. Pour que le formulaire envoie bien les demandes à **LesKlosques@hotmail.com**, un domaine expéditeur vérifié (ou un autre service d'e-mail configuré) est indispensable. Le fait de changer le destinataire dans le code ne suffit pas.
 
-## 2. Configurer l'envoi automatique des e-mails
+## Agenda Google
 
-Cette version utilise Resend (`https://resend.com/`) pour envoyer les demandes.
+Conservez les variables et secrets de Production si vous utilisez Google Agenda :
+- `GOOGLE_CLIENT_ID` : Secret
+- `GOOGLE_CLIENT_SECRET` : Secret
+- `GOOGLE_REFRESH_TOKEN` : Secret
+- `GOOGLE_CALENDAR_ID` : identifiant exact du calendrier partagé
 
-1. Créez un compte Resend.
-2. Ajoutez et vérifiez un domaine d'expédition que vous contrôlez dans Resend (il faut publier les enregistrements DNS indiqués par Resend).
-3. Créez une clé API.
-4. Dans Cloudflare Pages > Settings > Variables and Secrets, ajoutez :
-   - `RESEND_API_KEY` : clé API Resend (secret)
-   - `EMAIL_FROM` : expéditeur vérifié, par exemple `Les Klosques <reservations@votre-domaine.fr>`
-5. Relancez le déploiement.
+Le calendrier public n'affiche que les périodes occupées, sans détails des événements. Si Google Agenda est indisponible lors d'une demande de devis, le formulaire peut encore transmettre la demande au groupe, avec mention « Disponibilité à vérifier ».
 
-Important : Resend ne permet pas d'envoyer librement depuis une adresse `@laposte.net` qui n'a pas été vérifiée comme domaine d'expédition. Il faut un domaine que vous contrôlez et vérifiez, ou choisir un autre fournisseur d'e-mail compatible.
+Si l'application Google OAuth est encore en statut **Test**, une autorisation de ce type peut expirer ; vérifier le calendrier en production. Ne mettez aucun secret dans GitHub.
 
-## 3. Vérifications après configuration
+## Protection des données et limites
 
-- Ouvrir `/api/availability?month=2026-11` sur le site : la réponse doit être un JSON contenant `busyDates`.
-- Sur le site, vérifier que les jours occupés apparaissent en rouge.
-- Faire une demande test : un e-mail doit arriver à `LesKlosques@hotmail.com`.
-- Une date occupée est refusée par le serveur même si le formulaire est manipulé.
-
-## Limites de cette version
-
-- Les demandes sont envoyées par e-mail mais ne sont pas encore enregistrées dans une base de données ni visibles dans un espace membre.
-- Il n'y a pas encore de bouton d'approbation/refus ni de création automatique d'événement Google après validation.
-- Les jours sans événement occupé sont affichés comme « a priori disponibles » ; confirmez toujours avec le groupe avant de promettre une date.
-- L'agenda public ne reçoit que les périodes occupées et n'expose pas les détails des événements.
-- Les variables secrètes se configurent dans Cloudflare, jamais dans les fichiers GitHub.
+- Les coordonnées des prospects sont recueillies pour répondre à leur demande de devis et transmises par e-mail au groupe. Pas de suivi nominatif des visiteurs ne soumettant pas le formulaire.
+- Ajouter une vraie politique de confidentialité avant une diffusion commerciale durable (responsable, finalités, conservation, droits, contact), adaptée à vos pratiques de traitement.
+- Le site n'archive pas encore les demandes dans une base de données, n'a pas d'espace privé d'approbation et n'envoie pas de devis PDF automatisé.
+- Les descriptions de « Équipe technique + DJ » et « Avec remorque » ne spécifient pas de durée ni de tarif : ces éléments restent à définir par le groupe.
+- La messagerie et l'agenda doivent être testés **sur le nouveau projet Pages** : les variables de l'ancien projet ne sont pas automatiquement transférées.
