@@ -21,3 +21,34 @@
 .calendar-status{color:#aaa;font-size:.9rem;margin:.8rem 0 0}
 input:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:600px){.calendar-wrap{padding:1rem}.calendar-grid{gap:.25rem}.calendar-day,.calendar-day-name{min-height:36px;font-size:.78rem}}
+
+
+/* Instagram + Facebook — visibles dans le menu et le pied de page */
+.social-icons{display:flex;align-items:center;gap:9px}
+.social-icon{width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #49494f;border-radius:50%;color:#f7f5f2;background:rgba(255,255,255,.04);transition:color .18s,border-color .18s,background .18s,transform .18s}
+.social-icon svg{width:18px;height:18px;display:block}
+.social-icon[href]:hover,.social-icon[href]:focus-visible{color:white;border-color:var(--red);background:var(--red);transform:translateY(-2px)}
+.social-icon[href]:focus-visible{outline:2px solid white;outline-offset:3px}
+/* Sans URL, l'icône est visible mais ne redirige vers aucune page erronée. */
+.social-icon:not([href]){opacity:.5;cursor:default}
+.footer-social{display:flex;align-items:center;gap:12px;color:#bbb}
+.footer-social>span{font-size:11px;font-weight:700;white-space:nowrap}
+@media(max-width:1000px) and (min-width:801px){nav{gap:16px}.site-header{padding-left:24px;padding-right:24px}}
+@media(max-width:800px){.nav-social-icons{padding-top:12px;border-top:1px solid #28282d}.footer-social{flex-wrap:wrap}}
+
+
+/* Logo Les Klosques personnalisé */
+.brand{gap:14px}
+.brand-text{display:flex;align-items:center;line-height:1.1}
+.brand-logo{width:58px;height:58px;object-fit:cover;border-radius:12px;border:2px solid var(--red);background:#111;box-shadow:0 10px 24px rgba(0,0,0,.28)}
+.hero{background:
+  linear-gradient(90deg,rgba(0,0,0,.92),rgba(0,0,0,.60)),
+  radial-gradient(ellipse at 78% 40%,rgba(107,23,32,.68) 0,rgba(36,16,20,.78) 33%,rgba(9,9,11,.95) 72%),
+  url('assets/logo-les-klosques.jpg') center/cover no-repeat !important}
+.hero:after{content:'';position:absolute;right:4%;top:50%;transform:translateY(-50%) rotate(-6deg);width:min(42vw,520px);height:min(42vw,520px);background:url('assets/logo-les-klosques.jpg') center/contain no-repeat;opacity:.10;filter:drop-shadow(0 14px 40px rgba(0,0,0,.35));pointer-events:none}
+main{position:relative;isolation:isolate}
+main:before{content:'';position:absolute;inset:0;background:url('assets/logo-les-klosques.jpg') center 1250px/900px auto no-repeat;opacity:.025;pointer-events:none;z-index:-1}
+.section,.contact-section,.band-section,.dark-section,.hero{position:relative}
+footer .brand-logo{width:54px;height:54px}
+@media(max-width:800px){.brand-logo{width:50px;height:50px}.hero:after{width:300px;height:300px;right:-20px;top:58%;opacity:.08}}
+@media(max-width:480px){.brand-logo{width:46px;height:46px}.brand{gap:10px;font-size:12px}.hero{background-position:center top}.hero:after{display:none}main:before{background-size:650px auto;background-position:center 1180px}}

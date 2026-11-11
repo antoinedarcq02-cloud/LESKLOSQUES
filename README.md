@@ -1,10 +1,22 @@
 # Les Klosques — site avec agenda et demandes de réservation
 
 Cette version ajoute :
+- des icônes Instagram et Facebook dans l'en-tête et le bas de page, sur ordinateur et mobile ;
 - un calendrier public qui affiche uniquement les jours occupés (sans révéler les titres, lieux ou détails des événements Google) ;
 - un formulaire qui envoie une demande à `antoine.darcq@laposte.net` via Resend ;
 - une vérification côté serveur de la date avant l'envoi ;
 - les demandes restent des demandes : aucune réservation n'est confirmée automatiquement.
+
+## Réseaux sociaux : liens officiels configurés
+
+Les icônes Instagram et Facebook sont visibles en haut et en bas du site. Elles ouvrent les pages officielles des Klosques dans un nouvel onglet :
+
+- Instagram : https://www.instagram.com/les_klosques/
+- Facebook : https://www.facebook.com/ze.klosques/
+
+Les liens sont intégrés à `index.html` et à `script.js`. Aucune autre configuration n'est nécessaire pour les réseaux sociaux.
+
+Pour publier cette mise à jour, remplacer les fichiers correspondants dans le dépôt GitHub (ou redéployer le site avec Cloudflare Pages selon votre méthode habituelle). Les variables et secrets Cloudflare restent dans Cloudflare, jamais dans le ZIP ni dans GitHub.
 
 ## Déploiement Cloudflare Pages
 

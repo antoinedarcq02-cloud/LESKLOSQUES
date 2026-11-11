@@ -1,3 +1,27 @@
+// Liens officiels des Klosques vers Instagram et Facebook.
+const SOCIAL_PAGES = {
+  instagram: 'https://www.instagram.com/les_klosques/',
+  facebook: 'https://www.facebook.com/ze.klosques/'
+};
+
+document.querySelectorAll('[data-social]').forEach(icon => {
+  const service = icon.dataset.social;
+  const link = (SOCIAL_PAGES[service] || '').trim();
+  try {
+    const parsed = new URL(link);
+    const domain = parsed.hostname.toLowerCase();
+    const allowed = service === 'instagram'
+      ? (domain === 'instagram.com' || domain === 'www.instagram.com')
+      : (domain === 'facebook.com' || domain === 'www.facebook.com' || domain === 'm.facebook.com' || domain === 'fb.com' || domain === 'www.fb.com');
+    if (parsed.protocol !== 'https:' || !allowed) return;
+    icon.href = parsed.href;
+    icon.setAttribute('aria-label', service === 'instagram' ? 'Visiter notre page Instagram' : 'Visiter notre page Facebook');
+    icon.title = service === 'instagram' ? 'Instagram des Klosques' : 'Facebook des Klosques';
+  } catch (_) {
+    // Aucun lien saisi : l'icône reste sans destination.
+  }
+});
+
 const menuToggle=document.getElementById('menuToggle');
 const nav=document.getElementById('mainNav');
 menuToggle.addEventListener('click',()=>{const open=nav.classList.toggle('open');menuToggle.setAttribute('aria-expanded',String(open));});
