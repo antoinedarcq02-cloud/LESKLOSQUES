@@ -44,14 +44,14 @@ input:disabled{opacity:.5;cursor:not-allowed}
 .hero{background:
   linear-gradient(90deg,rgba(0,0,0,.92),rgba(0,0,0,.60)),
   radial-gradient(ellipse at 78% 40%,rgba(107,23,32,.68) 0,rgba(36,16,20,.78) 33%,rgba(9,9,11,.95) 72%),
-  url('assets/logo-les-klosques.jpg') center 58%/cover no-repeat !important}
+  url('assets/logo-les-klosques.jpg') center 68%/contain no-repeat !important}
 .hero:after{display:none}
 main{position:relative;isolation:isolate}
-main:before{content:'';position:absolute;inset:0;background:url('assets/logo-les-klosques.jpg') center 1250px/900px auto no-repeat;opacity:.025;pointer-events:none;z-index:-1}
+main:before{display:none}
 .section,.contact-section,.band-section,.dark-section,.hero{position:relative}
 footer .brand-logo{width:54px;height:54px}
-@media(max-width:800px){.brand-logo{width:50px;height:50px}.hero{background-position:center 62% !important}}
-@media(max-width:480px){.brand-logo{width:46px;height:46px}.brand{gap:10px;font-size:12px}.hero{background-position:center 64% !important}main:before{background-size:650px auto;background-position:center 1180px}}
+@media(max-width:800px){.brand-logo{width:50px;height:50px}.hero{background-position:center 72% !important;background-size:115% auto !important}}
+@media(max-width:480px){.brand-logo{width:46px;height:46px}.brand{gap:10px;font-size:12px}.hero{background-position:center 76% !important;background-size:130% auto !important}main:before{display:none}}
 
 .member-icon-wrap{display:flex;justify-content:center;align-items:center;min-height:56px}.member-icon{display:block;max-width:58px;height:auto}.bass-icon{width:58px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.28))}@media(max-width:480px){.member-icon{max-width:52px}.bass-icon{width:52px}}
 
@@ -172,3 +172,35 @@ main::before { display: none !important; }
 
 /* Formule 05 : "Formule" et "avec remorque" ont la même couleur. */
 .pricing-grid > .price-card:nth-child(5) h3 > span { color: inherit; }
+
+
+/* Supprime uniquement la petite image superposée sur la grande photo d'accueil. */
+.hero::after,
+.hero:after {
+    content: none !important;
+    display: none !important;
+    background: none !important;
+}
+
+/* Les cinq formules utilisent désormais les couleurs de la formule 02. */
+.pricing-grid .price-card {
+  background: #121216;
+  color: #ffffff;
+  border-color: #121216;
+}
+.pricing-grid .price-card h3 span { color: #bbb; }
+.pricing-grid .price-card ul { color: #ccc; }
+.pricing-grid .price-card .button.full {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red);
+}
+.pricing-grid .price-card .button.full:hover {
+  background: #bd1727;
+  color: #fff;
+  border-color: #bd1727;
+}
+/* Respecte les choix typographiques déjà faits pour les formules 3 et 5. */
+.pricing-grid > .price-card:nth-child(3) h3 > span:not(.formula-qualifier),
+.pricing-grid > .price-card:nth-child(5) h3 > span { color: inherit; }
+.pricing-grid > .price-card:nth-child(3) h3 > .formula-qualifier { color: #bbb; }
