@@ -14,14 +14,14 @@ export async function onRequestPost({ request, env }) {
     if (raw.length > 4000) return respond({ error: "Requête trop longue." }, 413);
     const data = JSON.parse(raw);
     const current = await env.DB.prepare("SELECT * FROM admin_users WHERE username=?").bind(user.username).first();
-    if (!current || !(await verifyPassword(data.current_password, current)))
+    if (!current || !(await verifyPassword(data.current_password, current, env)))
       return respond({ error: "Mot de passe actuel incorrect." }, 401);
     const newPassword = data.new_password;
     if (!validPassword(newPassword))
       return respond({ error: "Le nouveau mot de passe doit contenir au moins 15 caractères." }, 400);
     if (newPassword === data.current_password)
       return respond({ error: "Choisis un nouveau mot de passe différent de l'ancien." }, 400);
-    const hashes = await hashPassword(newPassword);
+    const hashes = await hashPassword(newPassword, env);
     const result = await env.DB.prepare(\`UPDATE admin_users SET
       password_salt=?,password_hash=?,password_iterations=?,
       must_change_password=0,session_version=session_version+1,updated_at=datetime('now')
