@@ -221,9 +221,29 @@ main::before { display: none !important; }
 @media(max-width:480px){.member-photo{height:185px}.member.member-with-photo h3{font-size:23px}.member.member-with-photo small{font-size:8px}}
 
 
-/* Identité visuelle : logo blanc du groupe dans l'en-tête et le pied de page. */
-.brand-image-only { display:flex; align-items:center; flex-shrink:0; gap:0; letter-spacing:0; font-size:0; }
-.brand-logo-white { display:block; width:220px; max-width:min(30vw,220px); height:auto; object-fit:contain; filter:drop-shadow(0 6px 18px rgba(0,0,0,.25)); }
-footer .brand-logo-white { width:180px; max-width:min(26vw,180px); }
-@media(max-width:800px) { .brand-logo-white { width:170px; max-width:42vw; } footer .brand-logo-white {width:150px;max-width:38vw;} }
-@media(max-width:480px) { .brand-logo-white { width:145px; max-width:46vw; } footer .brand-logo-white {width:130px;max-width:44vw;} }
+/* Logo blanc Les Klosques dans l'en-tête et le footer */
+.brand-image-only{display:flex;align-items:center;gap:0;letter-spacing:0;font-size:0}
+.brand-logo-white{display:block;width:220px;max-width:min(30vw,220px);height:auto;object-fit:contain;filter:drop-shadow(0 6px 18px rgba(0,0,0,.25))}
+.footer-logo-white{width:180px;max-width:min(26vw,180px)}
+.brand-text{display:none}
+@media(max-width:800px){.brand-logo-white{width:170px;max-width:42vw}.footer-logo-white{width:150px;max-width:38vw}}
+@media(max-width:480px){.brand-logo-white{width:145px;max-width:46vw}.footer-logo-white{width:130px;max-width:44vw}}
+
+
+/* Logo blanc officiel : dimensionné pour rester ENTIER dans le bandeau, y compris mobile. */
+.site-header { height: 91px; }
+.site-header .brand-image-only { flex-shrink: 0; max-width: 190px; }
+.site-header .brand-logo-white { display: block; width: 185px; height: 77px; max-width: 185px; max-height: 77px; object-fit: contain; object-position: center; border: 0; border-radius: 0; box-shadow: none; }
+footer .footer-logo-white { display: block; width: 175px; height: 80px; max-width: 175px; object-fit: contain; border: 0; border-radius: 0; box-shadow: none; }
+@media (max-width: 800px) {
+  .site-header { height: 78px; }
+  .site-header nav { top: 78px; }
+  .site-header .brand-logo-white { width: 150px; height: 65px; max-width: 150px; max-height: 65px; }
+  footer .footer-logo-white { width: 165px; height: 76px; max-width: 165px; }
+}
+@media (max-width: 480px) {
+  .site-header { height: 74px; }
+  .site-header nav { top: 74px; }
+  .site-header .brand-logo-white { width: 145px; height: 61px; max-width: 145px; max-height: 61px; }
+  footer .footer-logo-white { width: 155px; height: 72px; max-width: 155px; }
+}
