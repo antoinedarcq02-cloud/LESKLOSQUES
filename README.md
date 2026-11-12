@@ -98,7 +98,7 @@ La rubrique « Les Klosques en live ! » conserve les trois vidéos YouTube et a
 
 - https://www.facebook.com/reel/1098640118264832/
 
-La quatrième vidéo est intégrée au moyen du lecteur Facebook (`facebook.com/plugins/video.php`), au format vertical. Un lien « Voir le Reel sur Facebook » est toujours visible : selon les paramètres de visibilité du Reel, les restrictions de Facebook ou le navigateur, le lecteur intégré peut ne pas fonctionner. Le Reel doit être public et autoriser son intégration.
+La quatrième vidéo est intégrée au moyen du lecteur Facebook (`facebook.com/plugins/video.php`), dans un cadre horizontal 16:9 identique aux vidéos YouTube. Le lecteur interne reste contrôlé par Facebook et peut imposer son propre cadrage. Un lien « Voir le Reel sur Facebook » est toujours visible : selon les paramètres de visibilité du Reel, les restrictions de Facebook ou le navigateur, le lecteur intégré peut ne pas fonctionner. Le Reel doit être public et autoriser son intégration.
 
 Aucun compte ni clé Facebook n'est nécessaire pour cette intégration. Le lecteur peut charger des ressources de Facebook quand le visiteur arrive à la zone vidéo (chargement différé / `loading=lazy`). Les intégrations YouTube, le logo, les formules, le formulaire, les réseaux sociaux et les fonctions Cloudflare/Google Agenda restent inchangés.
 

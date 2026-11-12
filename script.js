@@ -148,11 +148,16 @@ if (videoFrame && videoShell && videoLabel && videoLink) {
     videoFrame.title = `Les Klosques en live — vidéo ${index + 1} sur ${selection.source}`;
     videoShell.classList.toggle('is-facebook', isFacebook);
     videoShell.closest('.video-main')?.classList.toggle('is-facebook-selected', isFacebook);
-    // Facebook fabrique un lecteur à largeur fixe : l'ajuster à la place disponible
-    // pour éviter tout débordement sur les petits écrans.
+    // Prépare un lecteur Facebook au format horizontal, à la largeur du cadre
+    // (au lieu d'un lecteur Reel étroit avec de grandes bandes vides autour).
+    // Les éléments internes de Facebook restent contrôlés par Facebook.
     if (isFacebook) {
       const playerUrl = new URL(selection.player);
-      playerUrl.searchParams.set('width', String(Math.max(220, Math.min(344, Math.floor(videoShell.clientWidth)))));
+      const width = Math.max(220, Math.round(videoShell.clientWidth));
+      const height = Math.round(width * 9 / 16);
+      playerUrl.searchParams.set('width', String(width));
+      playerUrl.searchParams.set('height', String(height));
+      playerUrl.searchParams.set('show_text', 'false');
       videoFrame.src = playerUrl.toString();
     } else {
       videoFrame.src = selection.player;
