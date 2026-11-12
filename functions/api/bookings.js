@@ -109,6 +109,20 @@ export async function onRequestPost({ request, env }) {
       console.warn("Resend : échec de l'envoi de devis", mail.status);
       return Response.json({ error: "Le service d'e-mail a refusé l'envoi. Contactez directement le groupe par e-mail." }, { status: 502 });
     }
+
+    // Après confirmation de l'envoi, archiver le dossier pour les quatre musiciens.
+    // L'email reste le canal de secours tant que le binding D1 n'est pas activé.
+    if (env.DB) {
+      try {
+        await env.DB.prepare(`INSERT INTO bookings
+          (id,source,name,email,phone,event_type,event_date,location,package,message,status)
+          VALUES (?,?,?,?,?,?,?,?,?,?,'nouveau')`)
+          .bind(crypto.randomUUID(), "site", name, email, phone, eventType, date, location, pkg, message).run();
+      } catch (error) {
+        // Éviter d'indiquer un échec au client alors que son email est déjà parti.
+        console.warn("D1 : demande envoyée par email mais non archivée", error?.message || error);
+      }
+    }
     return Response.json({ ok: true });
   } catch (error) {
     console.warn("Erreur formulaire de devis", error?.message || error);
