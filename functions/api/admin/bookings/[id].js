@@ -1,4 +1,4 @@
-import { authorize, respond, cleanText, validDate, statuses } from "../../../../_lib/admin-auth.js";
+import { authorize, respond, cleanText, validDate, statuses } from "../../../_lib/admin-auth.js";
 
 const EDITABLE = {
   name: 150, email: 254, phone: 50, event_type: 100, event_date: 10,
