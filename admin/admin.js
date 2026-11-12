@@ -343,4 +343,58 @@ siteForm.addEventListener('submit', async event => {
   finally { button.disabled = false; }
 });
 
+
+async function loadMembers() {
+  if (state.role !== 'admin') return;
+  try {
+    const data = await callApi('/api/admin/users');
+    const users = data.users || [];
+    $('memberList').innerHTML = users.map(user =>
+      '<div class="member-row"><strong>'+escapeHtml(user.display_name)+'</strong>' +
+      '<span class="muted small">@'+escapeHtml(user.username)+(user.role === 'admin'?' · gestionnaire':' · musicien')+
+      (user.must_change_password ? ' · mot de passe provisoire' : '')+'</span></div>'
+    ).join('') || '<p class="muted">Aucun compte enregistré.</p>';
+    $('memberCreateForm').hidden = users.length >= 4;
+    const otherUsers = users.filter(user => user.role === 'member');
+    $('memberResetUsername').innerHTML = otherUsers.map(user =>
+      '<option value="'+escapeHtml(user.username)+'">'+escapeHtml(user.display_name)+'</option>'
+    ).join('');
+    $('memberResetForm').hidden = otherUsers.length === 0;
+  } catch (error) { notify(error.message); }
+}
+$('memberCreateForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = form.querySelector('[type=submit]');
+  button.disabled = true;
+  notify('');
+  try {
+    await jsonCall('/api/admin/users', 'POST', {
+      ...Object.fromEntries(new FormData(form)),
+      action:'create'
+    });
+    form.reset();
+    await loadMembers();
+    notify('Compte créé. Communique le mot de passe provisoire à ce musicien par un moyen privé.');
+  } catch(error) { notify(error.message); }
+  finally { form.elements.namedItem('admin_password').value=''; button.disabled = false; }
+});
+$('memberResetForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = form.querySelector('[type=submit]');
+  button.disabled = true;
+  notify('');
+  try {
+    await jsonCall('/api/admin/users', 'POST', {
+      ...Object.fromEntries(new FormData(form)),
+      action:'reset'
+    });
+    form.reset();
+    await loadMembers();
+    notify('Mot de passe réinitialisé. L’ancien accès est invalidé et le musicien devra changer le mot de passe provisoire.');
+  } catch(error) { notify(error.message); }
+  finally { form.elements.namedItem('admin_password').value=''; button.disabled = false; }
+});
+
 initialize();
