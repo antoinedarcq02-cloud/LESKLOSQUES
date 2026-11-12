@@ -113,3 +113,14 @@ Le fichier fourni fait 160 × 160 pixels : une version originale de plus haute r
 
 ## Correction du Reel Facebook (12 novembre 2026)
 Le sélecteur conserve les trois vidéos YouTube au format horizontal (16:9). Lorsque la vidéo Facebook est sélectionnée, le lecteur adopte un format vertical (9:16) centré, adapté aussi au téléphone. Le lien direct Facebook reste disponible si Facebook refuse la lecture intégrée (par exemple selon les paramètres de confidentialité, le navigateur ou la connexion Facebook).
+
+
+## Réception des demandes de devis — vérification des formules (12 novembre 2026)
+
+- Le formulaire transmet les demandes à `LesKlosques@hotmail.com` par défaut via l'API Resend côté serveur (`functions/api/bookings.js`).
+- Les cinq formules du sélecteur, les cinq boutons « Demander un devis » et la liste de validation de l'API utilisent désormais les mêmes identifiants ; cela évite le rejet des formules 03, 04 et 05.
+- Facultatif : ajoutez dans **Cloudflare Pages > Settings > Variables and Secrets > Production** la variable de type **Text** `QUOTE_EMAIL_TO` = `LesKlosques@hotmail.com` pour piloter le destinataire depuis Cloudflare sans modifier le code.
+- Pour l'envoi automatique, les variables `RESEND_API_KEY` et `EMAIL_FROM` doivent aussi être configurées sur **le bon projet Cloudflare Pages**. `RESEND_API_KEY` doit être un **Secret** et `EMAIL_FROM` doit désigner une adresse appartenant à un domaine d'expédition vérifié chez Resend.
+- **IMPORTANT :** `LesKlosques@hotmail.com` est le **destinataire** des demandes, pas une adresse d'expédition validable dans Resend. L'expéditeur d'essai `onboarding@resend.dev` est limité aux essais ; il peut refuser des destinataires comme Hotmail. Aucun envoi externe n'a été testé ni garanti par la création de cette archive.
+- Après publication, effectuer un **test de devis réel depuis le formulaire**. Si un message d'erreur apparaît, vérifier les logs Cloudflare Pages et les logs Resend sans divulguer les clés API. La réception est confirmée seulement après vérification dans la boîte du groupe.
+- Les demandes sont uniquement des demandes de devis, jamais des réservations validées automatiquement.

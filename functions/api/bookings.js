@@ -2,13 +2,15 @@ import { getBusyDates } from "../_lib/google.js";
 
 // Destination unique des demandes : les coordonnées des visiteurs ne sont
 // envoyées que lorsque ceux-ci valident le formulaire.
+// Envoi par défaut vers la boîte officielle ; modifiable sans publier de nouveau code
+// en définissant QUOTE_EMAIL_TO dans Cloudflare Pages.
 const DESTINATION = "LesKlosques@hotmail.com";
 const ALLOWED_PACKAGES = new Set([
   "Formule auto gestion (sans DJ)",
   "Formule Auto gestion + DJ",
-  "Prestation du groupe Les Klosques avec équipe technique",
-  "Prestation du groupe Les Klosques avec équipe technique + DJ",
-  "Prestation du groupe Les Klosques avec remorque"
+  "Équipe technique (sans DJ)",
+  "Équipe technique + DJ",
+  "Remorque autonome"
 ]);
 const ALLOWED_EVENT_TYPES = new Set([
   "Mariage",
@@ -97,7 +99,7 @@ export async function onRequestPost({ request, env }) {
       headers: { "Authorization": `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         from: env.EMAIL_FROM,
-        to: [DESTINATION],
+        to: [(env.QUOTE_EMAIL_TO || DESTINATION).trim()],
         reply_to: email,
         subject: `Demande de devis Les Klosques — ${date}`,
         text: lines.join("\n")
