@@ -65,11 +65,22 @@
     </section>
     <section id="panel-site" class="page" hidden>
       <div class="panel">
-        <h2>Gestion du site public</h2>
-        <p>Le site public reste inchangé à cette étape. La modification directe des photos, vidéos et textes sera activée dans une prochaine version avec validation avant publication.</p>
-        <a class="secondary link" href="/" target="_blank" rel="noopener">Voir le site public ↗</a>
+        <h2>Modifier les textes et les vidéos du site</h2>
+        <p class="muted">Les quatre musiciens autorisés peuvent mettre à jour les textes principaux et les liens vidéo. Les photos restent gérées dans le dépôt GitHub pour le moment.</p>
+        <form id="siteContentForm">
+          <label>Accroche de l'accueil<input name="hero_lead" maxlength="180" value="Du son, de l’énergie et une bonne dose de fête."></label>
+          <label>Présentation courte de l'accueil<textarea name="hero_copy" maxlength="500" rows="3">Un groupe pop/rock festif pour faire vibrer vos soirées, fêtes privées, événements associatifs et rendez-vous publics.</textarea></label>
+          <label>Texte de présentation du groupe<textarea name="intro_text" maxlength="650" rows="4">Originaires du pays catalan, Les Klosques sont quatre musiciens réunis par une même envie : partager leur passion de la musique et faire vibrer le public avec des reprises festives des plus grands tubes des années 70 à aujourd’hui !</textarea></label>
+          <h2>Vidéos</h2>
+          <p class="muted small">Colle le lien YouTube ou son identifiant. Le lien du Reel Facebook est également accepté.</p>
+          <label>Vidéo YouTube 1<input name="video_1" value="kUTlcbnGmgw"></label>
+          <label>Vidéo YouTube 2<input name="video_2" value="njdBF5e3U4s"></label>
+          <label>Vidéo YouTube 3<input name="video_3" value="JQyRAMXzBfA"></label>
+          <label>Reel Facebook<input name="facebook_reel" value="1098640118264832"></label>
+          <div class="modal-actions"><a class="secondary link" href="/" target="_blank" rel="noopener">Voir le site ↗</a><button class="primary" type="submit">Publier les modifications</button></div>
+        </form>
       </div>
-      <div class="panel"><h2>Règle du groupe</h2><p>Aucun vote ni saisie de disponibilités personnelles n'est prévu dans Klosques Manager. Vous échangez entre vous en dehors du site.</p></div>
+      <div class="panel"><h2>Organisation du groupe</h2><p>Aucun vote ni saisie de disponibilités personnelles n'est prévu. Vous échangez entre vous en dehors du site.</p></div>
     </section>
   </main>
   <nav class="bottom-nav" aria-label="Navigation de l'administration">
