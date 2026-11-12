@@ -106,21 +106,21 @@ quoteForm.addEventListener('submit', async event => {
 });
 
 
-// Un seul lecteur vidéo : les quatre miniatures changent la vidéo affichée en grand.
+// Les quatre miniatures affichent une seule vidéo dans le grand lecteur.
+// YouTube n'autorise pas la suppression totale des recommandations : rel=0 les
+// limite à la chaîne de la vidéo. L'API IFrame permet d'afficher notre écran
+// « Revoir cette vidéo » dès que la vidéo se termine.
 const KLOSQUES_VIDEOS = [
   {
-    source: 'YouTube',
-    player: 'https://www.youtube-nocookie.com/embed/kUTlcbnGmgw',
+    source: 'YouTube', id: 'kUTlcbnGmgw',
     page: 'https://www.youtube.com/watch?v=kUTlcbnGmgw'
   },
   {
-    source: 'YouTube',
-    player: 'https://www.youtube-nocookie.com/embed/njdBF5e3U4s',
+    source: 'YouTube', id: 'njdBF5e3U4s',
     page: 'https://www.youtube.com/watch?v=njdBF5e3U4s'
   },
   {
-    source: 'YouTube',
-    player: 'https://www.youtube-nocookie.com/embed/JQyRAMXzBfA',
+    source: 'YouTube', id: 'JQyRAMXzBfA',
     page: 'https://www.youtube.com/watch?v=JQyRAMXzBfA'
   },
   {
@@ -131,46 +131,130 @@ const KLOSQUES_VIDEOS = [
 ];
 
 const videoChoices = document.querySelectorAll('.video-choice');
-const videoFrame = document.getElementById('featuredVideo');
 const videoShell = document.getElementById('videoPlayerShell');
 const videoLabel = document.getElementById('featuredVideoLabel');
 const videoLink = document.getElementById('featuredVideoLink');
 const videoNote = document.getElementById('videoEmbedNote');
 const videoStatus = document.getElementById('videoSelectionStatus');
+const replayPanel = document.getElementById('videoReplayPanel');
+const replayPoster = document.getElementById('videoReplayPoster');
+const replayButton = document.getElementById('videoReplayButton');
+let videoFrame = document.getElementById('featuredVideo');
+let youtubePlayer = null;
+let currentVideoIndex = 0;
 
-if (videoFrame && videoShell && videoLabel && videoLink) {
+function youtubeEmbedUrl(id, autoplay = false) {
+  const url = new URL(`https://www.youtube-nocookie.com/embed/${id}`);
+  url.searchParams.set('rel', '0'); // Suggestions limitées à cette chaîne YouTube.
+  url.searchParams.set('enablejsapi', '1');
+  url.searchParams.set('playsinline', '1');
+  if (autoplay) url.searchParams.set('autoplay', '1');
+  if (location.protocol === 'https:') url.searchParams.set('origin', location.origin);
+  return url.toString();
+}
+
+function attachYouTubeEndListener() {
+  if (!videoFrame || !window.YT || !window.YT.Player ||
+      KLOSQUES_VIDEOS[currentVideoIndex].source !== 'YouTube' || youtubePlayer) return;
+  const activeFrame = videoFrame;
+  try {
+    youtubePlayer = new YT.Player(activeFrame, {
+      events: {
+        onStateChange(event) {
+          // L'API signale 0 quand la lecture est entièrement terminée.
+          if (event.data !== 0 || KLOSQUES_VIDEOS[currentVideoIndex].source !== 'YouTube' ||
+              activeFrame !== videoFrame) return;
+          const video = KLOSQUES_VIDEOS[currentVideoIndex];
+          replayPoster.src = `https://i.ytimg.com/vi/${video.id}/hqdefault.jpg`;
+          replayPanel.hidden = false;
+          // On remplace le lecteur terminé par notre propre invitation à revoir
+          // la vidéo, pour éviter de laisser affiché l'écran de suggestions.
+          try { event.target.destroy(); } catch (_) { activeFrame.remove(); }
+          youtubePlayer = null;
+          videoFrame = null;
+          videoStatus.textContent = 'Vidéo terminée. Vous pouvez la revoir ou choisir une autre vidéo.';
+        }
+      }
+    });
+  } catch (_) {
+    youtubePlayer = null; // Le lecteur standard YouTube continue de fonctionner.
+  }
+}
+
+function removePreviousPlayer() {
+  if (youtubePlayer) {
+    try { youtubePlayer.destroy(); } catch (_) { /* Iframe nettoyée ci-dessous. */ }
+    youtubePlayer = null;
+  }
+  const previousFrame = videoShell.querySelector('iframe');
+  if (previousFrame) previousFrame.remove();
+  videoFrame = null;
+}
+
+function makeVideoFrame(url, title) {
+  const frame = document.createElement('iframe');
+  frame.id = 'featuredVideo';
+  frame.title = title;
+  frame.loading = 'lazy';
+  frame.referrerPolicy = 'strict-origin-when-cross-origin';
+  frame.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen';
+  frame.allowFullscreen = true;
+  frame.src = url;
+  videoShell.insertBefore(frame, replayPanel);
+  videoFrame = frame;
+}
+
+function selectVideo(index, autoplay = false) {
+  const video = KLOSQUES_VIDEOS[index];
+  if (!video || !videoShell) return;
+  const isFacebook = video.source === 'Facebook Reel';
+  currentVideoIndex = index;
+  removePreviousPlayer();
+  replayPanel.hidden = true;
+  videoShell.classList.toggle('is-facebook', isFacebook);
+  videoShell.closest('.video-main')?.classList.toggle('is-facebook-selected', isFacebook);
+  if (isFacebook) {
+    const facebookUrl = new URL(video.player);
+    const width = Math.max(220, Math.round(videoShell.clientWidth));
+    facebookUrl.searchParams.set('width', String(width));
+    facebookUrl.searchParams.set('height', String(Math.round(width * 9 / 16)));
+    facebookUrl.searchParams.set('show_text', 'false');
+    makeVideoFrame(facebookUrl.toString(), 'Les Klosques en live — vidéo 4, Facebook Reel');
+  } else {
+    makeVideoFrame(youtubeEmbedUrl(video.id, autoplay), `Les Klosques en live — vidéo ${index + 1} sur YouTube`);
+    attachYouTubeEndListener();
+  }
+  videoLabel.textContent = `VIDÉO ${String(index + 1).padStart(2, '0')} · ${video.source.toUpperCase()}`;
+  videoLink.href = video.page;
+  videoLink.textContent = isFacebook ? 'Voir sur Facebook ↗' : 'Voir sur YouTube ↗';
+  videoNote.hidden = !isFacebook;
+  videoChoices.forEach(choice => {
+    const active = Number(choice.dataset.videoIndex) === index;
+    choice.classList.toggle('is-active', active);
+    choice.setAttribute('aria-pressed', String(active));
+  });
+  videoStatus.textContent = `Vidéo ${index + 1} (${video.source}) affichée dans le grand lecteur.`;
+}
+
+if (videoShell && videoFrame && videoLabel && videoLink && replayPanel && replayButton) {
+  // Conserve la première vidéo visible même si l'API YouTube est indisponible.
+  videoFrame.src = youtubeEmbedUrl(KLOSQUES_VIDEOS[0].id);
   videoChoices.forEach(button => button.addEventListener('click', () => {
     const index = Number(button.dataset.videoIndex);
-    const selection = KLOSQUES_VIDEOS[index];
-    if (!selection || button.classList.contains('is-active')) return;
-    const isFacebook = selection.source === 'Facebook Reel';
-
-    videoFrame.title = `Les Klosques en live — vidéo ${index + 1} sur ${selection.source}`;
-    videoShell.classList.toggle('is-facebook', isFacebook);
-    videoShell.closest('.video-main')?.classList.toggle('is-facebook-selected', isFacebook);
-    // Prépare un lecteur Facebook au format horizontal, à la largeur du cadre
-    // (au lieu d'un lecteur Reel étroit avec de grandes bandes vides autour).
-    // Les éléments internes de Facebook restent contrôlés par Facebook.
-    if (isFacebook) {
-      const playerUrl = new URL(selection.player);
-      const width = Math.max(220, Math.round(videoShell.clientWidth));
-      const height = Math.round(width * 9 / 16);
-      playerUrl.searchParams.set('width', String(width));
-      playerUrl.searchParams.set('height', String(height));
-      playerUrl.searchParams.set('show_text', 'false');
-      videoFrame.src = playerUrl.toString();
-    } else {
-      videoFrame.src = selection.player;
-    } // Le changement arrête aussi la vidéo précédente.
-    videoLabel.textContent = `VIDÉO ${String(index + 1).padStart(2, '0')} · ${selection.source.toUpperCase()}`;
-    videoLink.href = selection.page;
-    videoLink.textContent = isFacebook ? 'Voir sur Facebook ↗' : 'Voir sur YouTube ↗';
-    videoNote.hidden = !isFacebook;
-    videoChoices.forEach(choice => {
-      const active = choice === button;
-      choice.classList.toggle('is-active', active);
-      choice.setAttribute('aria-pressed', String(active));
-    });
-    videoStatus.textContent = `La vidéo ${index + 1} (${selection.source}) est maintenant affichée dans le grand lecteur.`;
+    if (index === currentVideoIndex && replayPanel.hidden === true) return;
+    selectVideo(index);
   }));
+  replayButton.addEventListener('click', () => selectVideo(currentVideoIndex, true));
+
+  // API officielle YouTube pour savoir quand la lecture se termine.
+  // Si elle est bloquée, rel=0 réduit malgré tout les recommandations externes.
+  window.onYouTubeIframeAPIReady = attachYouTubeEndListener;
+  if (window.YT && window.YT.Player) {
+    attachYouTubeEndListener();
+  } else {
+    const apiScript = document.createElement('script');
+    apiScript.src = 'https://www.youtube.com/iframe_api';
+    apiScript.async = true;
+    document.head.appendChild(apiScript);
+  }
 }

@@ -124,3 +124,10 @@ Le sélecteur conserve les trois vidéos YouTube au format horizontal (16:9). Lo
 - **IMPORTANT :** `LesKlosques@hotmail.com` est le **destinataire** des demandes, pas une adresse d'expédition validable dans Resend. L'expéditeur d'essai `onboarding@resend.dev` est limité aux essais ; il peut refuser des destinataires comme Hotmail. Aucun envoi externe n'a été testé ni garanti par la création de cette archive.
 - Après publication, effectuer un **test de devis réel depuis le formulaire**. Si un message d'erreur apparaît, vérifier les logs Cloudflare Pages et les logs Resend sans divulguer les clés API. La réception est confirmée seulement après vérification dans la boîte du groupe.
 - Les demandes sont uniquement des demandes de devis, jamais des réservations validées automatiquement.
+
+
+## Vidéos YouTube — recommandations
+Le lecteur intégré utilise `rel=0` pour limiter les recommandations à la chaîne de chaque vidéo.
+L'API YouTube IFrame remplace le lecteur par un écran « Revoir cette vidéo » à la fin de la lecture.
+YouTube ne permet pas de supprimer complètement toutes ses recommandations et éléments propres, notamment juste avant la fin ; un blocage de l'API YouTube peut empêcher l'écran personnalisé d'apparaître.
+Les quatre vidéos, y compris le Reel Facebook, restent sélectionnables.

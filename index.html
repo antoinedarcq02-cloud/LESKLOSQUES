@@ -29,12 +29,20 @@
       <div class="video-player-shell" id="videoPlayerShell">
         <iframe
           id="featuredVideo"
-          src="https://www.youtube-nocookie.com/embed/kUTlcbnGmgw"
+          src="https://www.youtube-nocookie.com/embed/kUTlcbnGmgw?rel=0&amp;enablejsapi=1&amp;playsinline=1"
           title="Les Klosques en live — Vidéo 1 sur YouTube"
           loading="lazy"
           referrerpolicy="strict-origin-when-cross-origin"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
           allowfullscreen></iframe>
+        <div class="video-replay-panel" id="videoReplayPanel" hidden>
+          <img id="videoReplayPoster" src="https://i.ytimg.com/vi/kUTlcbnGmgw/hqdefault.jpg" alt="" loading="lazy" width="480" height="360">
+          <div class="video-replay-content">
+            <p>Vidéo terminée</p>
+            <button id="videoReplayButton" type="button" class="button button-red">↻ Revoir cette vidéo</button>
+            <span>Ou choisissez une autre vidéo juste en dessous.</span>
+          </div>
+        </div>
       </div>
       <div class="video-main-bar">
         <span id="featuredVideoLabel">VIDÉO 01 · YOUTUBE</span>
