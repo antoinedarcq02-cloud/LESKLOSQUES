@@ -27,65 +27,120 @@ async function callApi(path, options = {}) {
 function jsonCall(path, method, data) {
   return callApi(path, {method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
 }
-function switchLogin(logged) {
-  state.logged = logged;
-  $('login').hidden = logged;
-  $('workspace').hidden = !logged;
-  $('account').hidden = !logged;
+function showScreen(name) {
+  for (const id of ['login','setup','passwordGate','workspace']) $(id).hidden = id !== name;
+  state.logged = name === 'workspace' || name === 'passwordGate';
+  $('account').hidden = !state.logged;
+}
+async function signedIn(account) {
+  state.role = account.role;
+  state.mustChangePassword = !!account.must_change_password;
+  $('identity').textContent = account.display_name || account.username;
+  $('membersPanel').hidden = account.role !== 'admin';
+  $('cancelPasswordChange').hidden = state.mustChangePassword;
+  $('passwordExplanation').textContent = state.mustChangePassword
+    ? 'Ceci est ton mot de passe provisoire : choisis-en un nouveau, personnel, avant de consulter les dossiers.'
+    : 'Choisis un nouveau mot de passe personnel d’au moins 15 caractères.';
+  if (state.mustChangePassword) {
+    showScreen('passwordGate');
+    return;
+  }
+  showScreen('workspace');
+  await refresh();
+  await loadSiteContent();
+  if (state.role === 'admin') await loadMembers();
 }
 async function initialize() {
-  $('loginCode').required = false;
   $('agendaMonth').value = new Date().getFullYear() + '-' + String(new Date().getMonth()+1).padStart(2,'0');
   try {
     const session = await callApi('/api/admin/auth');
-    if (session.authenticated) {
-      $('identity').textContent = session.email;
-      switchLogin(true);
-      await refresh();
-      await loadSiteContent();
-    } else switchLogin(false);
-  } catch (error) { switchLogin(false); notify(error.message); }
+    if (session.authenticated) await signedIn(session);
+    else showScreen(session.needsSetup ? 'setup' : 'login');
+  } catch (error) { showScreen('login'); notify(error.message); }
 }
 $('loginForm').addEventListener('submit', async event => {
   event.preventDefault();
-  const email = $('loginEmail').value.trim();
-  const enteringCode = !$('codeFields').hidden;
-  const btn = $('loginBtn');
-  btn.disabled = true;
+  const button = $('loginBtn');
+  button.disabled = true;
   notify('');
   try {
-    if (!enteringCode) {
-      await jsonCall('/api/admin/auth','POST',{action:'request-code',email});
-      $('codeFields').hidden = false;
-      $('loginCode').required = true;
-      $('loginEmail').readOnly = true;
-      btn.textContent = 'Me connecter';
-      $('restartLogin').hidden = false;
-      $('loginHint').textContent = 'Si cette adresse est autorisée, tu recevras un code valable 10 minutes.';
-      $('loginCode').focus();
-    } else {
-      const result = await jsonCall('/api/admin/auth','POST',{action:'verify-code',email,code:$('loginCode').value.trim()});
-      $('identity').textContent = result.email;
-      switchLogin(true);
-      await refresh();
-      await loadSiteContent();
-    }
+    const account = await jsonCall('/api/admin/auth','POST',{
+      action:'login',
+      username:$('loginUsername').value,
+      password:$('loginPassword').value
+    });
+    $('loginPassword').value = '';
+    await signedIn(account);
   } catch (error) { notify(error.message); }
-  finally { btn.disabled = false; }
+  finally { button.disabled = false; }
 });
-$('restartLogin').addEventListener('click', () => {
-  $('codeFields').hidden = true;
-  $('loginCode').value = '';
-  $('loginCode').required = false;
-  $('loginEmail').readOnly = false;
-  $('loginBtn').textContent = 'Recevoir mon code';
-  $('restartLogin').hidden = true;
-  $('loginHint').textContent = 'Seules les quatre adresses configurées peuvent se connecter.';
+$('setupForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  if ($('setupPassword').value !== $('setupConfirm').value) {
+    notify('Les mots de passe ne correspondent pas.'); return;
+  }
+  const button = $('setupSubmit');
+  button.disabled = true;
   notify('');
+  try {
+    const account = await jsonCall('/api/admin/auth','POST',{
+      action:'bootstrap',
+      setup_key:$('setupKey').value,
+      username:$('setupUsername').value,
+      display_name:$('setupDisplay').value,
+      password:$('setupPassword').value
+    });
+    $('setupKey').value = '';
+    $('setupPassword').value = '';
+    $('setupConfirm').value = '';
+    await signedIn(account);
+    notify('Premier compte créé. Tu peux maintenant ajouter les trois autres musiciens dans la rubrique Site.');
+  } catch (error) { notify(error.message); }
+  finally { button.disabled = false; }
 });
 $('logoutBtn').addEventListener('click', async () => {
   try { await jsonCall('/api/admin/auth','POST',{action:'logout'}); }
-  finally { state.items = []; switchLogin(false); $('loginCode').value = ''; $('restartLogin').click(); }
+  catch (error) { notify(error.message); return; }
+  state.items = [];
+  state.role = null;
+  state.mustChangePassword = false;
+  $('loginPassword').value = '';
+  $('passwordForm').reset();
+  showScreen('login');
+  notify('Tu es déconnecté.');
+});
+$('changeMyPassword').addEventListener('click', () => {
+  $('passwordForm').reset();
+  $('cancelPasswordChange').hidden = false;
+  $('passwordExplanation').textContent = 'Choisis un nouveau mot de passe personnel d’au moins 15 caractères.';
+  showScreen('passwordGate');
+});
+$('cancelPasswordChange').addEventListener('click', () => {
+  if (state.mustChangePassword) return;
+  $('passwordForm').reset();
+  showScreen('workspace');
+});
+$('passwordForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const form = $('passwordForm');
+  const current_password = form.elements.namedItem('current_password').value;
+  const new_password = form.elements.namedItem('new_password').value;
+  const confirm = form.elements.namedItem('confirm').value;
+  if (new_password !== confirm) { notify('Les nouveaux mots de passe ne correspondent pas.'); return; }
+  const btn = $('changePasswordSubmit');
+  btn.disabled = true;
+  notify('');
+  try {
+    await jsonCall('/api/admin/password','POST',{current_password,new_password});
+    form.reset();
+    state.mustChangePassword = false;
+    showScreen('workspace');
+    await refresh();
+    await loadSiteContent();
+    if (state.role === 'admin') await loadMembers();
+    notify('Ton mot de passe a été modifié. Tes anciennes sessions sont désormais invalides.');
+  } catch(error) { notify(error.message); }
+  finally { btn.disabled = false; }
 });
 function setPage(page) {
   state.page = page;
