@@ -59,9 +59,9 @@ export async function onRequestPost({ request, env }) {
       if (displayName.length < 2)
         return respond({ error: "Indique le prénom du musicien." }, 400);
       const hashes = await hashPassword(password, env);
-      const result = await env.DB.prepare(\`INSERT INTO admin_users
+      const result = await env.DB.prepare(`INSERT INTO admin_users
         (username,display_name,password_salt,password_hash,password_iterations,role)
-        SELECT ?,?,?,?,?, 'admin' WHERE NOT EXISTS(SELECT 1 FROM admin_users)\`)
+        SELECT ?,?,?,?,?, 'admin' WHERE NOT EXISTS(SELECT 1 FROM admin_users)`)
         .bind(username,displayName,hashes.password_salt,hashes.password_hash,hashes.password_iterations).run();
       if (!result.meta?.changes) return respond({ error: "Compte déjà initialisé." }, 409);
       const account = { username, display_name: displayName, role: "admin", session_version: 1, must_change_password: 0 };
