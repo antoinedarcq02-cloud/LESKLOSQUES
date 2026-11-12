@@ -13,22 +13,59 @@
 <body>
 <header class="topbar">
   <a class="logo" href="/"><img src="/assets/favicon-klosques.png" width="42" height="42" alt=""><span>LES KLOSQUES<small>MANAGER</small></span></a>
-  <div id="account" class="account" hidden><span id="identity"></span><button type="button" id="logoutBtn" class="small-button">Sortir</button></div>
+  <div id="account" class="account" hidden><span id="identity"></span><button type="button" id="changeMyPassword" class="small-button">Mot de passe</button><button type="button" id="logoutBtn" class="small-button">Sortir</button></div>
 </header>
 <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
 <section id="login" class="login-shell" hidden>
   <div class="panel login-panel">
-    <p class="eyebrow">ACCÈS RÉSERVÉ AU GROUPE</p>
+    <p class="eyebrow">ACCÈS RÉSERVÉ AUX QUATRE MUSICIENS</p>
     <h1>Bienvenue dans Klosques Manager</h1>
-    <p class="muted">Connecte-toi avec ton adresse autorisée. Un code à six chiffres te sera envoyé par email.</p>
+    <p class="muted">Connecte-toi avec ton identifiant et ton mot de passe personnel. Aucun code par email.</p>
     <form id="loginForm">
-      <label for="loginEmail">Adresse email</label>
-      <input id="loginEmail" type="email" required autocomplete="email" placeholder="votre@email.fr">
-      <div id="codeFields" hidden><label for="loginCode">Code reçu par email</label><input id="loginCode" type="text" required inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000"></div>
-      <button class="primary full" id="loginBtn" type="submit">Recevoir mon code</button>
-      <button class="text-button" id="restartLogin" type="button" hidden>Changer d'adresse email</button>
+      <label for="loginUsername">Identifiant</label>
+      <input id="loginUsername" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="24" required placeholder="ex. antoine">
+      <label for="loginPassword">Mot de passe</label>
+      <input id="loginPassword" name="password" type="password" autocomplete="current-password" required placeholder="Ton mot de passe personnel">
+      <button class="primary full" id="loginBtn" type="submit">Se connecter</button>
     </form>
-    <p id="loginHint" class="muted small">Seules les quatre adresses configurées peuvent se connecter.</p>
+    <p class="muted small">Chaque musicien possède son propre compte. Si tu as oublié ton mot de passe, contacte la personne qui gère les comptes.</p>
+  </div>
+</section>
+<section id="setup" class="login-shell" hidden>
+  <div class="panel login-panel">
+    <p class="eyebrow">PREMIÈRE ACTIVATION UNIQUEMENT</p>
+    <h1>Créer le premier compte</h1>
+    <p class="muted">Le premier compte sera gestionnaire des accès. La clé d'initialisation est à configurer comme secret temporaire dans Cloudflare et à supprimer après cette étape.</p>
+    <form id="setupForm">
+      <label for="setupKey">Clé d'initialisation Cloudflare</label>
+      <input type="password" id="setupKey" name="setup_key" autocomplete="off" required placeholder="ADMIN_SETUP_KEY">
+      <label for="setupUsername">Identifiant du premier musicien</label>
+      <input id="setupUsername" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" pattern="[a-z][a-z0-9_-]{2,23}" maxlength="24" required placeholder="ex. antoine">
+      <label for="setupDisplay">Prénom affiché</label>
+      <input id="setupDisplay" name="display_name" maxlength="60" required placeholder="ex. Antoine">
+      <label for="setupPassword">Mot de passe personnel (15 caractères minimum)</label>
+      <input id="setupPassword" name="password" type="password" autocomplete="new-password" minlength="15" maxlength="128" required>
+      <label for="setupConfirm">Confirmer le mot de passe</label>
+      <input id="setupConfirm" name="confirm" type="password" autocomplete="new-password" minlength="15" maxlength="128" required>
+      <button class="primary full" id="setupSubmit" type="submit">Créer le premier compte</button>
+    </form>
+  </div>
+</section>
+<section id="passwordGate" class="login-shell" hidden>
+  <div class="panel login-panel">
+    <p class="eyebrow">SÉCURITÉ DU COMPTE</p>
+    <h1>Changer mon mot de passe</h1>
+    <p id="passwordExplanation" class="muted">Choisis un mot de passe personnel d'au moins 15 caractères.</p>
+    <form id="passwordForm">
+      <label for="currentPassword">Mot de passe actuel</label>
+      <input id="currentPassword" name="current_password" type="password" autocomplete="current-password" required>
+      <label for="newPassword">Nouveau mot de passe</label>
+      <input id="newPassword" name="new_password" type="password" autocomplete="new-password" minlength="15" maxlength="128" required>
+      <label for="newPasswordConfirm">Confirmer le nouveau mot de passe</label>
+      <input id="newPasswordConfirm" name="confirm" type="password" autocomplete="new-password" minlength="15" maxlength="128" required>
+      <button class="primary full" id="changePasswordSubmit" type="submit">Enregistrer mon nouveau mot de passe</button>
+      <button type="button" class="text-button" id="cancelPasswordChange">Revenir à l'administration</button>
+    </form>
   </div>
 </section>
 <div id="workspace" class="workspace" hidden>
@@ -81,6 +118,30 @@
         </form>
       </div>
       <div class="panel"><h2>Organisation du groupe</h2><p>Aucun vote ni saisie de disponibilités personnelles n'est prévu. Vous échangez entre vous en dehors du site.</p></div>
+      <div class="panel" id="membersPanel" hidden>
+        <h2>Comptes des quatre musiciens</h2>
+        <p class="muted">Gestion réservée au premier compte administrateur. Chaque musicien dispose d'un mot de passe différent et peut le changer.</p>
+        <div id="memberList" class="member-list"></div>
+        <h3>Ajouter un musicien</h3>
+        <form id="memberCreateForm">
+          <div class="field-row">
+            <label>Identifiant (sans accents)<input name="username" required autocomplete="off" autocapitalize="none" spellcheck="false" pattern="[a-z][a-z0-9_-]{2,23}" maxlength="24" placeholder="ex. greg"></label>
+            <label>Prénom<input name="display_name" required maxlength="60" placeholder="ex. Greg"></label>
+          </div>
+          <label>Mot de passe provisoire individuel (15 caractères minimum)<input name="password" type="password" autocomplete="new-password" minlength="15" maxlength="128" required></label>
+          <label>Confirme ton propre mot de passe administrateur<input name="admin_password" type="password" autocomplete="current-password" required></label>
+          <button class="primary" type="submit">Ajouter ce musicien</button>
+        </form>
+        <h3>Réinitialiser le mot de passe d'un musicien</h3>
+        <form id="memberResetForm">
+          <label>Compte<select id="memberResetUsername" name="username" required></select></label>
+          <label>Nouveau mot de passe provisoire (15 caractères minimum)<input name="password" type="password" autocomplete="new-password" minlength="15" maxlength="128" required></label>
+          <label>Confirme ton mot de passe administrateur<input name="admin_password" type="password" autocomplete="current-password" required></label>
+          <button class="secondary" type="submit">Réinitialiser le mot de passe</button>
+        </form>
+        <p class="muted small">Communique chaque mot de passe provisoire directement au musicien concerné, par un moyen privé. Il devra le changer à sa première connexion.</p>
+      </div>
+
     </section>
   </main>
   <nav class="bottom-nav" aria-label="Navigation de l'administration">
