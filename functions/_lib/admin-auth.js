@@ -1,8 +1,9 @@
-// Klosques Manager: comptes nominatifs, mots de passe dérivés PBKDF2-SHA256.
+// Klosques Manager: comptes nominatifs, hachage PBKDF2 + secret serveur indépendant.
+// Cloudflare Workers plafonne PBKDF2 WebCrypto à 100 000 itérations par opération.
 // Authentification et autorisations intégralement côté serveur Cloudflare.
 const COOKIE = "klosques_session";
 const DAY = 86400;
-const ITERATIONS = 600000;
+const ITERATIONS = 100000;
 const encoder = new TextEncoder();
 
 export function respond(data, status = 200, headers = {}) {
@@ -58,23 +59,31 @@ export async function setupKeyMatches(env, submitted) {
   return constantEquals(expected, actual);
 }
 async function derive(password, saltHex, iterations) {
-  if (!Number.isInteger(iterations) || iterations < 600000 || iterations > 2000000)
+  if (!Number.isInteger(iterations) || iterations !== ITERATIONS)
     throw new Error("Paramètres de mot de passe invalides.");
   const key = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveBits"]);
   return toHex(await crypto.subtle.deriveBits(
     { name: "PBKDF2", salt: fromHex(saltHex), iterations, hash: "SHA-256" }, key, 256
   ));
 }
-export async function hashPassword(password) {
+// Le secret "ADMIN_PASSWORD_PEPPER" ne doit jamais être stocké dans D1 ni GitHub.
+// L'attaquant qui obtient uniquement la base D1 ne peut pas tester des mots de passe hors ligne.
+async function passwordInput(password, env) {
+  if (!env?.ADMIN_PASSWORD_PEPPER || String(env.ADMIN_PASSWORD_PEPPER).length < 32)
+    throw new Error("Le secret ADMIN_PASSWORD_PEPPER est absent ou trop court.");
+  return mac(env.ADMIN_PASSWORD_PEPPER, "klosques-password-v1:" + password);
+}
+export async function hashPassword(password, env) {
   if (!validPassword(password))
     throw new Error("Choisis un mot de passe unique d'au moins 15 caractères (maximum 128).");
   const salt = toHex(crypto.getRandomValues(new Uint8Array(16)));
-  return { password_salt: salt, password_hash: await derive(password, salt, ITERATIONS), password_iterations: ITERATIONS };
+  const input = await passwordInput(password, env);
+  return { password_salt: salt, password_hash: await derive(input, salt, ITERATIONS), password_iterations: ITERATIONS };
 }
-export async function verifyPassword(password, account) {
+export async function verifyPassword(password, account, env) {
   if (typeof password !== "string" || password.length > 128 ||
       !account?.password_salt || !account?.password_hash) return false;
-  const result = await derive(password, account.password_salt, Number(account.password_iterations));
+  const result = await derive(await passwordInput(password, env), account.password_salt, Number(account.password_iterations));
   return constantEquals(result, account.password_hash);
 }
 function encode(value) {
