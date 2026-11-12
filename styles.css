@@ -587,3 +587,6 @@ footer .footer-logo-white { display: block; width: 175px; height: 80px; max-widt
 
 /* Présentation du groupe : reprises festives en pays catalan. */
 .intro .intro-band-pitch { margin: 0 auto 14px; max-width: 760px; color: #19191c; font-weight: 750; font-size: clamp(17px, 2vw, 22px); line-height: 1.5; }
+
+/* Formule 03 : Équipe technique côte à côte, même sur les petits écrans. */
+.pricing-grid > .price-card:nth-child(3) h3 { font-size: clamp(23px, 2.15vw, 29px); }
