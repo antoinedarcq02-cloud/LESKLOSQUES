@@ -46,9 +46,9 @@ export async function onRequestPost(context) {
       if (existing) return respond({ error: "Identifiant déjà utilisé." }, 409);
       const count = await context.env.DB.prepare("SELECT COUNT(*) AS total FROM admin_users").first();
       if (Number(count.total) >= 4) return respond({ error: "Quatre musiciens maximum." }, 409);
-      await context.env.DB.prepare(\`INSERT INTO admin_users
+      await context.env.DB.prepare(`INSERT INTO admin_users
         (username,display_name,password_salt,password_hash,password_iterations,role,must_change_password)
-        VALUES (?,?,?,?,?,'member',1)\`)
+        VALUES (?,?,?,?,?,'member',1)`)
         .bind(username,display,hash.password_salt,hash.password_hash,hash.password_iterations).run();
       return respond({ ok: true }, 201);
     }
@@ -57,9 +57,9 @@ export async function onRequestPost(context) {
     const existing = await context.env.DB.prepare("SELECT role FROM admin_users WHERE username=?").bind(username).first();
     if (!existing || existing.role !== "member")
       return respond({ error: "Ce musicien ne peut pas être réinitialisé ici." }, 404);
-    await context.env.DB.prepare(\`UPDATE admin_users SET
+    await context.env.DB.prepare(`UPDATE admin_users SET
       password_salt=?,password_hash=?,password_iterations=?,must_change_password=1,
-      session_version=session_version+1,updated_at=datetime('now') WHERE username=?\`)
+      session_version=session_version+1,updated_at=datetime('now') WHERE username=?`)
       .bind(hash.password_salt,hash.password_hash,hash.password_iterations,username).run();
     return respond({ ok: true });
   } catch (error) {
