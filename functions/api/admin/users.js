@@ -36,9 +36,9 @@ export async function onRequestPost(context) {
     // Une opération sensible nécessite de confirmer le mot de passe du gestionnaire.
     const admin = await context.env.DB.prepare("SELECT * FROM admin_users WHERE username=?")
       .bind(access.user.username).first();
-    if (!admin || !(await verifyPassword(data.admin_password, admin)))
+    if (!admin || !(await verifyPassword(data.admin_password, admin, context.env)))
       return respond({ error: "Mot de passe du gestionnaire incorrect." }, 401);
-    const hash = await hashPassword(data.password);
+    const hash = await hashPassword(data.password, context.env);
     if (data.action === "create") {
       const display = cleanText(data.display_name, 60);
       if (display.length < 2) return respond({ error: "Prénom obligatoire." }, 400);
