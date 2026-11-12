@@ -66,3 +66,46 @@ Si l'application Google OAuth est encore en statut **Test**, une autorisation de
 Les photos de Greg, Jeremy, Antoine et Galdric sont enregistrées dans `assets/` sous les noms `greg-sur-scene.webp`, `jeremy-sur-scene.webp`, `antoine-sur-scene.webp` et `galdric-sur-scene.webp`. Elles sont intégrées à la section « Le groupe ».
 
 Pour une mise à jour depuis GitHub, publier `index.html`, `styles.css` et les quatre nouveaux fichiers image dans `assets/`. Les fonctions Cloudflare existantes ne sont pas modifiées.
+
+
+## Mise à jour du 12 novembre 2026 — vidéo YouTube
+
+- Section « Agenda » remplacée sur la page par « Les Klosques en live ! ».
+- Vidéo intégrée : https://www.youtube.com/watch?v=kUTlcbnGmgw (lecteur YouTube respectueux de la vie privée, sans lecture automatique).
+- Lien de navigation renommé « Vidéo » ; bouton permettant d'ouvrir la vidéo directement sur YouTube.
+- L'API Google Agenda et la vérification de disponibilité côté serveur dans le formulaire de devis sont **conservées**. Aucun secret Cloudflare n'est contenu dans ce ZIP.
+- Autres sections, formules, photos, réseaux sociaux et fonctionnement des demandes de devis laissés inchangés.
+- Pour publier, remplacer les fichiers du dépôt par le contenu **décompressé** du ZIP (ne pas ajouter de dossier parent). Si votre projet utilise un téléversement direct dans Cloudflare Pages, publier les fichiers selon la méthode propre à ce projet plutôt que d'attendre un déploiement GitHub.
+- L'intégration de la vidéo dépend de l'autorisation d'intégration définie par la vidéo sur YouTube ; en cas de blocage par YouTube, le bouton « Voir la vidéo sur YouTube » reste utilisable.
+
+
+## Mise à jour — trois vidéos YouTube
+
+La rubrique « Les Klosques en live ! » affiche maintenant la première vidéo en grand et deux vidéos complémentaires côte à côte sur ordinateur (empilées sur mobile) :
+
+- https://www.youtube.com/watch?v=kUTlcbnGmgw
+- https://www.youtube.com/watch?v=njdBF5e3U4s
+- https://www.youtube.com/watch?v=JQyRAMXzBfA
+
+Chaque vidéo utilise un lecteur `youtube-nocookie.com`, sans lecture automatique, et possède un lien « Voir sur YouTube » en cas de restriction d'intégration. Les autres fonctionnalités (formulaire, fonctions Cloudflare, Google Agenda côté serveur, photos, logo, réseau sociaux et formules) sont inchangées.
+
+Pour publier : décompressez l'archive et remplacez les fichiers correspondants à la racine du dépôt GitHub connecté à Cloudflare Pages ; vérifiez ensuite le nouveau déploiement. Aucun secret n'est inclus.
+
+
+## Mise à jour — quatrième vidéo Facebook Reel
+
+La rubrique « Les Klosques en live ! » conserve les trois vidéos YouTube et ajoute une quatrième vidéo, un Reel Facebook public :
+
+- https://www.facebook.com/reel/1098640118264832/
+
+La quatrième vidéo est intégrée au moyen du lecteur Facebook (`facebook.com/plugins/video.php`), au format vertical. Un lien « Voir le Reel sur Facebook » est toujours visible : selon les paramètres de visibilité du Reel, les restrictions de Facebook ou le navigateur, le lecteur intégré peut ne pas fonctionner. Le Reel doit être public et autoriser son intégration.
+
+Aucun compte ni clé Facebook n'est nécessaire pour cette intégration. Le lecteur peut charger des ressources de Facebook quand le visiteur arrive à la zone vidéo (chargement différé / `loading=lazy`). Les intégrations YouTube, le logo, les formules, le formulaire, les réseaux sociaux et les fonctions Cloudflare/Google Agenda restent inchangés.
+
+Pour publier : décompressez ce ZIP et remplacez son contenu à la racine du dépôt GitHub ; Cloudflare Pages lancera le déploiement si votre dépôt est connecté. Les secrets Cloudflare ne sont pas dans cette archive.
+
+
+## Logo coloré (novembre 2026)
+Le logo transmis `assets/logo-klosques-couleur.jpg` est affiché dans l'en-tête et en grand sur l'accueil. Le nouvel icône de navigateur est `assets/favicon-klosques.png`. L'ancien logo blanc reste présent dans le pied de page, et le visuel de fond d'accueil est inchangé.
+
+Le fichier fourni fait 160 × 160 pixels : une version originale de plus haute résolution permettra un affichage encore plus net sur grands écrans. Les quatre lecteurs vidéo, les liens sociaux et les fonctions de réservation/API n'ont pas été modifiés.

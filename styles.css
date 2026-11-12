@@ -247,3 +247,177 @@ footer .footer-logo-white { display: block; width: 175px; height: 80px; max-widt
   .site-header .brand-logo-white { width: 145px; height: 61px; max-width: 145px; max-height: 61px; }
   footer .footer-logo-white { width: 155px; height: 72px; max-width: 155px; }
 }
+
+
+/* Vidéo YouTube — remplace l'agenda public (sans autoplay). */
+.live-section{scroll-margin-top:95px}
+.live-section .live-heading{max-width:1000px;margin:0 auto 28px}
+.live-section .live-heading h2{margin-bottom:12px}
+.live-intro{color:#c8c3c5;max-width:710px;margin:0;font-size:clamp(15px,1.6vw,18px)}
+.live-video-wrap{position:relative;aspect-ratio:16 / 9;width:100%;max-width:1000px;margin:0 auto;overflow:hidden;background:#050505;border:1px solid #414047;border-top:4px solid var(--red);box-shadow:0 28px 65px rgba(0,0,0,.32)}
+.live-video-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block}
+.live-actions{display:flex;justify-content:center;gap:13px;flex-wrap:wrap;margin-top:27px}
+.live-actions .button-outline{color:#fff;border-color:#777}
+@media(max-width:800px){.live-section{scroll-margin-top:78px}}
+
+
+/* Galerie des trois vidéos — une vidéo principale et deux en dessous. */
+.live-video-gallery{max-width:1000px;margin:0 auto}
+.live-video-featured,.live-video-card{min-width:0}
+.live-video-featured .live-video-wrap,.live-video-card .live-video-wrap{max-width:none}
+.live-video-secondary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin-top:26px}
+.live-video-card .live-video-wrap{border-top-width:3px;box-shadow:0 15px 35px rgba(0,0,0,.22)}
+.live-video-meta{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12px}
+.live-video-meta span{color:#ed4653;font-weight:800;letter-spacing:2px}
+.live-video-meta a{color:#f6f3f3;font-weight:700;text-decoration:underline;text-decoration-color:#e32636;text-underline-offset:4px}
+.live-video-meta a:hover,.live-video-meta a:focus-visible{color:#ff6571}
+@media (max-width:700px){.live-video-secondary-grid{grid-template-columns:1fr;gap:26px;margin-top:26px}}
+
+
+/* Quatrième vidéo : Reel Facebook (format vertical, sans lecture automatique) */
+.live-facebook-feature{
+  display:grid;
+  grid-template-columns:minmax(0,344px) minmax(0,1fr);
+  gap:clamp(26px,5vw,65px);
+  align-items:center;
+  max-width:1000px;
+  margin:34px auto 0;
+  padding:clamp(22px,4vw,38px);
+  border:1px solid #35343a;
+  border-top:3px solid var(--red);
+  background:linear-gradient(120deg,#1c1b20 0%,#121216 72%);
+}
+.facebook-reel-screen{
+  width:100%;
+  max-width:344px;
+  aspect-ratio:9 / 16;
+  margin:0 auto;
+  overflow:hidden;
+  background:#050505;
+  border:1px solid #414047;
+  box-shadow:0 18px 40px rgba(0,0,0,.34);
+}
+.facebook-reel-screen iframe{width:100%;height:100%;display:block;border:0}
+.facebook-reel-info h3{
+  margin:0 0 12px;
+  font:800 clamp(29px,3.5vw,45px)/1.05 'Barlow Condensed',sans-serif;
+  text-transform:uppercase;
+}
+.facebook-reel-info p:not(.eyebrow){color:#ded9db;font-size:15px;line-height:1.7;max-width:440px}
+.facebook-reel-info .facebook-embed-note{font-size:12px !important;color:#b7b2b6 !important}
+.facebook-reel-link{color:#fff !important;margin-top:12px}
+.facebook-reel-link:hover,.facebook-reel-link:focus-visible{color:#fff !important;background:var(--red);border-color:var(--red)}
+@media(max-width:700px){
+  .live-facebook-feature{grid-template-columns:1fr;justify-items:center;gap:24px;margin-top:30px}
+  .facebook-reel-info{width:100%;max-width:344px}
+  .facebook-reel-screen{max-width:min(344px,100%)}
+}
+
+
+/* Nouveau logo coloré — visible dans le bandeau et sur l’accueil. */
+.site-header .brand-color {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+  text-decoration: none;
+  font-size: inherit;
+  letter-spacing: 0;
+}
+.site-header .brand-logo-color {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  display: block;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 17px rgba(227,38,54,.24);
+}
+.site-header .brand-color-name {
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+  font: 800 22px/.92 'Barlow Condensed', sans-serif;
+  letter-spacing: .8px;
+  white-space: nowrap;
+}
+.site-header .brand-color-name strong { color: #fff; font-weight: 900; }
+.site-header .brand-color-name small {
+  margin-top: 6px;
+  color: #f05a65;
+  font: 700 9px/1 'DM Sans', sans-serif;
+  letter-spacing: 1px;
+}
+/* Premier plan : le logo reste net dans un panneau distinct de la photo. */
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 290px);
+  column-gap: clamp(24px, 4vw, 74px);
+  align-items: center;
+}
+.hero-content { min-width: 0; }
+.hero-color-logo {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 290px;
+  margin: 0 auto;
+  padding: clamp(8px, 1.2vw, 13px);
+  background: #060609;
+  border: 2px solid rgba(255,255,255,.30);
+  border-radius: 14px;
+  box-shadow: 0 0 0 5px rgba(227,38,54,.21), 0 23px 75px rgba(0,0,0,.56);
+  transform: rotate(2deg);
+}
+.hero-color-logo img {
+  width: 100%;
+  height: auto;
+  display: block;
+  aspect-ratio: 1;
+  object-fit: contain;
+  border-radius: 7px;
+}
+@media (max-width: 1050px) and (min-width: 801px) {
+  /* Menu replié avant que les liens chevauchent le nouveau logo. */
+  .menu-toggle { display: block; }
+  .site-header nav {
+    display: none;
+    position: absolute;
+    top: 91px;
+    left: 0;
+    right: 0;
+    background: #09090b;
+    padding: 20px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+  .site-header nav.open { display: flex; }
+}
+@media (max-width: 800px) {
+  .site-header .brand-logo-color { width: 58px; height: 58px; }
+  .site-header .brand-color-name { font-size: 20px; }
+  .site-header .brand-color-name small { font-size: 8px; }
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-top: 48px;
+    padding-bottom: 52px;
+  }
+  .hero-color-logo {
+    grid-row: 1;
+    max-width: 196px;
+    padding: 8px;
+    transform: rotate(0deg);
+  }
+  .hero-content { grid-row: 2; }
+}
+@media (max-width: 480px) {
+  .site-header .brand-color { gap: 8px; }
+  .site-header .brand-logo-color { width: 53px; height: 53px; }
+  .site-header .brand-color-name { font-size: 18px; }
+  .hero-color-logo { max-width: 176px; }
+  .hero { gap: 24px; }
+  .hero h1 { font-size: clamp(44px, 12vw, 58px); letter-spacing: 1px; }
+}

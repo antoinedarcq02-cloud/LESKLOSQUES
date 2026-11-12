@@ -64,19 +64,12 @@ quoteBack.addEventListener('click', () => {
   quotePackage.focus({ preventScroll: true });
 });
 
-const monthTitle=document.getElementById('calendarMonth'),calendarGrid=document.getElementById('calendarGrid'),calendarStatus=document.getElementById('calendarStatus'),bookingDate=document.getElementById('bookingDate');
-let shownMonth=new Date();shownMonth.setDate(1);let busyDates=new Set();
-const monthNames=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'],dayNames=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
-function dateKey(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
-function renderCalendar(){const y=shownMonth.getFullYear(),m=shownMonth.getMonth();monthTitle.textContent=monthNames[m][0].toUpperCase()+monthNames[m].slice(1)+' '+y;calendarGrid.innerHTML='';dayNames.forEach(n=>{const el=document.createElement('div');el.className='calendar-day-name';el.textContent=n;calendarGrid.append(el);});const offset=(new Date(y,m,1).getDay()+6)%7,count=new Date(y,m+1,0).getDate();for(let i=0;i<offset;i++){const el=document.createElement('div');el.className='calendar-day empty';calendarGrid.append(el);}for(let d=1;d<=count;d++){const key=dateKey(y,m,d),el=document.createElement('div');el.className='calendar-day '+(busyDates.has(key)?'busy':'available');el.textContent=d;el.title=busyDates.has(key)?'Groupe indisponible':'Aucune indisponibilité connue';calendarGrid.append(el);}}
-async function loadAvailability(){renderCalendar();calendarStatus.textContent='Mise à jour des disponibilités…';const y=shownMonth.getFullYear(),m=String(shownMonth.getMonth()+1).padStart(2,'0');try{const response=await fetch(`/api/availability?month=${y}-${m}`);if(!response.ok)throw new Error();const data=await response.json();busyDates=new Set(data.busyDates||[]);renderCalendar();calendarStatus.textContent='Agenda Google synchronisé. Une demande reste soumise à validation par le groupe.';bookingDate.min=todayLocal;}catch(e){calendarStatus.textContent='Les disponibilités ne sont pas encore configurées. Contactez-nous pour vérifier une date.';}}
-document.getElementById('prevMonth').addEventListener('click',()=>{shownMonth.setMonth(shownMonth.getMonth()-1);loadAvailability();});
-document.getElementById('nextMonth').addEventListener('click',()=>{shownMonth.setMonth(shownMonth.getMonth()+1);loadAvailability();});
-bookingDate.addEventListener('change',()=>{if(busyDates.has(bookingDate.value)){calendarStatus.textContent='Cette date est déjà occupée. Merci d’en choisir une autre.';bookingDate.value='';}});
+// L'agenda n'est plus affiché sur le site. La vérification de disponibilité
+// reste effectuée côté serveur lors de l'envoi d'une demande de devis.
+const bookingDate = document.getElementById('bookingDate');
 const today = new Date();
-const todayLocal = dateKey(today.getFullYear(), today.getMonth(), today.getDate());
+const todayLocal = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 bookingDate.min = todayLocal;
-loadAvailability();
 quoteForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (!quotePackage.value) {
