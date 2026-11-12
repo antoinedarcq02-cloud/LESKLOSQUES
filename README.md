@@ -109,3 +109,7 @@ Pour publier : décompressez ce ZIP et remplacez son contenu à la racine du dé
 Le logo transmis `assets/logo-klosques-couleur.jpg` est affiché dans l'en-tête et en grand sur l'accueil. Le nouvel icône de navigateur est `assets/favicon-klosques.png`. L'ancien logo blanc reste présent dans le pied de page, et le visuel de fond d'accueil est inchangé.
 
 Le fichier fourni fait 160 × 160 pixels : une version originale de plus haute résolution permettra un affichage encore plus net sur grands écrans. Les quatre lecteurs vidéo, les liens sociaux et les fonctions de réservation/API n'ont pas été modifiés.
+
+
+## Correction du Reel Facebook (12 novembre 2026)
+Le sélecteur conserve les trois vidéos YouTube au format horizontal (16:9). Lorsque la vidéo Facebook est sélectionnée, le lecteur adopte un format vertical (9:16) centré, adapté aussi au téléphone. Le lien direct Facebook reste disponible si Facebook refuse la lecture intégrée (par exemple selon les paramètres de confidentialité, le navigateur ou la connexion Facebook).
