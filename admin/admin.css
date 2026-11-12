@@ -11,3 +11,17 @@ label{display:block;margin:12px 0 4px;font-weight:700;font-size:.86rem}input,tex
 .calendar{padding:12px;margin:15px 0}.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}.cal-grid .weekday{text-align:center;color:#c0aeb6;font-size:.77rem;padding:9px 0}.day{min-height:50px;border:1px solid #3d3037;border-radius:8px;padding:6px;text-align:left;background:#221d22;color:#f2e7eb;display:flex;flex-direction:column;justify-content:space-between}.day.today{border-color:#ff7884}.day.has-bookings{background:#3a222b}.day:disabled{opacity:.15}.dots{display:flex;flex-wrap:wrap;gap:3px}.dot{width:6px;height:6px;border-radius:50%;background:#ff7a85}.dot.confirmed{background:#74e4a8}.dot.pending{background:#ffd17e}
 dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;border:1px solid #7a535e;color:#fff;border-radius:17px;padding:24px}dialog::backdrop{background:#09080bdc}.modal-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.modal-top h2{margin:0}.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.modal-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:20px}
 @media(max-width:730px){.workspace .content{padding:20px 13px 120px}.stats{grid-template-columns:repeat(2,1fr);gap:9px}.card-list{grid-template-columns:1fr}.stat{padding:14px}.stat span{font-size:.78rem}.stat strong{font-size:1.8rem}.heading .primary{font-size:.85rem}.bottom-nav button{flex:1;padding:10px 1px 8px;font-size:.62rem}.bottom-nav button span{font-size:1.25rem}.field-row{grid-template-columns:1fr;gap:0}dialog{padding:18px}.account span{display:none}.section-header{align-items:flex-start}.section-header h2{font-size:1.1rem}.section-header input,.section-header select{max-width:175px}}
+
+/* Comptes individuels : formulaires confortables sur téléphone. */
+.login-panel input { margin-bottom: 8px; }
+.member-list { margin: 12px 0 22px; display: grid; gap: 8px; }
+.member-row { padding: 10px 12px; border: 1px solid #514149; border-radius: 10px; display: flex; flex-direction: column; gap: 2px; }
+#membersPanel h3 { font-size: 1.02rem; margin: 24px 0 10px; }
+#membersPanel form { padding: 14px; background: #251e24; border: 1px solid #49363f; border-radius: 12px; margin-bottom: 14px; }
+#membersPanel form button { margin-top: 12px; }
+@media(max-width:550px) {
+  .account { gap: 4px; }
+  .account .small-button { padding: 7px 8px; font-size: .68rem; }
+  .logo { font-size: .8rem; gap: 6px; }
+  .logo img { width: 34px; height: 34px; }
+}
