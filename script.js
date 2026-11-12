@@ -258,3 +258,48 @@ if (videoShell && videoFrame && videoLabel && videoLink && replayPanel && replay
     document.head.appendChild(apiScript);
   }
 }
+
+
+// Contenus éditables depuis Klosques Manager ; valeurs statiques en secours.
+(async function syncPublicContent() {
+  try {
+    const response = await fetch('/api/site-content', { cache: 'no-store' });
+    if (!response.ok) return;
+    const payload = await response.json();
+    const values = payload.content || {};
+    const fields = {
+      hero_lead: '.hero-lead',
+      hero_copy: '.hero-copy',
+      intro_text: '.intro > p:not(.eyebrow)'
+    };
+    for (const [key, selector] of Object.entries(fields)) {
+      const target = document.querySelector(selector);
+      if (target && typeof values[key] === 'string' && values[key].trim())
+        target.textContent = values[key];
+    }
+    let videoChanged = false;
+    for (let index = 0; index < 3; index++) {
+      const id = values['video_' + (index + 1)];
+      if (!/^[a-zA-Z0-9_-]{11}$/.test(id || '')) continue;
+      if (KLOSQUES_VIDEOS[index].id !== id) videoChanged = true;
+      KLOSQUES_VIDEOS[index].id = id;
+      KLOSQUES_VIDEOS[index].page = 'https://www.youtube.com/watch?v=' + id;
+      const thumbnail = document.querySelector('[data-video-index="' + index + '"] img');
+      if (thumbnail) thumbnail.src = 'https://i.ytimg.com/vi/' + id + '/mqdefault.jpg';
+    }
+    if (/^\d{8,25}$/.test(values.facebook_reel || '')) {
+      const id = values.facebook_reel;
+      const page = 'https://www.facebook.com/reel/' + id + '/';
+      if (KLOSQUES_VIDEOS[3].page !== page) videoChanged = true;
+      KLOSQUES_VIDEOS[3].page = page;
+      const url = new URL('https://www.facebook.com/plugins/video.php');
+      url.searchParams.set('href', page);
+      url.searchParams.set('show_text', 'false');
+      url.searchParams.set('width', '344');
+      KLOSQUES_VIDEOS[3].player = url.toString();
+    }
+    if (videoChanged && videoShell) selectVideo(0);
+  } catch (_) {
+    // En cas d'indisponibilité de D1, le site continue d'utiliser ses textes et vidéos d'origine.
+  }
+})();
