@@ -22,10 +22,10 @@ export async function onRequestPost({ request, env }) {
     if (newPassword === data.current_password)
       return respond({ error: "Choisis un nouveau mot de passe différent de l'ancien." }, 400);
     const hashes = await hashPassword(newPassword, env);
-    const result = await env.DB.prepare(\`UPDATE admin_users SET
+    const result = await env.DB.prepare(`UPDATE admin_users SET
       password_salt=?,password_hash=?,password_iterations=?,
       must_change_password=0,session_version=session_version+1,updated_at=datetime('now')
-      WHERE username=? AND password_hash=?\`)
+      WHERE username=? AND password_hash=?`)
       .bind(hashes.password_salt,hashes.password_hash,hashes.password_iterations,
         current.username,current.password_hash).run();
     if (!result.meta?.changes) return respond({ error: "Le compte a été modifié entre-temps. Réessaie." }, 409);
