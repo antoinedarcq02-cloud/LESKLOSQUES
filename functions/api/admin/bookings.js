@@ -1,4 +1,4 @@
-import { authorize, respond, cleanText, validDate, statuses } from "../../../_lib/admin-auth.js";
+import { authorize, respond, cleanText, validDate, statuses } from "../../_lib/admin-auth.js";
 
 export async function onRequestGet(context) {
   const user = await authorize(context);
