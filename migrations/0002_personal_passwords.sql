@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
   display_name TEXT NOT NULL,
   password_salt TEXT NOT NULL,
   password_hash TEXT NOT NULL,
-  password_iterations INTEGER NOT NULL DEFAULT 600000,
+  password_iterations INTEGER NOT NULL DEFAULT 100000,
   role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('admin','member')),
   session_version INTEGER NOT NULL DEFAULT 1,
   must_change_password INTEGER NOT NULL DEFAULT 0,
