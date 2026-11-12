@@ -58,7 +58,7 @@ export async function onRequestPost({ request, env }) {
       const displayName = cleanText(data.display_name, 60);
       if (displayName.length < 2)
         return respond({ error: "Indique le prénom du musicien." }, 400);
-      const hashes = await hashPassword(password);
+      const hashes = await hashPassword(password, env);
       const result = await env.DB.prepare(\`INSERT INTO admin_users
         (username,display_name,password_salt,password_hash,password_iterations,role)
         SELECT ?,?,?,?,?, 'admin' WHERE NOT EXISTS(SELECT 1 FROM admin_users)\`)
@@ -72,7 +72,7 @@ export async function onRequestPost({ request, env }) {
     if (typeof password !== "string" || password.length > 128)
       return respond({ error: "Identifiant ou mot de passe incorrect." }, 401);
     const account = await env.DB.prepare("SELECT * FROM admin_users WHERE username=?").bind(username).first();
-    if (!account || account.disabled || !(await verifyPassword(password, account)))
+    if (!account || account.disabled || !(await verifyPassword(password, account, env)))
       return respond({ error: "Identifiant ou mot de passe incorrect." }, 401);
     await env.DB.prepare("UPDATE admin_users SET last_login_at=datetime('now') WHERE username=?").bind(username).run();
     return respond({
