@@ -140,10 +140,10 @@ export async function authorize(context, write = false) {
 export async function rateLimit(env, label, threshold = 25) {
   const key = await mac(env.ADMIN_SESSION_SECRET, "rate:" + label);
   const now = Math.floor(Date.now() / 1000);
-  await env.DB.prepare(\`INSERT INTO admin_login_limits(key_hash,counter,window_start)
+  await env.DB.prepare(`INSERT INTO admin_login_limits(key_hash,counter,window_start)
     VALUES (?,1,?) ON CONFLICT(key_hash) DO UPDATE SET
     counter=CASE WHEN window_start < ? THEN 1 ELSE counter + 1 END,
-    window_start=CASE WHEN window_start < ? THEN ? ELSE window_start END\`)
+    window_start=CASE WHEN window_start < ? THEN ? ELSE window_start END`)
     .bind(key, now, now - 900, now - 900, now).run();
   const row = await env.DB.prepare("SELECT counter FROM admin_login_limits WHERE key_hash=?").bind(key).first();
   return Number(row?.counter || 0) <= threshold;
