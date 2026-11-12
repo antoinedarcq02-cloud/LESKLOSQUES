@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111014">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Klosques Manager — Espace privé</title>
+<link rel="icon" href="/assets/favicon-klosques.png">
+<link rel="stylesheet" href="/admin/admin.css">
+<script src="/admin/admin.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <a class="logo" href="/"><img src="/assets/favicon-klosques.png" width="42" height="42" alt=""><span>LES KLOSQUES<small>MANAGER</small></span></a>
+  <div id="account" class="account" hidden><span id="identity"></span><button type="button" id="logoutBtn" class="small-button">Sortir</button></div>
+</header>
+<div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+<section id="login" class="login-shell" hidden>
+  <div class="panel login-panel">
+    <p class="eyebrow">ACCÈS RÉSERVÉ AU GROUPE</p>
+    <h1>Bienvenue dans Klosques Manager</h1>
+    <p class="muted">Connecte-toi avec ton adresse autorisée. Un code à six chiffres te sera envoyé par email.</p>
+    <form id="loginForm">
+      <label for="loginEmail">Adresse email</label>
+      <input id="loginEmail" type="email" required autocomplete="email" placeholder="votre@email.fr">
+      <div id="codeFields" hidden><label for="loginCode">Code reçu par email</label><input id="loginCode" type="text" required inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="000000"></div>
+      <button class="primary full" id="loginBtn" type="submit">Recevoir mon code</button>
+      <button class="text-button" id="restartLogin" type="button" hidden>Changer d'adresse email</button>
+    </form>
+    <p id="loginHint" class="muted small">Seules les quatre adresses configurées peuvent se connecter.</p>
+  </div>
+</section>
+<div id="workspace" class="workspace" hidden>
+  <main class="content">
+    <div class="heading"><div><p class="eyebrow">ESPACE PRIVÉ DES MUSICIENS</p><h1 id="pageTitle">Tableau de bord</h1></div><button id="newBooking" class="primary" type="button">+ Concert</button></div>
+    <section id="panel-home" class="page">
+      <div class="stats">
+        <div class="stat"><span>Demandes à traiter</span><strong id="statRequests">0</strong></div>
+        <div class="stat"><span>Concerts confirmés</span><strong id="statConcerts">0</strong></div>
+        <div class="stat"><span>Devis envoyés</span><strong id="statQuotes">0</strong></div>
+        <div class="stat"><span>Dates en option</span><strong id="statOptions">0</strong></div>
+      </div>
+      <div class="section-header"><h2>À suivre</h2><span class="muted small">Demandes et concerts récents</span></div>
+      <div id="homeList" class="card-list"></div>
+    </section>
+    <section id="panel-agenda" class="page" hidden>
+      <div class="section-header"><h2>Agenda commun</h2><input id="agendaMonth" aria-label="Mois affiché" type="month"></div>
+      <p class="muted">Les dates en option et confirmées sont visibles ici. Aucune gestion de disponibilité individuelle.</p>
+      <div id="calendar" class="calendar"></div>
+      <div id="agendaList" class="card-list"></div>
+    </section>
+    <section id="panel-demandes" class="page" hidden>
+      <div class="section-header"><h2>Demandes clients</h2><select id="requestFilter" aria-label="Filtrer les demandes"><option value="all">Toutes</option><option value="nouveau">Nouvelles</option><option value="en_discussion">En discussion</option><option value="devis_envoye">Devis envoyé</option><option value="refuse">Refusées</option></select></div>
+      <div id="requestsList" class="card-list"></div>
+    </section>
+    <section id="panel-concerts" class="page" hidden>
+      <div class="section-header"><h2>Fiches concerts</h2><select id="concertFilter" aria-label="Filtrer les concerts"><option value="all">Tous les concerts</option><option value="option">En option</option><option value="confirme">Confirmés</option><option value="termine">Terminés</option></select></div>
+      <div id="concertsList" class="card-list"></div>
+    </section>
+    <section id="panel-devis" class="page" hidden>
+      <h2>Suivi des devis</h2>
+      <p class="muted">Ouvre un dossier pour renseigner le montant proposé, puis imprimer une proposition brouillon au format PDF. L'envoi et la validation restent manuels.</p>
+      <div id="quotesList" class="card-list"></div>
+    </section>
+    <section id="panel-site" class="page" hidden>
+      <div class="panel">
+        <h2>Gestion du site public</h2>
+        <p>Le site public reste inchangé à cette étape. La modification directe des photos, vidéos et textes sera activée dans une prochaine version avec validation avant publication.</p>
+        <a class="secondary link" href="/" target="_blank" rel="noopener">Voir le site public ↗</a>
+      </div>
+      <div class="panel"><h2>Règle du groupe</h2><p>Aucun vote ni saisie de disponibilités personnelles n'est prévu dans Klosques Manager. Vous échangez entre vous en dehors du site.</p></div>
+    </section>
+  </main>
+  <nav class="bottom-nav" aria-label="Navigation de l'administration">
+    <button type="button" data-tab="home" class="active"><span>⌂</span>Accueil</button>
+    <button type="button" data-tab="agenda"><span>▦</span>Agenda</button>
+    <button type="button" data-tab="demandes"><span>✉</span>Demandes</button>
+    <button type="button" data-tab="concerts"><span>♫</span>Concerts</button>
+    <button type="button" data-tab="devis"><span>€</span>Devis</button>
+    <button type="button" data-tab="site"><span>⚙</span>Site</button>
+  </nav>
+</div>
+<dialog id="bookingDialog" aria-labelledby="dialogTitle">
+  <form id="bookingEditor">
+    <div class="modal-top"><h2 id="dialogTitle">Fiche concert</h2><button type="button" id="closeDialog" class="small-button" aria-label="Fermer">✕</button></div>
+    <div class="field-row">
+      <label>Nom / organisateur<input name="name" maxlength="150" required></label>
+      <label>Statut<select name="status">
+        <option value="nouveau">Nouvelle demande</option><option value="en_discussion">En discussion</option>
+        <option value="devis_envoye">Devis envoyé</option><option value="option">En option</option>
+        <option value="confirme">Confirmé</option><option value="termine">Terminé</option><option value="refuse">Refusé</option>
+      </select></label>
+    </div>
+    <div class="field-row"><label>Date<input type="date" name="event_date" required></label><label>Lieu<input name="location" maxlength="200" required></label></div>
+    <label>Prestation<input name="package" maxlength="200" placeholder="Choisir la formule ou préciser"></label>
+    <div class="field-row"><label>E-mail du client<input name="email" type="email" maxlength="254"></label><label>Téléphone<input name="phone" maxlength="50"></label></div>
+    <label>Type d'événement<input name="event_type" maxlength="100"></label>
+    <label>Détails de la demande<textarea name="message" rows="3" maxlength="2500"></textarea></label>
+    <label>Notes internes (visibles des 4 musiciens)<textarea name="notes" rows="4" maxlength="3000"></textarea></label>
+    <label>Montant proposé (€ TTC ou HT selon vos mentions)<input name="quote_euros" type="number" min="0" max="1000000" step="0.01" placeholder="Non renseigné"></label>
+    <p id="editorMeta" class="muted small"></p>
+    <div class="modal-actions">
+      <button type="button" id="printDraft" class="secondary">Proposition PDF (brouillon)</button>
+      <button type="submit" id="saveBooking" class="primary">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+</body>
+</html>
