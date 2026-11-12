@@ -31,3 +31,11 @@ CREATE TABLE IF NOT EXISTS admin_login_limits (
   counter INTEGER NOT NULL DEFAULT 1,
   window_start INTEGER NOT NULL
 );
+
+-- Textes et identifiants des vidéos modifiables depuis l'espace privé.
+CREATE TABLE IF NOT EXISTS site_content (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_by TEXT NOT NULL DEFAULT ''
+);
