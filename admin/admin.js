@@ -42,6 +42,7 @@ async function initialize() {
       $('identity').textContent = session.email;
       switchLogin(true);
       await refresh();
+      await loadSiteContent();
     } else switchLogin(false);
   } catch (error) { switchLogin(false); notify(error.message); }
 }
@@ -67,6 +68,7 @@ $('loginForm').addEventListener('submit', async event => {
       $('identity').textContent = result.email;
       switchLogin(true);
       await refresh();
+      await loadSiteContent();
     }
   } catch (error) { notify(error.message); }
   finally { btn.disabled = false; }
@@ -229,4 +231,61 @@ $('printDraft').addEventListener('click',() => {
   windowPrint.document.open(); windowPrint.document.write(doc); windowPrint.document.close();
   windowPrint.focus();
 });
+
+const siteForm = $('siteContentForm');
+async function loadSiteContent() {
+  try {
+    const data = await callApi('/api/admin/content');
+    for (const [key, value] of Object.entries(data.content || {})) {
+      const input = siteForm.elements.namedItem(key);
+      if (input) input.value = value;
+    }
+  } catch (error) {
+    notify(error.message);
+  }
+}
+function getYoutubeId(value) {
+  const raw = String(value || '').trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return raw;
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== 'https:') return null;
+    if (url.hostname === 'youtu.be' || url.hostname === 'www.youtu.be') {
+      const id = url.pathname.split('/')[1];
+      return /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : null;
+    }
+    if (!['youtube.com','www.youtube.com','m.youtube.com','www.youtube-nocookie.com'].includes(url.hostname)) return null;
+    const id = url.searchParams.get('v') || url.pathname.match(/^\/(?:embed|shorts)\/([a-zA-Z0-9_-]{11})/)?.[1];
+    return /^[a-zA-Z0-9_-]{11}$/.test(id || '') ? id : null;
+  } catch { return null; }
+}
+function getReelId(value) {
+  const raw = String(value || '').trim();
+  if (/^\d{8,25}$/.test(raw)) return raw;
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== 'https:' || !['facebook.com','www.facebook.com','m.facebook.com'].includes(url.hostname)) return null;
+    const id = url.pathname.match(/\/reel\/(\d{8,25})\/?/)?.[1];
+    return id || null;
+  } catch { return null; }
+}
+siteForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  const data = Object.fromEntries(new FormData(siteForm).entries());
+  for (const key of ['video_1','video_2','video_3']) {
+    data[key] = getYoutubeId(data[key]);
+    if (!data[key]) { notify('Vérifie le lien YouTube : '+key); return; }
+  }
+  data.facebook_reel = getReelId(data.facebook_reel);
+  if (!data.facebook_reel) { notify('Vérifie le lien du Reel Facebook.'); return; }
+  const button = siteForm.querySelector('button[type=submit]');
+  button.disabled = true;
+  try {
+    await jsonCall('/api/admin/content','PATCH',data);
+    notify('Contenu enregistré. Actualise le site public pour voir les modifications.');
+    await loadSiteContent();
+  } catch (error) { notify(error.message); }
+  finally { button.disabled = false; }
+});
+
 initialize();
