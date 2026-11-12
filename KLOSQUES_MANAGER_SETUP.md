@@ -1,60 +1,84 @@
-# Klosques Manager — mise en service Cloudflare
+# Klosques Manager — mise en service avec quatre mots de passe personnels
 
-## Ce que contient cette branche
+> Mise à jour de la branche `feature/klosques-manager` : l'authentification par code e-mail a été **remplacée**. Aucun service e-mail n'est requis pour se connecter à Klosques Manager. Cette branche n'est **pas** déployée en production.
 
-- Espace privé mobile sur `/admin/` ; quatre personnes autorisées se connectent individuellement avec un code temporaire reçu par e-mail.
-- Tableau de bord, demandes issues du formulaire, agenda des **concerts** (pas des disponibilités individuelles), fiches et notes du groupe.
-- Saisie manuelle des concerts et changement de statut : nouveau, en discussion, devis envoyé, option, confirmé, terminé, refusé.
-- Montant indicatif et **impression d'un brouillon de proposition** ; **pas de devis officiel ni d'envoi automatique**. Les mentions légales, la numérotation, les conditions et la validation doivent être prévues avant de produire des devis officiels.
-- Éditeur de textes d'accueil/présentation et identifiants de trois vidéos YouTube + du Reel Facebook ; les photos restent gérées dans GitHub.
-- Demandes envoyées au groupe par Resend comme avant, puis archivées en base D1 si la base existe.
-- Lien discret « Espace musiciens » dans le pied de page publique.
+## Fonctionnement
 
-**Non inclus :** planning de disponibilités des musiciens, votes, notifications individuelles, envoi de devis officiels, upload de photos, synchronisation à double sens avec Google Agenda, migration d'anciennes demandes reçues par email.
+- Quatre musiciens au maximum, chacun avec **un identifiant et un mot de passe distincts**.
+- Premier compte créé une seule fois avec un secret temporaire Cloudflare, puis gestion des trois autres comptes depuis l'onglet **Site** de l'administration.
+- Le premier compte est **gestionnaire des comptes** (création et réinitialisation). Les quatre comptes peuvent consulter et modifier concerts, demandes, devis brouillons et contenus du site.
+- Les trois comptes ajoutés utilisent un mot de passe provisoire, à **changer obligatoirement à la première connexion**.
+- Changement de mot de passe possible depuis le bouton « Mot de passe ». Les autres sessions de ce musicien sont invalidées.
+- Pas de vote ni de gestion des disponibilités individuelles.
+- Les devis PDF restent des brouillons internes, non des devis officiels.
 
-## Avant fusion / mise en production
+## Situation actuelle sur Cloudflare
 
-**1. Créer une base Cloudflare D1** appelée `klosques-manager` (nom libre). Dans le tableau de bord D1 ou avec Wrangler, exécuter le fichier SQL `migrations/0001_manager.sql`. Exemple depuis une copie du dépôt :
+La base D1 de l'utilisateur s'appelle **`klosquesmanager`** (sans tiret) et est déjà reliée au projet Pages via le binding **`DB`** dans les paramètres Production. Les quatre tables de la migration 0001 ont été créées manuellement dans la console D1 :
 
-```sh
-npx wrangler d1 execute klosques-manager --remote --file=migrations/0001_manager.sql
-```
+- `bookings`
+- `admin_auth_challenges` (ancienne méthode email, **inutilisée**, peut rester sans risque fonctionnel)
+- `admin_login_limits`
+- `site_content`
 
-**2. Lier D1 au projet Cloudflare Pages qui héberge le vrai site** :
+**Ne pas exécuter de DROP sur ces tables et ne pas recréer la base.**
 
-Workers & Pages > projet Pages > Settings > Bindings > Add > D1 database > Variable name : `DB` > sélectionner la base. Faire de même en environnement Preview si on souhaite tester une branche de prévisualisation. Redéployer le projet après la liaison.
+### 1. Créer la table des comptes personnels
 
-**3. Définir les variables et secrets du projet Pages**, dans l'environnement approprié :
+Dans Cloudflare > Storage & databases > D1 > `klosquesmanager` > Console, exécuter **seulement** le contenu du fichier :
 
-| Nom | Type | Utilité |
+`migrations/0002_personal_passwords.sql`
+
+Ce fichier crée `admin_users` et une protection limitant le groupe à quatre comptes. Il n'écrase pas les tables existantes.
+
+### 2. Configurer les secrets
+
+Dans Cloudflare > Workers & Pages > **lesklosques** > Settings > Variables and secrets, environnement souhaité :
+
+| Variable | Type | Usage |
 | --- | --- | --- |
-| `ADMIN_EMAILS` | Texte | Les **quatre** adresses des musiciens, séparées par des virgules, sans espace nécessaire ; aucune adresse inventée dans le code. |
-| `ADMIN_SESSION_SECRET` | Secret | Chaîne aléatoire longue et imprévisible (minimum 32 caractères), **différente** des autres secrets. Ne jamais la commiter dans GitHub. |
-| `RESEND_API_KEY` | Secret | Déjà utilisée pour les demandes de devis : nécessaire aussi pour envoyer les codes de connexion. |
-| `EMAIL_FROM` | Texte | Expéditeur vérifié chez Resend, autorisé à envoyer aux quatre musiciens. |
-| `QUOTE_EMAIL_TO` | Texte optionnel | Boîte de réception des demandes du site, par défaut `LesKlosques@hotmail.com`. |
+| `ADMIN_SESSION_SECRET` | Secret | **Déjà configuré** : conserve les sessions signées. Ne pas divulguer. |
+| `ADMIN_SETUP_KEY` | **Secret** | **À ajouter avant la première activation**. Utiliser une chaîne aléatoire d'au moins 32 caractères, différente de tout autre secret. Conserver temporairement cette clé pour la copier dans le formulaire d'initialisation de l'administration. |
+| `ADMIN_EMAILS` | Texte | **Ancien réglage, désormais inutile**. Peut être laissé tel quel pendant les tests puis supprimé. Les mots de passe personnels utilisent `admin_users`. |
+| `RESEND_API_KEY` | Secret | **Non nécessaire à la connexion des musiciens**. Toujours nécessaire pour envoyer les demandes de devis du site public via Resend. |
+| `EMAIL_FROM` | Texte | **Non nécessaire à la connexion des musiciens**. Toujours nécessaire pour l'expéditeur Resend des demandes de devis. |
+| `QUOTE_EMAIL_TO` | Texte facultatif | Adresse de réception des demandes publiques, par défaut `LesKlosques@hotmail.com`. |
 
-Il n'est pas nécessaire de communiquer ces secrets dans le chat. Vérifier dans Resend que l'expéditeur est accepté pour chaque destinataire : les domaines non vérifiés et l'adresse `onboarding@resend.dev` sont limités.
+Ne pas envoyer les mots de passe ni les secrets dans ChatGPT ou GitHub. Un mot de passe fort est **personnel, différent des autres et comporte 15 à 128 caractères**. Utiliser idéalement un gestionnaire de mots de passe.
 
-**4. Tester sur Preview** : ouvrir `/admin/`, se connecter avec une adresse autorisée, vérifier le refus d'une adresse non autorisée, ajouter un concert test, modifier son statut et ses notes, générer un brouillon imprimable, modifier un texte de test, puis envoyer **une demande de devis test** sur le site public et vérifier (a) son email, (b) sa fiche dans la rubrique Demandes. Supprimer ensuite les données fictives depuis la console D1 ou les identifier clairement ; l'interface ne fournit volontairement pas de suppression.
+### 3. Tester en prévisualisation
 
-**5. Après validation**, fusionner la branche dans `main` et laisser Cloudflare Pages déployer le projet relié à GitHub. Si Pages est publié par upload manuel plutôt que via GitHub, une synchronisation manuelle sera nécessaire.
+Sur une prévisualisation Cloudflare Pages correctement reliée à une **base D1 de test** (ne pas mélanger les comptes et les demandes de test avec la production) :
 
-## Sécurité et données
+1. Ouvrir `/admin/`. Le formulaire « Première activation » s'affiche si `admin_users` est vide.
+2. Coller `ADMIN_SETUP_KEY` dans ce formulaire et choisir le premier identifiant, prénom et mot de passe personnel.
+3. Après création réussie, **supprimer `ADMIN_SETUP_KEY` de Cloudflare** (ou à minima le désactiver ; il ne permet de toute façon plus de recréer le premier compte).
+4. Onglet **Site** > **Comptes des quatre musiciens** : ajouter les trois autres comptes avec des mots de passe **provisoires distincts**. Le gestionnaire confirme son propre mot de passe pour chaque création.
+5. Transmettre chaque mot de passe provisoire à son musicien directement et de manière privée ; le mot de passe devra être changé à sa première connexion.
+6. Tester un mauvais mot de passe, la limite de tentatives, le changement de mot de passe, la révocation de l'ancienne session et l'interdiction d'accéder aux API sans connexion.
+7. Tester l'agenda, l'ajout et la modification de concerts, le suivi des dossiers et les modifications de vidéos/textes.
 
-- Une page HTML d'identification peut être consultée par toute personne connaissant `/admin/`, mais **aucune donnée client n'est exposée sans cookie de session signé et adresse présente dans la liste autorisée**.
-- Code de connexion à six chiffres, valable dix minutes, cinq essais maximum par code, limitation par IP et délai d'une minute entre envois pour la même adresse.
-- Session signée sur sept jours, cookie `HttpOnly`, `Secure`, `SameSite=Strict`, requêtes d'écriture contrôlées par origine. Déconnexion disponible.
-- Les quatre comptes autorisés peuvent modifier tous les dossiers et les contenus publics ; définir plus tard des rôles distincts si souhaité.
-- Les demandes clients sont stockées après confirmation d'envoi de l'email. Si D1 tombe en panne, la demande peut quand même arriver par email sans apparaître dans Manager : vérifier les logs.
-- Prévoir une politique de confidentialité mise à jour, une politique de conservation et de purge des données clients, et des sauvegardes de D1 avant utilisation réelle.
-- Le système d'impression est volontairement libellé « BROUILLON INTERNE » ; ne pas le présenter comme un devis conforme avant validation des mentions et données de facturation.
+> À ce jour, **aucun de ces tests n'a été exécuté sur Cloudflare** depuis la conversation. L'intégration est prête pour validation, mais pas annoncée comme opérationnelle.
 
-## Points à finaliser avant usage complet
+### 4. Publier quand tout est validé
 
-- Obtenir et saisir les quatre adresses de connexion sur Cloudflare.
-- Choisir la personne responsable de la validation des devis officiels.
-- Configurer D1 et vérifier l'envoi des codes Resend.
-- Tester réellement le déploiement, notamment les Functions et l'envoi du formulaire, puis contrôler les logs.
+La branche reste séparée de `main`. Une pull request en brouillon est ouverte :
 
-Cette branche est une **implémentation à valider**, pas une installation terminée en production.
+`https://github.com/antoinedarcq02-cloud/LESKLOSQUES/pull/2`
+
+Après tests et configuration Production, passer la PR en état prêt et la fusionner manuellement. Cloudflare Pages peut alors déployer `main` si le site est connecté à GitHub. **Ne pas fusionner avant d'avoir vérifié la migration D1, les protections et les variables.**
+
+## Sécurité
+
+- PBKDF2-HMAC-SHA256, **600 000 itérations** par mot de passe, avec un sel aléatoire de 16 octets par compte. Les mots de passe ne sont jamais enregistrés en clair.
+- Cookie de session signé avec `ADMIN_SESSION_SECRET`, `HttpOnly`, `Secure`, `SameSite=Strict`, 7 jours, et contrôle en base de la version de session. Toute modification/réinitialisation du mot de passe invalide les anciens cookies.
+- Limitation des tentatives de connexion à **25 par adresse IP** et **12 par identifiant** sur une fenêtre de 15 minutes.
+- Vérification de l'origine des requêtes d'écriture et des droits sur toutes les API d'administration ; les données clients ne sont pas accessibles anonymement.
+- Seul le gestionnaire des comptes peut ajouter ou réinitialiser des comptes ; il doit confirmer son mot de passe pour ces opérations.
+- Les trois autres comptes créés sont de rôle `member` ; seul le premier a le rôle `admin`.
+- Aucun service de réinitialisation par email : en cas d'oubli, demander au gestionnaire de créer un nouveau mot de passe provisoire. **Si le gestionnaire perd le sien**, une récupération par intervention administrative sécurisée sur Cloudflare sera nécessaire ; ne pas stocker un mot de passe de récupération dans GitHub.
+- Vérifier les sauvegardes et la politique de conservation des données clients avant la mise en service.
+
+## À ne pas oublier pour le formulaire public
+
+Le formulaire `/api/bookings` continue à expédier une demande de devis par **Resend** avant son archivage D1. Si `RESEND_API_KEY` et `EMAIL_FROM` sont absents ou mal configurés, **le formulaire public ne pourra toujours pas envoyer de demandes**. Cela n'affecte pas la connexion par mot de passe à Klosques Manager.
