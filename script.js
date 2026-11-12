@@ -104,3 +104,59 @@ quoteForm.addEventListener('submit', async event => {
     button.disabled = false;
   }
 });
+
+
+// Un seul lecteur vidéo : les quatre miniatures changent la vidéo affichée en grand.
+const KLOSQUES_VIDEOS = [
+  {
+    source: 'YouTube',
+    player: 'https://www.youtube-nocookie.com/embed/kUTlcbnGmgw',
+    page: 'https://www.youtube.com/watch?v=kUTlcbnGmgw'
+  },
+  {
+    source: 'YouTube',
+    player: 'https://www.youtube-nocookie.com/embed/njdBF5e3U4s',
+    page: 'https://www.youtube.com/watch?v=njdBF5e3U4s'
+  },
+  {
+    source: 'YouTube',
+    player: 'https://www.youtube-nocookie.com/embed/JQyRAMXzBfA',
+    page: 'https://www.youtube.com/watch?v=JQyRAMXzBfA'
+  },
+  {
+    source: 'Facebook Reel',
+    player: 'https://www.facebook.com/plugins/video.php?href=https%3A%2F%2Fwww.facebook.com%2Freel%2F1098640118264832%2F&show_text=false&width=344',
+    page: 'https://www.facebook.com/reel/1098640118264832/'
+  }
+];
+
+const videoChoices = document.querySelectorAll('.video-choice');
+const videoFrame = document.getElementById('featuredVideo');
+const videoShell = document.getElementById('videoPlayerShell');
+const videoLabel = document.getElementById('featuredVideoLabel');
+const videoLink = document.getElementById('featuredVideoLink');
+const videoNote = document.getElementById('videoEmbedNote');
+const videoStatus = document.getElementById('videoSelectionStatus');
+
+if (videoFrame && videoShell && videoLabel && videoLink) {
+  videoChoices.forEach(button => button.addEventListener('click', () => {
+    const index = Number(button.dataset.videoIndex);
+    const selection = KLOSQUES_VIDEOS[index];
+    if (!selection || button.classList.contains('is-active')) return;
+    const isFacebook = selection.source === 'Facebook Reel';
+
+    videoFrame.title = `Les Klosques en live — vidéo ${index + 1} sur ${selection.source}`;
+    videoShell.classList.toggle('is-facebook', isFacebook);
+    videoFrame.src = selection.player; // Le changement arrête aussi la vidéo précédente.
+    videoLabel.textContent = `VIDÉO ${String(index + 1).padStart(2, '0')} · ${selection.source.toUpperCase()}`;
+    videoLink.href = selection.page;
+    videoLink.textContent = isFacebook ? 'Voir sur Facebook ↗' : 'Voir sur YouTube ↗';
+    videoNote.hidden = !isFacebook;
+    videoChoices.forEach(choice => {
+      const active = choice === button;
+      choice.classList.toggle('is-active', active);
+      choice.setAttribute('aria-pressed', String(active));
+    });
+    videoStatus.textContent = `La vidéo ${index + 1} (${selection.source}) est maintenant affichée dans le grand lecteur.`;
+  }));
+}
