@@ -1,5 +1,6 @@
 import { authorize, respond, cleanText, validDate, statuses } from "../../_lib/admin-auth.js";
 import { ensureQuotesTable } from "../../_lib/quote-table.js";
+import { ensureInvoiceTables } from "../../_lib/invoice-core.js";
 
 export async function onRequestGet(context) {
   const user = await authorize(context);
@@ -9,12 +10,24 @@ export async function onRequestGet(context) {
     // 0 = aucun, 1 = brouillon, 2 = devis finalisé. Ne change jamais le statut
     // métier « Devis envoyé », qui ne doit pas être déduit d'un simple enregistrement.
     await ensureQuotesTable(context.env.DB);
+    await ensureInvoiceTables(context.env.DB);
     const { results } = await context.env.DB.prepare(`
       SELECT b.*,
         COALESCE((
           SELECT MAX(CASE q.status WHEN 'finalise' THEN 2 WHEN 'brouillon' THEN 1 ELSE 0 END)
           FROM official_quotes q WHERE q.booking_id = b.id
-        ), 0) AS quote_progress
+        ), 0) AS quote_progress,
+        COALESCE((
+          SELECT MAX(CASE
+            WHEN i.status='emise' AND EXISTS (
+              SELECT 1 FROM invoice_email_sends e WHERE e.invoice_id=i.id
+            ) THEN 3
+            WHEN i.status='emise' THEN 2
+            WHEN i.status='brouillon' THEN 1
+            ELSE 0
+          END)
+          FROM official_invoices i WHERE i.booking_id=b.id
+        ), 0) AS invoice_progress
       FROM bookings b
       ORDER BY b.event_date DESC, b.created_at DESC LIMIT 500
     `).all();
