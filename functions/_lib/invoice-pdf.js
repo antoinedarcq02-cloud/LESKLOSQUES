@@ -85,7 +85,8 @@ export function createInvoicePdf(invoice){
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"];
   const kids=[];
   for(let pageIndex=0;pageIndex<sheets.length;pageIndex++){
-    const content=sheets[pageIndex]+"0 0 0 rg BT /F1 9 Tf 1 0 0 1 490 28 Tm (Page "+(pageIndex+1)+"/"+sheets.length+") Tj ET\n";
+    const footer=(invoice.number||"BROUILLON")+" - Page "+(pageIndex+1)+"/"+sheets.length;
+    const content=sheets[pageIndex]+"0 0 0 rg BT /F1 9 Tf 1 0 0 1 385 28 Tm ("+pdfLiteral(footer)+") Tj ET\n";
     const p=objs.length,k=p+1;kids.push(p+" 0 R");
     objs.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents "+k+" 0 R >>");
     objs.push("<< /Length "+content.length+" >>\nstream\n"+content+"endstream");
