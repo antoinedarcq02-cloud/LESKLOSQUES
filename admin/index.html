@@ -184,10 +184,21 @@
     <label>Montant proposé (€ TTC ou HT selon vos mentions)<input name="quote_euros" type="number" min="0" max="1000000" step="0.01" placeholder="Non renseigné"></label>
     <p id="editorMeta" class="muted small"></p>
     <div class="modal-actions">
+      <button type="button" id="deleteRequest" class="danger" hidden>Supprimer la demande</button>
       <button type="button" id="printDraft" class="secondary">Proposition PDF (brouillon)</button>
       <button type="submit" id="saveBooking" class="primary">Enregistrer</button>
     </div>
   </form>
+</dialog>
+<dialog id="deleteRequestDialog" aria-labelledby="deleteRequestTitle" aria-describedby="deleteRequestMessage">
+  <div class="modal-top"><h2 id="deleteRequestTitle">Confirmer la suppression</h2></div>
+  <p id="deleteRequestMessage">Es-tu vraiment sûr de vouloir supprimer cette demande ?</p>
+  <p id="deleteRequestDetails" class="delete-request-details"></p>
+  <p class="muted small">Cette suppression est définitive. Le dossier sera retiré de Klosques Manager pour les quatre musiciens.</p>
+  <div class="modal-actions">
+    <button type="button" id="cancelDelete" class="secondary">Annuler</button>
+    <button type="button" id="confirmDelete" class="danger">Supprimer définitivement</button>
+  </div>
 </dialog>
 </body>
 </html>
