@@ -2,7 +2,7 @@
 
 // Factures des Klosques : brouillon modifiable, numéro seulement à l'émission,
 // PDF et envoi sous contrôle, aucun envoi lors de la sauvegarde.
-const invoiceState={invoices:[],issuer:{},quotes:[],mailReady:false,current:null};
+const invoiceState={invoices:[],issuer:{},quotes:[],mailReady:false,current:null,testResetCandidateId:null};
 const invoiceForm=$('invoiceForm');
 const invoiceFields=[
   'issuer_name','issuer_address','issuer_identifier','issuer_tax_number','issuer_contact','issuer_legal',
@@ -139,6 +139,9 @@ function lockInvoiceEditor(){
   $('deleteInvoiceDraft').hidden=!invoice||issued;
   $('archiveInvoice').hidden=!issued;
   $('archiveInvoice').textContent=invoice?.archived?'Restaurer la facture':'Archiver la facture';
+  // Exception très limitée : premier document fictif non envoyé, réservé au responsable.
+  $('resetInitialTestInvoice').hidden=!issued||!invoiceState.testResetCandidateId||
+    invoice.id!==invoiceState.testResetCandidateId;
   $('saveInvoice').hidden=issued;
   $('issueInvoice').hidden=issued;
   $('printInvoice').disabled=!invoice;
@@ -212,6 +215,7 @@ async function loadInvoices(){
     invoiceState.invoices=result.invoices||[];
     invoiceState.issuer=result.issuer||{};
     invoiceState.mailReady=result.mail_ready===true;
+    invoiceState.testResetCandidateId=result.test_reset_candidate_id||null;
     try{
       const quotes=await callApi('/api/admin/quotes');
       invoiceState.quotes=quotes.quotes||[];
@@ -309,6 +313,66 @@ $('confirmArchiveInvoice').addEventListener('click',async()=>{
       :'Facture restaurée dans la liste en cours.');
   }catch(error){notify(error.message);}
   finally{button.disabled=false;}
+});
+// Suppression exceptionnelle du seul tout premier test : aucun autre document,
+// mail ou règlement. Les vérifications sont refaites sur le serveur à l'envoi.
+let pendingTestReset=null;
+const resetInvoiceDialog=$('resetTestInvoiceDialog');
+function updateTestResetConfirmation(){
+  $('confirmResetTestInvoice').disabled=!(
+    pendingTestReset &&
+    $('resetTestInvoiceCheck').checked &&
+    $('resetTestInvoiceText').value.trim()==='SUPPRIMER TEST'
+  );
+}
+$('resetInitialTestInvoice').addEventListener('click',()=>{
+  const invoice=invoiceState.current;
+  if(!invoice||invoice.id!==invoiceState.testResetCandidateId||invoice.status!=='emise')return;
+  pendingTestReset=invoice.id;
+  $('resetTestInvoiceDescription').textContent=
+    'Supprimer définitivement le test '+(invoice.number||'')+
+    ' pour '+(invoice.data.client_name||'client non précisé')+
+    ' ? Cette action ne concerne que la première facture, unique, jamais envoyée ni réglée.';
+  $('resetTestInvoiceCheck').checked=false;
+  $('resetTestInvoiceText').value='';
+  $('resetTestInvoiceError').hidden=true;
+  $('resetTestInvoiceError').textContent='';
+  updateTestResetConfirmation();
+  resetInvoiceDialog.showModal();
+});
+$('resetTestInvoiceCheck').addEventListener('change',updateTestResetConfirmation);
+$('resetTestInvoiceText').addEventListener('input',updateTestResetConfirmation);
+$('cancelResetTestInvoice').addEventListener('click',()=>resetInvoiceDialog.close());
+resetInvoiceDialog.addEventListener('close',()=>{
+  pendingTestReset=null;
+  $('resetTestInvoiceText').value='';
+  $('resetTestInvoiceCheck').checked=false;
+  $('confirmResetTestInvoice').disabled=true;
+});
+$('confirmResetTestInvoice').addEventListener('click',async()=>{
+  const id=pendingTestReset;
+  if(!id||!$('resetTestInvoiceCheck').checked||
+      $('resetTestInvoiceText').value.trim()!=='SUPPRIMER TEST')return;
+  const button=$('confirmResetTestInvoice');
+  button.disabled=true;
+  try{
+    await jsonCall('/api/admin/invoices/'+encodeURIComponent(id)+'/reset-test','POST',{
+      confirmation:'SUPPRIMER TEST',never_used:true
+    });
+    pendingTestReset=null;
+    resetInvoiceDialog.close();
+    invoiceState.current=null;
+    $('invoiceEditorPanel').hidden=true;
+    $('invoiceVisibility').value='current';
+    await loadInvoices();
+    await refresh();
+    notify('La facture d’essai a été retirée. Une trace interne est conservée et la première vraie facture utilisera le numéro initial.');
+  }catch(error){
+    $('resetTestInvoiceError').textContent='Suppression impossible : '+error.message;
+    $('resetTestInvoiceError').hidden=false;
+  }finally{
+    updateTestResetConfirmation();
+  }
 });
 let pendingInvoiceDelete=null;
 const invoiceDeleteDialog=$('deleteInvoiceDialog');
