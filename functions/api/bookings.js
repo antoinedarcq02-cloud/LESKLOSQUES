@@ -1,10 +1,8 @@
 import { getBusyDates } from "../_lib/google.js";
+import { rateLimit } from "../_lib/admin-auth.js";
 
-// Destination unique des demandes : les coordonnées des visiteurs ne sont
-// envoyées que lorsque ceux-ci valident le formulaire.
-// Envoi par défaut vers la boîte officielle ; modifiable sans publier de nouveau code
-// en définissant QUOTE_EMAIL_TO dans Cloudflare Pages.
-const DESTINATION = "LesKlosques@hotmail.com";
+// Les demandes arrivent d'abord dans D1 / Klosques Manager.
+// L'envoi d'un email pourra être ajouté plus tard, indépendamment du stockage.
 const ALLOWED_PACKAGES = new Set([
   "Formule auto gestion (sans DJ)",
   "Formule Auto gestion + DJ",
@@ -25,21 +23,36 @@ const clean = (value, limit = 3000) =>
 
 function validCalendarDate(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const timestamp = Date.parse(`${value}T12:00:00Z`);
+  const timestamp = Date.parse(value + "T12:00:00Z");
   return Number.isFinite(timestamp) && new Date(timestamp).toISOString().slice(0, 10) === value;
 }
 
+const errorResponse = (error, status) =>
+  Response.json({ error }, { status, headers: { "Cache-Control": "no-store" } });
+
 export async function onRequestPost({ request, env }) {
   try {
-    if (!env.RESEND_API_KEY || !env.EMAIL_FROM) {
-      return Response.json({ error: "L'envoi des devis n'est pas encore configuré. Contactez directement le groupe par e-mail." }, { status: 503 });
-    }
-    // Limite raisonnable : évite de traiter de très gros messages.
-    if (Number(request.headers.get("content-length") || 0) > 16000) {
-      return Response.json({ error: "Le formulaire est trop long." }, { status: 413 });
-    }
-    const data = await request.json();
-    if (clean(data.website)) return Response.json({ ok: true }); // champ anti-spam invisible
+    if (!env.DB)
+      return errorResponse("Le service des demandes est momentanément indisponible. Contactez directement le groupe par e-mail.", 503);
+
+    // Écarter les requêtes lancées par un autre site.
+    const origin = request.headers.get("Origin");
+    if (origin && origin !== new URL(request.url).origin)
+      return errorResponse("Origine non autorisée.", 403);
+
+    // Un Content-Length absent n'autorise pas un formulaire démesuré.
+    if (Number(request.headers.get("content-length") || 0) > 16000)
+      return errorResponse("Le formulaire est trop long.", 413);
+    const raw = await request.text();
+    if (raw.length > 16000)
+      return errorResponse("Le formulaire est trop long.", 413);
+    let data;
+    try { data = JSON.parse(raw); }
+    catch { return errorResponse("Le formulaire est invalide.", 400); }
+    if (!data || typeof data !== "object" || Array.isArray(data))
+      return errorResponse("Le formulaire est invalide.", 400);
+
+    if (clean(data.website)) return Response.json({ ok: true }); // piège à robots
 
     const name = clean(data.name, 150);
     const email = clean(data.email, 254);
@@ -53,79 +66,45 @@ export async function onRequestPost({ request, env }) {
       timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit"
     }).formatToParts(new Date());
     const dayParts = Object.fromEntries(parts.map(part => [part.type, part.value]));
-    const todayParis = `${dayParts.year}-${dayParts.month}-${dayParts.day}`;
+    const todayParis = dayParts.year + "-" + dayParts.month + "-" + dayParts.day;
 
     if (!name || !phone || !location || !validCalendarDate(date) || date < todayParis ||
         !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
-        !ALLOWED_PACKAGES.has(pkg) || !ALLOWED_EVENT_TYPES.has(eventType)) {
-      return Response.json({ error: "Merci de vérifier la prestation, la date et les coordonnées obligatoires." }, { status: 400 });
-    }
+        !ALLOWED_PACKAGES.has(pkg) || !ALLOWED_EVENT_TYPES.has(eventType))
+      return errorResponse("Merci de vérifier la prestation, la date et les coordonnées obligatoires.", 400);
 
-    // La demande de devis peut être reçue même si Google Agenda est momentanément
-    // inaccessible : dans ce cas le groupe vérifiera la date manuellement.
-    let availability = "À vérifier manuellement";
+    // L'agenda reste facultatif : un incident Google ne bloque pas les devis.
     if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.GOOGLE_REFRESH_TOKEN) {
       try {
-        const start = new Date(Date.parse(`${date}T00:00:00Z`) - 24 * 60 * 60 * 1000).toISOString();
-        const end = new Date(Date.parse(`${date}T00:00:00Z`) + 48 * 60 * 60 * 1000).toISOString();
+        const start = new Date(Date.parse(date + "T00:00:00Z") - 86400000).toISOString();
+        const end = new Date(Date.parse(date + "T00:00:00Z") + 172800000).toISOString();
         const busy = await getBusyDates(env, start, end);
-        if (busy.includes(date)) {
-          return Response.json({ error: "Cette date apparaît occupée dans notre agenda. Choisissez une autre date ou contactez-nous." }, { status: 409 });
-        }
-        availability = "Aucune indisponibilité détectée (à confirmer par le groupe)";
-      } catch (err) {
-        console.warn("Google Agenda : vérification de date indisponible", err?.message || err);
-      }
-    }
-
-    const lines = [
-      "NOUVELLE DEMANDE DE DEVIS — LES KLOSQUES", "",
-      `Prestation demandée : ${pkg}`,
-      `Type d'événement : ${eventType}`,
-      `Date souhaitée : ${date}`,
-      `Lieu : ${location}`,
-      `Disponibilité : ${availability}`, "",
-      `Nom / organisation : ${name}`,
-      `E-mail : ${email}`,
-      `Téléphone : ${phone}`, "",
-      "Informations complémentaires :", message || "Aucune précision", "",
-      "ACTION REQUISE : étudier et valider le devis avant de l'envoyer au client.",
-      "Ceci n'est ni un devis accepté, ni une réservation confirmée.",
-      "Aucun e-mail de devis n'est envoyé automatiquement au client."
-    ];
-
-    const mail = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: env.EMAIL_FROM,
-        to: [(env.QUOTE_EMAIL_TO || DESTINATION).trim()],
-        reply_to: email,
-        subject: `Demande de devis Les Klosques — ${date}`,
-        text: lines.join("\n")
-      })
-    });
-    if (!mail.ok) {
-      console.warn("Resend : échec de l'envoi de devis", mail.status);
-      return Response.json({ error: "Le service d'e-mail a refusé l'envoi. Contactez directement le groupe par e-mail." }, { status: 502 });
-    }
-
-    // Après confirmation de l'envoi, archiver le dossier pour les quatre musiciens.
-    // L'email reste le canal de secours tant que le binding D1 n'est pas activé.
-    if (env.DB) {
-      try {
-        await env.DB.prepare(`INSERT INTO bookings
-          (id,source,name,email,phone,event_type,event_date,location,package,message,status)
-          VALUES (?,?,?,?,?,?,?,?,?,?,'nouveau')`)
-          .bind(crypto.randomUUID(), "site", name, email, phone, eventType, date, location, pkg, message).run();
+        if (busy.includes(date))
+          return errorResponse("Cette date apparaît occupée dans notre agenda. Choisissez une autre date ou contactez-nous.", 409);
       } catch (error) {
-        // Éviter d'indiquer un échec au client alors que son email est déjà parti.
-        console.warn("D1 : demande envoyée par email mais non archivée", error?.message || error);
+        console.warn("Google Agenda : vérification de date indisponible", error?.message || error);
       }
     }
-    return Response.json({ ok: true });
+
+    // Éviter que le formulaire public soit utilisé pour saturer le Manager.
+    if (env.ADMIN_SESSION_SECRET) {
+      const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+      if (!(await rateLimit(env, "quote-request:" + ip, 6)))
+        return errorResponse("Trop de demandes en peu de temps. Merci de réessayer dans 15 minutes.", 429);
+    }
+
+    const inserted = await env.DB.prepare(`INSERT INTO bookings
+      (id,source,name,email,phone,event_type,event_date,location,package,message,status)
+      VALUES (?,?,?,?,?,?,?,?,?,?,'nouveau')`)
+      .bind(crypto.randomUUID(), "site", name, email, phone, eventType, date, location, pkg, message).run();
+    // Ne confirmer au client qu'une demande réellement enregistrée.
+    if (!inserted.success || Number(inserted.meta?.changes) !== 1)
+      throw new Error("D1 : insertion non confirmée.");
+    return Response.json({ ok: true, saved: true }, {
+      status: 201, headers: { "Cache-Control": "no-store" }
+    });
   } catch (error) {
-    console.warn("Erreur formulaire de devis", error?.message || error);
-    return Response.json({ error: "Une erreur est survenue. Contactez-nous directement par e-mail." }, { status: 503 });
+    console.warn("Erreur enregistrement demande de devis", error?.message || error);
+    return errorResponse("La demande n'a pas pu être enregistrée. Réessayez ou contactez directement le groupe par e-mail.", 503);
   }
 }
