@@ -10,9 +10,23 @@ const state = { items:[], current:null, selectedDay:null, page:'home', logged:fa
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => (
   {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]
 ));
+let noticeTimer = null;
 function notify(message) {
-  $('notice').textContent = message;
-  $('notice').hidden = !message;
+  // Une nouvelle notification remplace la précédente et relance le délai.
+  if (noticeTimer !== null) {
+    window.clearTimeout(noticeTimer);
+    noticeTimer = null;
+  }
+  const notice = $('notice');
+  notice.textContent = message;
+  notice.hidden = !message;
+  if (message) {
+    noticeTimer = window.setTimeout(() => {
+      notice.textContent = '';
+      notice.hidden = true;
+      noticeTimer = null;
+    }, 6000);
+  }
 }
 function dateLabel(value) {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return value || '';
