@@ -1,4 +1,5 @@
 import { authorize, respond, cleanText, validDate } from "../../_lib/admin-auth.js";
+import { ensureQuotesTable } from "../../_lib/quote-table.js";
 
 // Devis enregistrés dans D1 : création de la table lors du premier accès authentifié.
 // Le numéro est basé sur la clé primaire croissante ; une fois finalisé, le devis n'est plus modifiable.
@@ -72,18 +73,7 @@ function ensureFinalizable(data) {
   if (!data.lines.length || data.lines.some((line) => !line.label || line.price_cents <= 0))
     throw new Error("Renseigne la description, la quantité et le prix de chaque prestation.");
 }
-async function ensureQuotesTable(DB) {
-  await DB.prepare(`CREATE TABLE IF NOT EXISTS official_quotes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    booking_id TEXT,
-    data_json TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'brouillon'
-      CHECK(status IN ('brouillon','finalise')),
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_by TEXT NOT NULL
-  )`).run();
-}
+
 function cleanRow(row) {
   if (!row) return null;
   const data = JSON.parse(row.data_json);
