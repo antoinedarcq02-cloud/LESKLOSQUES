@@ -198,9 +198,9 @@ function quoteProgressLabel(item) {
 function invoiceProgressLabel(item) {
   if (!item || item.source !== 'site') return '';
   const level=Number(item.invoice_progress);
-  if (level===4) return 'Facture réglée';
-  if (level===3) return 'Facture envoyée';
-  if (level===2) return 'Facture faite';
+  if (level===4) return 'Facture payée';
+  if (level===3) return 'Facture en attente de paiement';
+  if (level===2) return 'Facture en attente d’envoi';
   if (level===1) return 'Facture en préparation';
   return '';
 }
