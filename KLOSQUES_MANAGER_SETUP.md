@@ -85,3 +85,13 @@ Après tests et configuration Production, passer la PR en état prêt et la fusi
 Le formulaire `/api/bookings` continue à expédier une demande de devis par **Resend** avant son archivage D1. Si `RESEND_API_KEY` et `EMAIL_FROM` sont absents ou mal configurés, **le formulaire public ne pourra toujours pas envoyer de demandes**. Cela n'affecte pas la connexion par mot de passe à Klosques Manager.
 
 > Important : les secrets de Preview et Production sont indépendants selon la configuration Cloudflare. Configurer `ADMIN_PASSWORD_PEPPER` et `ADMIN_SESSION_SECRET` dans chaque environnement de test avec des valeurs propres à cet environnement, et ne pas modifier ces secrets après création des comptes.
+
+## Écran de bienvenue BD personnalisé (en préparation)
+
+- Après une connexion réussie, afficher brièvement une illustration de concert avec un musicien souriant, une bulle BD et la barre « Accès à Klosques Manager ».
+- Le prénom apparaît **dynamiquement depuis `display_name`** de la session, via `textContent`, par exemple « Bienvenue Greg ! », « Bienvenue Jérémy ! », etc. Une image fixe ne doit pas déterminer le prénom affiché.
+- L’illustration **sélectionnée par le groupe** doit être déposée dans `admin/klosques-welcome.webp` sur la branche `feature/klosques-manager`. Le composant masque l’inscription « Antoine » imprimée dans l’image en redessinant la bulle au-dessus.
+- Le visuel ne change pas les règles d’authentification. L’écran s’affiche après une connexion manuelle (ou après le changement du mot de passe provisoire), puis laisse place au tableau de bord. Il ne bloque pas une session existante rechargée.
+- Respecte `prefers-reduced-motion` : animation de chargement désactivée et délai de bienvenue raccourci.
+- **Ne pas fusionner dans `main`** tant que l’image n’a pas été ajoutée et que le rendu sur mobile n’est pas vérifié en Preview.
+
