@@ -175,14 +175,23 @@ async function refresh() {
     notify(error.message);
   }
 }
+function quoteProgressLabel(item) {
+  if (!item || item.source !== 'site') return '';
+  if (Number(item.quote_progress) === 2) return 'Devis fait';
+  if (Number(item.quote_progress) === 1) return 'Devis en préparation';
+  return '';
+}
 function itemCard(item) {
   const category = item.status === 'confirme' ? 'confirmed' :
     item.status === 'refuse' ? 'declined' : ['nouveau','option'].includes(item.status) ? 'pending' : '';
+  const quoteLabel = quoteProgressLabel(item);
   return '<button type="button" class="booking-card" data-open="'+escapeHtml(item.id)+'">' +
     '<div class="card-top"><span class="date">'+escapeHtml(dateLabel(item.event_date))+'</span>' +
     '<span class="tag '+category+'">'+escapeHtml(STATUSES[item.status] || item.status)+'</span></div>' +
     '<h3>'+escapeHtml(item.name)+'</h3>' +
     '<p>📍 '+escapeHtml(item.location)+'</p>' +
+    (quoteLabel ? '<p class="booking-quote-indicator '+(Number(item.quote_progress) === 2 ? 'done' : 'draft')+'">'+
+      escapeHtml(quoteLabel)+'</p>' : '') +
     (item.package ? '<p>🎸 '+escapeHtml(item.package)+'</p>' : '') +
     (item.quote_amount_cents != null ? '<p>💶 '+escapeHtml((item.quote_amount_cents/100).toLocaleString('fr-FR',{style:'currency',currency:'EUR'}))+'</p>' : '') +
     '<p class="small">Ouvrir la fiche →</p></button>';
@@ -251,6 +260,12 @@ function openEditor(item) {
   const price = editor.elements.namedItem('quote_euros');
   price.value = item && item.quote_amount_cents != null ? String(item.quote_amount_cents/100) : '';
   $('editorMeta').textContent = item ? 'Créé le '+(item.created_at || '')+' · Dernière modification : '+(item.updated_by || 'non renseignée') : 'Fiche ajoutée manuellement. Aucun email envoyé automatiquement.';
+  const quoteLabel = quoteProgressLabel(item);
+  $('bookingQuoteStatus').hidden = !quoteLabel;
+  $('bookingQuoteStatus').textContent = quoteLabel === 'Devis fait'
+    ? 'Devis fait : un devis finalisé est associé à cette demande (pas nécessairement envoyé).'
+    : 'Devis en préparation : un brouillon est associé à cette demande.';
+  $('bookingQuoteStatus').classList.toggle('done',quoteLabel === 'Devis fait');
   $('printDraft').disabled = !item;
   // La suppression n'est proposée que pour les demandes issues du site.
   $('deleteRequest').hidden = !item || item.source !== 'site';

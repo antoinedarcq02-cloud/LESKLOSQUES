@@ -78,3 +78,18 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
   .official-quote-actions{display:grid;grid-template-columns:1fr}
   .official-quote-actions button{width:100%}
 }
+
+/* Avancement du devis rattaché à une demande, indépendant du statut « Devis envoyé ». */
+.booking-card .booking-quote-indicator {
+  display:inline-flex;align-items:center;gap:6px;margin:2px 0 9px;
+  padding:6px 10px;border-radius:999px;font-weight:800;font-size:.78rem;
+}
+.booking-quote-indicator.draft {background:#4b391d;color:#ffe2a7}
+.booking-quote-indicator.done {background:#174c36;color:#b1f5ce}
+.booking-quote-status {
+  margin:15px 0 7px;padding:12px 14px;border-radius:10px;
+  border:1px solid #b58c4b;background:#352c1f;color:#ffe2ab;font-weight:750;
+}
+.booking-quote-status.done {
+  border-color:#398b62;background:#193d2c;color:#b5f6cf;
+}
