@@ -79,7 +79,6 @@ export function createInvoicePdf(invoice){
     lines(q.late_penalties||"Pénalités de retard à préciser",10,false,90,46);
     lines("Indemnité forfaitaire pour frais de recouvrement : 40 € (lorsqu'elle s'applique).",9,false,98,46);
   }
-  if(invoice.paid){section("RÈGLEMENT");write("FACTURE MARQUÉE PAYÉE DANS LE SUIVI",11,true,"0.2 0.45 0.2");}
   nextPage();
   const objs=[null,"<< /Type /Catalog /Pages 2 0 R >>","",
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
