@@ -183,6 +183,9 @@
             <button type="button" class="primary" id="finalizeOfficialQuote">Finaliser le devis</button>
           </div>
         </form>
+        <div class="modal-actions">
+          <button type="button" class="danger" id="deleteOfficialQuote" hidden>Supprimer le devis</button>
+        </div>
       </div>
     </section>
     <section id="panel-site" class="page" hidden>
@@ -272,6 +275,17 @@
   <div class="modal-actions">
     <button type="button" id="cancelDelete" class="secondary">Annuler</button>
     <button type="button" id="confirmDelete" class="danger">Supprimer définitivement</button>
+  </div>
+</dialog>
+<dialog id="deleteQuoteDialog" aria-labelledby="deleteQuoteTitle" aria-describedby="deleteQuoteMessage">
+  <div class="modal-top"><h2 id="deleteQuoteTitle">Confirmer la suppression du devis</h2></div>
+  <p id="deleteQuoteMessage">Es-tu vraiment sûr de vouloir supprimer ce devis ?</p>
+  <p id="deleteQuoteDetails" class="delete-request-details"></p>
+  <p class="muted small">Cette suppression est définitive : le devis disparaîtra de Klosques Manager pour les quatre musiciens. Elle ne supprime pas la demande client associée.</p>
+  <p id="deleteFinalQuoteWarning" class="quote-lock-note" hidden>Attention : ce devis est finalisé. S'il a été envoyé, accepté ou signé, conserve une copie du document conformément à tes obligations avant de le supprimer.</p>
+  <div class="modal-actions">
+    <button type="button" id="cancelDeleteQuote" class="secondary">Annuler</button>
+    <button type="button" id="confirmDeleteQuote" class="danger">Supprimer définitivement</button>
   </div>
 </dialog>
 </body>
