@@ -61,6 +61,7 @@ async function signedIn(account, showWelcome = false) {
   state.mustChangePassword = !!account.must_change_password;
   $('identity').textContent = account.display_name || account.username;
   $('membersPanel').hidden = account.role !== 'admin';
+  $('emailSettingsPanel').hidden = account.role !== 'admin';
   $('cancelPasswordChange').hidden = state.mustChangePassword;
   $('passwordExplanation').textContent = state.mustChangePassword
     ? 'Ceci est ton mot de passe provisoire : choisis-en un nouveau, personnel, avant de consulter les dossiers.'
@@ -73,7 +74,10 @@ async function signedIn(account, showWelcome = false) {
   showScreen('workspace');
   await refresh();
   await loadSiteContent();
-  if (state.role === 'admin') await loadMembers();
+  if (state.role === 'admin') {
+    await loadMembers();
+    await loadEmailSettings();
+  }
 }
 async function initialize() {
   $('agendaMonth').value = new Date().getFullYear() + '-' + String(new Date().getMonth()+1).padStart(2,'0');
@@ -232,6 +236,11 @@ function render() {
   $('statConcerts').textContent = items.filter(x => x.status === 'confirme').length;
   $('statQuotes').textContent = items.filter(x => x.status === 'devis_envoye').length;
   $('statOptions').textContent = items.filter(x => x.status === 'option').length;
+  const newRequests=items.filter(x=>x.source==='site'&&x.status==='nouveau').length;
+  $('newRequestsPrompt').hidden=newRequests===0;
+  $('newRequestsPromptText').textContent=newRequests===1
+    ?'📩 Une nouvelle demande client attend une réponse.'
+    :'📩 '+newRequests+' nouvelles demandes clients attendent une réponse.';
   fillList('homeList',items.filter(x => !['termine','refuse'].includes(x.status)).slice(0,8),'Aucune demande en cours.');
   let requests = items.filter(x => x.source === 'site');
   if ($('requestFilter').value !== 'all') requests = requests.filter(x => x.status === $('requestFilter').value);
@@ -377,6 +386,51 @@ $('printDraft').addEventListener('click',() => {
   windowPrint.focus();
 });
 
+// Diagnostic et test d'envoi réservés au gestionnaire de Klosques Manager.
+$('viewNewRequests').addEventListener('click',()=>{
+  $('requestFilter').value='nouveau';
+  setPage('demandes');
+});
+async function loadEmailSettings(){
+  if(state.role!=='admin')return;
+  try{
+    const info=await callApi('/api/admin/email');
+    const root=$('emailConfigDetails');
+    root.replaceChildren();
+    const rows=[
+      ['Expéditeur Resend',info.provider_ready?'Variables détectées':'Non configuré'],
+      ['Envoi des devis et factures',info.documents_ready?'Variables détectées':'Non configuré'],
+      ['Alerte au groupe',info.alerts_ready?'Activée':info.alerts_enabled?'Configuration incomplète':'Désactivée'],
+      ['Accusé de réception au client',info.receipt_ready?'Activé':info.receipt_enabled?'Configuration incomplète':'Désactivé'],
+      ['Destinataires des alertes',(info.notification_to||[]).join(', ')||'À vérifier'],
+      ['Dernier test accepté',info.last_test_accepted_at||'Aucun']
+    ];
+    for(const [label,value] of rows){
+      const p=document.createElement('p');
+      p.textContent=label+' : '+value;
+      root.appendChild(p);
+    }
+    $('sendTestEmail').disabled=!info.provider_ready;
+  }catch(error){
+    $('emailConfigDetails').textContent='État de messagerie indisponible : '+error.message;
+    $('sendTestEmail').disabled=true;
+  }
+}
+$('refreshEmailSettings').addEventListener('click',loadEmailSettings);
+$('sendTestEmail').addEventListener('click',async()=>{
+  if(state.role!=='admin')return;
+  if(!window.confirm('Envoyer un e-mail de test vers la première adresse de notification du groupe ? Aucun devis ni aucune facture ne sera transmis.'))return;
+  $('sendTestEmail').disabled=true;
+  $('emailTestFeedback').textContent='Demande d’envoi en cours…';
+  try{
+    const answer=await jsonCall('/api/admin/email','POST',{action:'test_email',confirmed:true});
+    $('emailTestFeedback').textContent=answer.message+' Destinataire : '+answer.recipient;
+  }catch(error){
+    $('emailTestFeedback').textContent='Test non envoyé : '+error.message;
+  }finally{
+    await loadEmailSettings();
+  }
+});
 const siteForm = $('siteContentForm');
 async function loadSiteContent() {
   try {
