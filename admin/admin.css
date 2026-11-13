@@ -150,3 +150,24 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
   #panel-concerts .concert-actions{width:100%;justify-content:space-between}
   #panel-concerts .concert-actions select{flex:1;min-width:0}
 }
+
+/* Notifications commerciales et diagnostic e-mail (pas de secrets dans le navigateur). */
+.new-requests-prompt{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  margin:14px 0 18px;border-color:#af884c;background:#33281e
+}
+.new-requests-prompt[hidden]{display:none}
+.new-requests-prompt p{margin:0;color:#ffe2ad;font-weight:750}
+.new-requests-prompt button{flex-shrink:0}
+.email-settings-panel{margin:18px 0}
+.email-config-details{
+  margin:16px 0;padding:12px 16px;background:#201d23;border:1px solid #494048;
+  border-radius:12px
+}
+.email-config-details p{margin:7px 0;font-size:.9rem;overflow-wrap:anywhere}
+.email-settings-panel code{font-size:.88em;overflow-wrap:anywhere}
+@media(max-width:550px){
+  .new-requests-prompt button{width:100%}
+  .email-settings-panel .modal-actions{display:flex;flex-wrap:wrap}
+  .email-settings-panel .modal-actions button{flex:1;min-width:160px}
+}
