@@ -121,6 +121,7 @@ function fillQuoteForm(record = null) {
     ? record.number+' · '+(record.status === 'finalise' ? 'Finalisé' : 'Brouillon')
     : 'Un numéro de devis sera attribué lors du premier enregistrement.';
   $('quoteFormPanel').hidden = false;
+  $('deleteOfficialQuote').hidden = !record;
   updateOfficialTotals();
   updateQuoteLock();
   $('quoteFormPanel').scrollIntoView({block:'start',behavior:'smooth'});
@@ -175,6 +176,48 @@ $('officialQuotesList').addEventListener('click',event => {
   if (!card) return;
   const quote = officialQuoteState.quotes.find(item => String(item.id) === card.dataset.quoteId);
   if (quote) fillQuoteForm(quote);
+});
+// Même principe que la suppression des demandes : bouton, confirmation, puis DELETE.
+let pendingQuoteDeletion = null;
+const deleteQuoteDialog = $('deleteQuoteDialog');
+$('deleteOfficialQuote').addEventListener('click', () => {
+  const quote = officialQuoteState.current;
+  if (!quote) return;
+  pendingQuoteDeletion = quote.id;
+  $('deleteQuoteMessage').textContent = 'Es-tu vraiment sûr de vouloir supprimer ce devis ?';
+  $('deleteQuoteDetails').textContent =
+    quote.number + ' · ' + (quote.data.client_name || 'Client non précisé') +
+    ' · ' + (quote.status === 'finalise' ? 'Devis finalisé' : 'Brouillon');
+  $('deleteFinalQuoteWarning').hidden = quote.status !== 'finalise';
+  deleteQuoteDialog.showModal();
+});
+$('cancelDeleteQuote').addEventListener('click', () => {
+  pendingQuoteDeletion = null;
+  deleteQuoteDialog.close();
+});
+deleteQuoteDialog.addEventListener('close', () => {
+  pendingQuoteDeletion = null;
+});
+$('confirmDeleteQuote').addEventListener('click', async () => {
+  const id = pendingQuoteDeletion;
+  if (!Number.isSafeInteger(id) || id < 1) return;
+  const button = $('confirmDeleteQuote');
+  button.disabled = true;
+  try {
+    await callApi('/api/admin/quotes/' + encodeURIComponent(id), { method:'DELETE' });
+    // Les autres devis et les demandes clients restent intacts.
+    officialQuoteState.quotes = officialQuoteState.quotes.filter(quote => quote.id !== id);
+    officialQuoteState.current = null;
+    pendingQuoteDeletion = null;
+    deleteQuoteDialog.close();
+    $('quoteFormPanel').hidden = true;
+    renderOfficialQuotes();
+    notify('Le devis a été supprimé définitivement.');
+  } catch (error) {
+    $('deleteQuoteMessage').textContent = 'Suppression impossible : ' + error.message;
+  } finally {
+    button.disabled = false;
+  }
 });
 $('saveQuoteProfile').addEventListener('click',async () => {
   const button = $('saveQuoteProfile');
