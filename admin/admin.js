@@ -204,7 +204,7 @@ function render() {
   let concerts = items.filter(x => ['option','confirme','termine'].includes(x.status));
   if ($('concertFilter').value !== 'all') concerts = concerts.filter(x => x.status === $('concertFilter').value);
   fillList('concertsList',concerts,'Aucun concert enregistré.');
-  fillList('quotesList',items.filter(x => x.quote_amount_cents != null || x.status === 'devis_envoye'), 'Pas encore de devis préparé.');
+  // La liste des devis numérotés est maintenant gérée par quote-builder.js.
   renderCalendar();
 }
 ['requestFilter','concertFilter','agendaMonth'].forEach(id => $(id).addEventListener('change',() => { if(id==='agendaMonth') state.selectedDay=null; render(); }));

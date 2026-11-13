@@ -9,6 +9,7 @@
 <link rel="icon" href="/assets/favicon-klosques.png">
 <link rel="stylesheet" href="/admin/admin.css">
 <script src="/admin/admin.js" defer></script>
+<script src="/admin/quote-builder.js" defer></script>
 </head>
 <body>
 <header class="topbar">
@@ -107,9 +108,82 @@
       <div id="concertsList" class="card-list"></div>
     </section>
     <section id="panel-devis" class="page" hidden>
-      <h2>Suivi des devis</h2>
-      <p class="muted">Ouvre un dossier pour renseigner le montant proposé, puis imprimer une proposition brouillon au format PDF. L'envoi et la validation restent manuels.</p>
-      <div id="quotesList" class="card-list"></div>
+      <div class="section-header">
+        <div>
+          <h2>Devis à remplir et à imprimer</h2>
+          <p class="muted small">Crée un devis depuis une demande client ou à partir de zéro. Enregistre-le, puis imprime-le en PDF. Aucun envoi automatique.</p>
+        </div>
+        <button type="button" class="primary" id="newQuote">+ Nouveau devis</button>
+      </div>
+      <div id="officialQuotesList" class="card-list" aria-live="polite"></div>
+      <div id="quoteFormPanel" class="panel official-quote-panel" hidden>
+        <div class="section-header">
+          <h2 id="quoteFormTitle">Nouveau devis</h2>
+          <button type="button" id="closeQuote" class="secondary">Fermer</button>
+        </div>
+        <p id="quoteNumber" class="muted small">Numéro attribué lors du premier enregistrement.</p>
+        <p id="quoteLocked" class="quote-lock-note" hidden>Ce devis est finalisé et verrouillé pour préserver la version transmise. Pour une modification, prépare un nouveau devis.</p>
+        <form id="officialQuoteForm">
+          <h3>1. Demande et coordonnées du client</h3>
+          <label>Dossier client existant (facultatif)
+            <select id="quoteBooking"><option value="">Devis indépendant / sans demande</option></select>
+          </label>
+          <div class="field-row">
+            <label>Nom du client / organisateur *<input name="client_name" maxlength="160" required></label>
+            <label>E-mail du client<input name="client_email" type="email" maxlength="254"></label>
+          </div>
+          <label>Adresse complète du client *<textarea name="client_address" rows="2" maxlength="350" placeholder="Rue, code postal, ville"></textarea></label>
+          <div class="field-row">
+            <label>Date de l'événement *<input name="event_date" type="date"></label>
+            <label>Heure de début (facultative)<input name="event_time" type="time"></label>
+          </div>
+          <label>Lieu de la prestation *<input name="event_location" maxlength="240" placeholder="Nom de la salle et adresse"></label>
+          <h3>2. Structure qui émet le devis</h3>
+          <p class="muted small">À compléter avec les véritables informations de la structure qui facture, pas seulement le nom du groupe.</p>
+          <label>Nom / raison sociale *<input name="issuer_name" maxlength="160" placeholder="Nom juridique de l'association, société ou entreprise"></label>
+          <label>Adresse complète de la structure *<textarea name="issuer_address" rows="2" maxlength="350"></textarea></label>
+          <div class="field-row">
+            <label>Identifiant officiel (SIRET, RNA selon la structure) *<input name="issuer_identifier" maxlength="90"></label>
+            <label>Numéro de TVA intracommunautaire (si applicable)<input name="issuer_tax_number" maxlength="70"></label>
+          </div>
+          <label>Contact professionnel (email / téléphone)<input name="issuer_contact" maxlength="180"></label>
+          <label>Autres mentions légales (statut, immatriculation… selon votre situation)<textarea name="issuer_legal" rows="2" maxlength="250"></textarea></label>
+          <button type="button" id="saveQuoteProfile" class="secondary">Mémoriser ces coordonnées pour les prochains devis</button>
+          <h3>3. Prestations et prix</h3>
+          <p class="muted small">Tous les prix unitaires ci-dessous sont indiqués hors taxes (HT). Ajoute une ligne pour les frais de déplacement si nécessaire.</p>
+          <div class="quote-lines-header" aria-hidden="true"><span>Prestation</span><span>Qté</span><span>Prix unitaire HT</span><span></span></div>
+          <div id="quoteLines"></div>
+          <button id="addQuoteLine" type="button" class="secondary">+ Ajouter une prestation</button>
+          <div class="field-row">
+            <label>TVA applicable
+              <select name="vat_mode">
+                <option value="non_precise">Régime de TVA à préciser (brouillon seulement)</option>
+                <option value="franchise">TVA non applicable — franchise en base (si éligible)</option>
+                <option value="20">TVA 20 %</option>
+                <option value="10">TVA 10 %</option>
+                <option value="5.5">TVA 5,5 %</option>
+                <option value="0">TVA 0 % (autre régime à justifier)</option>
+              </select>
+            </label>
+          </div>
+          <p class="muted small">Le bon taux de TVA et l'éligibilité à la franchise sont à vérifier avec la structure émettrice.</p>
+          <div class="quote-total" id="quoteTotals">Total HT : 0,00 € · TVA : 0,00 € · Total TTC : 0,00 €</div>
+          <h3>4. Conditions et validité</h3>
+          <div class="field-row">
+            <label>Date du devis *<input name="issue_date" type="date"></label>
+            <label>Valable jusqu'au *<input name="valid_until" type="date"></label>
+          </div>
+          <label>Modalités de paiement *<textarea name="payment_terms" rows="2" maxlength="600" placeholder="Ex. acompte, échéance, mode de règlement…"></textarea></label>
+          <label>Précisions sur la prestation<textarea name="description" rows="3" maxlength="900" placeholder="Horaires, durée, matériel, installation…"></textarea></label>
+          <label>Conditions particulières<textarea name="conditions" rows="3" maxlength="1400" placeholder="Annulation, frais éventuels, obligations de l'organisateur…"></textarea></label>
+          <p class="muted small">Un brouillon peut être enregistré avec des champs incomplets. La finalisation demande les mentions principales et verrouille ensuite le document.</p>
+          <div class="modal-actions official-quote-actions">
+            <button type="button" class="secondary" id="printOfficialQuote" disabled>Imprimer / PDF</button>
+            <button type="button" class="secondary" id="saveOfficialQuote">Enregistrer le brouillon</button>
+            <button type="button" class="primary" id="finalizeOfficialQuote">Finaliser le devis</button>
+          </div>
+        </form>
+      </div>
     </section>
     <section id="panel-site" class="page" hidden>
       <div class="panel">

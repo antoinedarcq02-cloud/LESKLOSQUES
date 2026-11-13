@@ -51,3 +51,30 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
 .danger:disabled{opacity:.55;cursor:wait}
 .delete-request-details{background:#2c2027;border:1px solid #72505b;border-radius:11px;padding:12px;overflow-wrap:anywhere;font-weight:700}
 #deleteRequestDialog{max-width:570px}
+
+/* Éditeur de devis : lecture simple, lignes de prestations et totaux. */
+.official-quote-panel{margin-top:24px;scroll-margin-top:20px}
+.official-quote-panel h3{font-size:1.08rem;color:#ff93a1;margin:30px 0 12px}
+.official-quote-panel .section-header{margin:0 0 12px}
+.official-quote-panel .section-header h2{margin:0}
+.official-quote-panel label{margin-bottom:12px}
+.official-quote-panel textarea{min-height:70px}
+.official-quote-panel input:disabled,.official-quote-panel textarea:disabled,.official-quote-panel select:disabled{opacity:.75;background:#2a252a}
+.quote-lines-header,.official-quote-line{display:grid;grid-template-columns:minmax(0,3fr) minmax(65px,.7fr) minmax(95px,1fr) 36px;gap:9px;align-items:center}
+.quote-lines-header{color:#c6b9be;font-size:.76rem;margin:14px 0 8px;font-weight:800}
+.official-quote-line{margin-bottom:9px}
+.official-quote-line input{min-width:0;padding:10px 8px}
+.official-quote-line .small-button{padding:9px 5px;min-height:42px}
+.quote-total{text-align:right;padding:18px 14px;margin-top:17px;background:#2d222a;border:1px solid #7b4655;border-radius:10px;color:#fff;font-size:1.03rem;font-weight:800}
+.quote-lock-note{padding:14px;border:1px solid #e3a665;border-radius:11px;color:#ffe1b3;background:#3a2b1f}
+.official-quote-actions{border-top:1px solid #43333b;padding-top:17px}
+@media(max-width:620px){
+  .quote-lines-header{display:none}
+  .official-quote-line{grid-template-columns:minmax(0,1fr) 83px 34px;gap:6px}
+  .official-quote-line .quote-line-label{grid-column:1/-1}
+  .official-quote-line .quote-line-price{grid-column:1}
+  .official-quote-line .quote-line-qty{grid-column:2;grid-row:2}
+  .official-quote-line .quote-line-remove{grid-column:3;grid-row:2}
+  .official-quote-actions{display:grid;grid-template-columns:1fr}
+  .official-quote-actions button{width:100%}
+}
