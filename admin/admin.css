@@ -102,3 +102,22 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
 .booking-card .quote-email-sent{color:#adf3c5;font-weight:800}
 #sendQuoteDialog{max-width:570px}
 #sendQuoteDialog .primary:disabled{opacity:.55;cursor:not-allowed}
+
+/* Factures : mêmes repères que les devis, avec prévention des erreurs irréversibles. */
+#invoiceEditorPanel{margin-top:24px}
+#invoiceEditorPanel .quote-total{margin:18px 0 24px}
+#invoiceEditorPanel .modal-actions{margin-top:18px}
+#invoiceEditorPanel .quote-line-label{width:100%}
+#invoiceEditorPanel input:disabled,#invoiceEditorPanel textarea:disabled,#invoiceEditorPanel select:disabled{
+  opacity:.78;background:#2c292e
+}
+#invoiceEditorPanel .quote-lock-note{margin-top:14px}
+#invoiceEditorPanel #importInvoiceQuote{margin:6px 0 10px}
+#sendInvoiceDialog,#deleteInvoiceDialog,#payInvoiceDialog{max-width:570px}
+#sendInvoiceDialog .primary:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:760px){
+  .bottom-nav{overflow-x:auto;justify-content:flex-start}
+  .bottom-nav button{flex:1 0 13.5%;min-width:48px}
+  #invoiceEditorPanel .official-quote-actions{display:grid;grid-template-columns:1fr}
+  #invoiceEditorPanel .official-quote-actions button{width:100%}
+}
