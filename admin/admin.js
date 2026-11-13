@@ -35,6 +35,8 @@ function showScreen(name) {
 async function welcomeMusician(displayName) {
   const firstName = String(displayName || 'musicien').trim().split(/\s+/)[0].slice(0,30);
   $('welcomeFirstName').textContent = firstName + ' !';
+  // Pour Antoine, afficher exactement l'illustration validée, sans redessiner sa bulle.
+  $('welcomeBalloon').hidden = firstName.toLocaleLowerCase('fr-FR') === 'antoine';
   $('welcomeAnnounce').textContent = 'Bienvenue ' + firstName + ' ! Accès à Klosques Manager…';
   showScreen('welcome');
   const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
