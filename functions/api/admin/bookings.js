@@ -1,12 +1,23 @@
 import { authorize, respond, cleanText, validDate, statuses } from "../../_lib/admin-auth.js";
+import { ensureQuotesTable } from "../../_lib/quote-table.js";
 
 export async function onRequestGet(context) {
   const user = await authorize(context);
   if (user.error) return user.error;
   try {
-    const { results } = await context.env.DB.prepare(
-      "SELECT * FROM bookings ORDER BY event_date DESC, created_at DESC LIMIT 500"
-    ).all();
+    // L'avancement du devis est dérivé des devis réellement liés à la demande.
+    // 0 = aucun, 1 = brouillon, 2 = devis finalisé. Ne change jamais le statut
+    // métier « Devis envoyé », qui ne doit pas être déduit d'un simple enregistrement.
+    await ensureQuotesTable(context.env.DB);
+    const { results } = await context.env.DB.prepare(`
+      SELECT b.*,
+        COALESCE((
+          SELECT MAX(CASE q.status WHEN 'finalise' THEN 2 WHEN 'brouillon' THEN 1 ELSE 0 END)
+          FROM official_quotes q WHERE q.booking_id = b.id
+        ), 0) AS quote_progress
+      FROM bookings b
+      ORDER BY b.event_date DESC, b.created_at DESC LIMIT 500
+    `).all();
     return respond({ bookings: results || [], email: user.email });
   } catch (error) {
     console.warn("Erreur liste concerts", error?.message);
