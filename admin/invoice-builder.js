@@ -170,7 +170,7 @@ function fillInvoice(invoice=null){
     newInvoiceLine(line.label,line.qty,line.price_cents);
   $('invoiceEditorTitle').textContent=invoice?(invoice.number||'Brouillon de facture'):'Nouvelle facture';
   $('invoiceNumber').textContent=invoice
-    ?(invoice.number||'Brouillon non numéroté')+' · '+(invoice.paid?'Payée':invoice.status==='emise'?'Émise':'Brouillon')
+    ?(invoice.number||'Brouillon non numéroté')+' · '+(invoice.paid?'Payée':invoice.status==='emise'?'En attente de paiement':'Brouillon')
     :'Un numéro officiel sera attribué uniquement à l’émission de la facture.';
   $('invoiceEditorPanel').hidden=false;
   updateInvoiceTotal();lockInvoiceEditor();
@@ -180,7 +180,7 @@ function renderInvoices(){
   const rows=invoiceState.invoices;
   $('invoiceList').innerHTML=rows.length?rows.map(inv=>{
     const safe=escapeHtml,t=invoiceAmounts(inv.data);
-    const label=inv.status!=='emise'?'Brouillon':inv.paid?'Payée':inv.sent_at?'Envoyée':'Émise';
+    const label=inv.status!=='emise'?'Brouillon':inv.paid?'Payée':'En attente de paiement';
     const category=inv.paid?'confirmed':inv.status==='emise'?'pending':'';
     return '<button type="button" class="booking-card" data-invoice-id="'+safe(inv.id)+'">'+
       '<div class="card-top"><span class="date">'+safe(inv.number||'Brouillon non numéroté')+'</span>'+
@@ -188,6 +188,7 @@ function renderInvoices(){
       '<h3>'+safe(inv.data.client_name||'Client à préciser')+'</h3>'+
       '<p>'+safe(inv.data.event_date?dateLabel(inv.data.event_date):'Date à préciser')+'</p>'+
       '<p>'+safe(t.pending?'Montant TTC à préciser':'Total TTC : '+invoiceMoney(t.ttc))+'</p>'+
+      (inv.sent_at?'<p class="small quote-email-sent">E-mail envoyé le '+safe(inv.sent_at)+'</p>':'')+
       '<p class="small">Ouvrir la facture →</p></button>';
   }).join(''):'<p class="empty">Aucune facture pour le moment. Clique sur « Nouvelle facture ».</p>';
 }
