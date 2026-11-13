@@ -121,3 +121,10 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
   #invoiceEditorPanel .official-quote-actions{display:grid;grid-template-columns:1fr}
   #invoiceEditorPanel .official-quote-actions button{width:100%}
 }
+
+/* Archivage réversible des factures émises : jamais de suppression comptable. */
+.invoice-list-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0 18px}
+.invoice-list-controls label{font-weight:750;margin:0}
+.invoice-list-controls select{min-width:160px;width:auto;max-width:100%}
+#archiveInvoiceDialog{max-width:570px}
+#confirmArchiveInvoice:disabled{opacity:.55;cursor:wait}
