@@ -181,10 +181,20 @@ function quoteProgressLabel(item) {
   if (Number(item.quote_progress) === 1) return 'Devis en préparation';
   return '';
 }
+function invoiceProgressLabel(item) {
+  if (!item || item.source !== 'site') return '';
+  const level=Number(item.invoice_progress);
+  if (level===4) return 'Facture réglée';
+  if (level===3) return 'Facture envoyée';
+  if (level===2) return 'Facture faite';
+  if (level===1) return 'Facture en préparation';
+  return '';
+}
 function itemCard(item) {
   const category = item.status === 'confirme' ? 'confirmed' :
     item.status === 'refuse' ? 'declined' : ['nouveau','option'].includes(item.status) ? 'pending' : '';
   const quoteLabel = quoteProgressLabel(item);
+  const invoiceLabel = invoiceProgressLabel(item);
   return '<button type="button" class="booking-card" data-open="'+escapeHtml(item.id)+'">' +
     '<div class="card-top"><span class="date">'+escapeHtml(dateLabel(item.event_date))+'</span>' +
     '<span class="tag '+category+'">'+escapeHtml(STATUSES[item.status] || item.status)+'</span></div>' +
@@ -192,6 +202,8 @@ function itemCard(item) {
     '<p>📍 '+escapeHtml(item.location)+'</p>' +
     (quoteLabel ? '<p class="booking-quote-indicator '+(Number(item.quote_progress) === 2 ? 'done' : 'draft')+'">'+
       escapeHtml(quoteLabel)+'</p>' : '') +
+    (invoiceLabel ? '<p class="booking-quote-indicator '+(Number(item.invoice_progress) >= 2 ? 'done' : 'draft')+'">'+
+      escapeHtml(invoiceLabel)+'</p>' : '') +
     (item.package ? '<p>🎸 '+escapeHtml(item.package)+'</p>' : '') +
     (item.quote_amount_cents != null ? '<p>💶 '+escapeHtml((item.quote_amount_cents/100).toLocaleString('fr-FR',{style:'currency',currency:'EUR'}))+'</p>' : '') +
     '<p class="small">Ouvrir la fiche →</p></button>';
@@ -266,6 +278,12 @@ function openEditor(item) {
     ? 'Devis fait : un devis finalisé est associé à cette demande (pas nécessairement envoyé).'
     : 'Devis en préparation : un brouillon est associé à cette demande.';
   $('bookingQuoteStatus').classList.toggle('done',quoteLabel === 'Devis fait');
+  const invoiceLabel = invoiceProgressLabel(item);
+  $('bookingInvoiceStatus').hidden = !invoiceLabel;
+  $('bookingInvoiceStatus').textContent = invoiceLabel
+    ? invoiceLabel + ' : suivi automatique de la facture associée à cette demande.'
+    : '';
+  $('bookingInvoiceStatus').classList.toggle('done',Number(item?.invoice_progress)>=2);
   $('printDraft').disabled = !item;
   // La suppression n'est proposée que pour les demandes issues du site.
   $('deleteRequest').hidden = !item || item.source !== 'site';
