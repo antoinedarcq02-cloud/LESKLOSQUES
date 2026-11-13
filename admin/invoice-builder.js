@@ -11,6 +11,12 @@ const invoiceFields=[
   'payment_terms','description','conditions','late_penalties','vat_mode'
 ];
 const invoiceMoney=cents=>(cents/100).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
+// Suivi : émise en attente d'envoi, envoyée en attente de paiement, puis payée.
+function invoiceStatusLabel(invoice){
+  if(!invoice||invoice.status!=='emise')return 'Brouillon';
+  if(invoice.paid)return 'Payée';
+  return invoice.sent_at?'En attente de paiement':'En attente d’envoi';
+}
 const invoiceDate=(value=new Date())=>[
   value.getFullYear(),String(value.getMonth()+1).padStart(2,'0'),String(value.getDate()).padStart(2,'0')
 ].join('-');
@@ -137,6 +143,8 @@ function lockInvoiceEditor(){
   $('sendInvoice').hidden=!issued;
   $('markInvoicePaid').hidden=!issued;
   $('markInvoicePaid').textContent=invoice?.paid?'Marquer comme non réglée':'Marquer comme payée';
+  // Rafraîchit l'en-tête après l'envoi, sans fermer et rouvrir la fiche.
+  if(invoice)$('invoiceNumber').textContent=(invoice.number||'Brouillon non numéroté')+' · '+invoiceStatusLabel(invoice);
   const when=invoice?.sent_at;
   $('invoiceEmailHistory').hidden=!when;
   $('invoiceEmailHistory').textContent=when
@@ -170,7 +178,7 @@ function fillInvoice(invoice=null){
     newInvoiceLine(line.label,line.qty,line.price_cents);
   $('invoiceEditorTitle').textContent=invoice?(invoice.number||'Brouillon de facture'):'Nouvelle facture';
   $('invoiceNumber').textContent=invoice
-    ?(invoice.number||'Brouillon non numéroté')+' · '+(invoice.paid?'Payée':invoice.status==='emise'?'En attente de paiement':'Brouillon')
+    ?(invoice.number||'Brouillon non numéroté')+' · '+invoiceStatusLabel(invoice)
     :'Un numéro officiel sera attribué uniquement à l’émission de la facture.';
   $('invoiceEditorPanel').hidden=false;
   updateInvoiceTotal();lockInvoiceEditor();
@@ -180,7 +188,7 @@ function renderInvoices(){
   const rows=invoiceState.invoices;
   $('invoiceList').innerHTML=rows.length?rows.map(inv=>{
     const safe=escapeHtml,t=invoiceAmounts(inv.data);
-    const label=inv.status!=='emise'?'Brouillon':inv.paid?'Payée':'En attente de paiement';
+    const label=invoiceStatusLabel(inv);
     const category=inv.paid?'confirmed':inv.status==='emise'?'pending':'';
     return '<button type="button" class="booking-card" data-invoice-id="'+safe(inv.id)+'">'+
       '<div class="card-top"><span class="date">'+safe(inv.number||'Brouillon non numéroté')+'</span>'+
@@ -295,7 +303,7 @@ $('confirmPayInvoice').addEventListener('click',async()=>{
       action:choice.paid?'mark_paid':'mark_unpaid',id:choice.id
     });
     paymentDialog.close();pendingInvoicePayment=null;
-    await loadInvoices();await refresh();fillInvoice(res.invoice);
+    await loadInvoices();await refresh();fillInvoice(invoiceState.invoices.find(i=>i.id===res.invoice.id)||res.invoice);
     notify(choice.paid?'Facture marquée comme payée.':'Facture marquée comme non réglée.');
   }catch(error){notify(error.message);}
   finally{button.disabled=false;}
