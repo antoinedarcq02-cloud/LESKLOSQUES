@@ -1,8 +1,9 @@
 import { getBusyDates } from "../_lib/google.js";
 import { rateLimit } from "../_lib/admin-auth.js";
+import { bookingEmailStatus, sendNewBookingEmails } from "../_lib/booking-email.js";
 
-// Les demandes arrivent d'abord dans D1 / Klosques Manager.
-// L'envoi d'un email pourra être ajouté plus tard, indépendamment du stockage.
+// Les demandes sont TOUJOURS enregistrées dans D1 avant les notifications.
+// Un problème de messagerie ne bloque jamais le formulaire.
 const ALLOWED_PACKAGES = new Set([
   "Formule auto gestion (sans DJ)",
   "Formule Auto gestion + DJ",
@@ -30,7 +31,7 @@ function validCalendarDate(value) {
 const errorResponse = (error, status) =>
   Response.json({ error }, { status, headers: { "Cache-Control": "no-store" } });
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost({ request, env, waitUntil }) {
   try {
     if (!env.DB)
       return errorResponse("Le service des demandes est momentanément indisponible. Contactez directement le groupe par e-mail.", 503);
@@ -93,13 +94,24 @@ export async function onRequestPost({ request, env }) {
         return errorResponse("Trop de demandes en peu de temps. Merci de réessayer dans 15 minutes.", 429);
     }
 
+    const bookingId=crypto.randomUUID();
     const inserted = await env.DB.prepare(`INSERT INTO bookings
       (id,source,name,email,phone,event_type,event_date,location,package,message,status)
       VALUES (?,?,?,?,?,?,?,?,?,?,'nouveau')`)
-      .bind(crypto.randomUUID(), "site", name, email, phone, eventType, date, location, pkg, message).run();
+      .bind(bookingId, "site", name, email, phone, eventType, date, location, pkg, message).run();
     // Ne confirmer au client qu'une demande réellement enregistrée.
     if (!inserted.success || Number(inserted.meta?.changes) !== 1)
       throw new Error("D1 : insertion non confirmée.");
+    const emailSettings=bookingEmailStatus(env);
+    if (emailSettings.alerts_ready || emailSettings.receipt_ready) {
+      const job=sendNewBookingEmails(env,bookingId,{
+        name,email,phone,location,date,package:pkg,eventType,message
+      }).catch(error=>console.warn("Notifications non envoyées",error?.message));
+      // Cloudflare poursuit l'envoi après la réponse ; une erreur d'email
+      // ne remet jamais en cause une demande déjà sauvegardée.
+      if (typeof waitUntil === "function") waitUntil(job);
+      else await job;
+    }
     return Response.json({ ok: true, saved: true }, {
       status: 201, headers: { "Cache-Control": "no-store" }
     });
