@@ -629,3 +629,28 @@ footer .footer-logo-white { display: block; width: 175px; height: 80px; max-widt
 }
 .video-replay-content span { color: #e0d8db; font-size: 13px; }
 .video-replay-content .button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+/* Lisibilité du formulaire de devis : calendrier plus visible et Retour contrasté. */
+#devis #bookingDate {
+  color-scheme: dark;
+  border-color: #85858e;
+}
+#devis #bookingDate::-webkit-calendar-picker-indicator {
+  opacity: 1;
+  filter: brightness(0) invert(1);
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+}
+#devis #quoteBack {
+  color: #21131a;
+  background: #f4e9ec;
+  border-color: #f4e9ec;
+  font-weight: 800;
+}
+#devis #quoteBack:hover,
+#devis #quoteBack:focus-visible {
+  color: #130b0e;
+  background: #ffffff;
+  border-color: #ffffff;
+}
