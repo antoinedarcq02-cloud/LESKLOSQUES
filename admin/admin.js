@@ -28,11 +28,19 @@ function jsonCall(path, method, data) {
   return callApi(path, {method,headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
 }
 function showScreen(name) {
-  for (const id of ['login','setup','passwordGate','workspace']) $(id).hidden = id !== name;
+  for (const id of ['login','setup','passwordGate','welcome','workspace']) $(id).hidden = id !== name;
   state.logged = name === 'workspace' || name === 'passwordGate';
   $('account').hidden = !state.logged;
 }
-async function signedIn(account) {
+async function welcomeMusician(displayName) {
+  const firstName = String(displayName || 'musicien').trim().split(/\s+/)[0].slice(0,30);
+  $('welcomeFirstName').textContent = firstName + ' !';
+  $('welcomeAnnounce').textContent = 'Bienvenue ' + firstName + ' ! Accès à Klosques Manager…';
+  showScreen('welcome');
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  await new Promise(resolve => window.setTimeout(resolve, reduceMotion ? 350 : 1650));
+}
+async function signedIn(account, showWelcome = false) {
   state.role = account.role;
   state.mustChangePassword = !!account.must_change_password;
   $('identity').textContent = account.display_name || account.username;
@@ -45,6 +53,7 @@ async function signedIn(account) {
     showScreen('passwordGate');
     return;
   }
+  if (showWelcome) await welcomeMusician(account.display_name || account.username);
   showScreen('workspace');
   await refresh();
   await loadSiteContent();
@@ -70,7 +79,7 @@ $('loginForm').addEventListener('submit', async event => {
       password:$('loginPassword').value
     });
     $('loginPassword').value = '';
-    await signedIn(account);
+    await signedIn(account, true);
   } catch (error) { notify(error.message); }
   finally { button.disabled = false; }
 });
@@ -93,7 +102,7 @@ $('setupForm').addEventListener('submit', async event => {
     $('setupKey').value = '';
     $('setupPassword').value = '';
     $('setupConfirm').value = '';
-    await signedIn(account);
+    await signedIn(account, true);
     notify('Premier compte créé. Tu peux maintenant ajouter les trois autres musiciens dans la rubrique Site.');
   } catch (error) { notify(error.message); }
   finally { button.disabled = false; }
@@ -134,6 +143,7 @@ $('passwordForm').addEventListener('submit', async event => {
     await jsonCall('/api/admin/password','POST',{current_password,new_password});
     form.reset();
     state.mustChangePassword = false;
+    await welcomeMusician($('identity').textContent);
     showScreen('workspace');
     await refresh();
     await loadSiteContent();
