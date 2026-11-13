@@ -57,17 +57,19 @@ function collectOfficialQuote() {
 }
 function officialTotals(data) {
   const ht = data.lines.reduce((total,line) => total + Math.round(line.qty * line.price_cents),0);
-  const percent = data.vat_mode === 'franchise' ? 0 : Number(data.vat_mode);
+  const pending = data.vat_mode === 'non_precise';
+  const percent = pending || data.vat_mode === 'franchise' ? 0 : Number(data.vat_mode);
   const vat = Math.round(ht * percent / 100);
-  return {ht,vat,ttc:ht+vat};
+  return {ht,vat,ttc:ht+vat,pending};
 }
 function updateOfficialTotals() {
   try {
     const data = collectOfficialQuote();
     const t = officialTotals(data);
-    $('quoteTotals').textContent =
-      'Total HT : ' + officialMoney(t.ht) + ' · TVA : ' + officialMoney(t.vat) +
-      ' · Total TTC : ' + officialMoney(t.ttc);
+    $('quoteTotals').textContent = t.pending
+      ? 'Total HT : ' + officialMoney(t.ht) + ' · TVA et TTC : à préciser'
+      : 'Total HT : ' + officialMoney(t.ht) + ' · TVA : ' + officialMoney(t.vat) +
+        ' · Total TTC : ' + officialMoney(t.ttc);
   } catch { $('quoteTotals').textContent = 'Vérifie les prix et les quantités.'; }
 }
 function populateBookingSelect() {
@@ -97,7 +99,7 @@ function fillQuoteForm(record = null) {
   const data = record?.data || {};
   for (const field of officialQuoteFields) {
     const input = officialQuoteForm.elements.namedItem(field);
-    if (input) input.value = data[field] || (field === 'vat_mode' ? 'franchise' : '');
+    if (input) input.value = data[field] || (field === 'vat_mode' ? 'non_precise' : '');
   }
   if (!record) {
     for (const key of officialIssuerFields) {
@@ -149,7 +151,7 @@ function renderOfficialQuotes() {
         (quote.status === 'finalise'?'Finalisé':'Brouillon')+'</span></div>' +
         '<h3>'+safe(quote.data.client_name || 'Client à préciser')+'</h3>' +
         '<p>'+safe(quote.data.event_date ? dateLabel(quote.data.event_date) : 'Date à préciser')+'</p>' +
-        '<p>Montant TTC : '+safe(officialMoney(officialTotals(quote.data).ttc))+'</p>' +
+        '<p>'+safe(officialTotals(quote.data).pending ? 'Montant TTC à préciser' : 'Montant TTC : '+officialMoney(officialTotals(quote.data).ttc))+'</p>' +
         '<p class="small">Ouvrir le devis →</p></button>';
       }).join('')
     : '<p class="empty">Aucun devis enregistré pour le moment. Clique sur « Nouveau devis ».</p>';
@@ -222,7 +224,9 @@ function quoteDocumentHtml(quote) {
     return '<tr><td>'+safe(line.label)+'</td><td>'+safe(String(line.qty))+
       '</td><td>'+safe(unit)+'</td><td>'+safe(officialMoney(Math.round(line.qty*line.price_cents)))+'</td></tr>';
   }).join('');
-  const vat = data.vat_mode === 'franchise' ? 'TVA non applicable, art. 293 B du CGI (sous réserve d’éligibilité)' : 'TVA '+safe(data.vat_mode)+' %';
+  const vat = total.pending ? 'Régime de TVA à préciser avant transmission'
+    : data.vat_mode === 'franchise' ? 'TVA non applicable, art. 293 B du CGI'
+    : 'TVA '+safe(data.vat_mode)+' %';
   const draftLabel = isFinal ? '' : '<p class="draft">BROUILLON INTERNE — À COMPLÉTER AVANT ENVOI</p>';
   return '<!doctype html><html lang="fr"><head><meta charset="utf-8">'+
     '<title>'+safe(quote.number)+' — Les Klosques</title>'+
@@ -244,8 +248,8 @@ function quoteDocumentHtml(quote) {
     '<table><thead><tr><th>Prestation</th><th>Quantité</th><th>Prix unitaire HT</th><th>Total HT</th></tr></thead>'+
     '<tbody>'+rows+'</tbody></table>'+
     '<div class="total"><div><span>Total HT</span><strong>'+safe(officialMoney(total.ht))+'</strong></div>'+
-    '<div><span>TVA</span><strong>'+safe(officialMoney(total.vat))+'</strong></div>'+
-    '<div class="grand"><span>TOTAL TTC</span><strong>'+safe(officialMoney(total.ttc))+'</strong></div></div>'+
+    '<div><span>TVA</span><strong>'+safe(total.pending ? 'À préciser' : officialMoney(total.vat))+'</strong></div>'+
+    '<div class="grand"><span>TOTAL TTC</span><strong>'+safe(total.pending ? 'À préciser' : officialMoney(total.ttc))+'</strong></div></div>'+
     '<p class="muted">'+vat+'</p>'+
     '<h2>Modalités de paiement</h2><p class="conditions">'+htmlLine(data.payment_terms)+'</p>'+
     (data.conditions?'<h2>Conditions particulières</h2><p class="conditions">'+htmlLine(data.conditions)+'</p>':'')+
