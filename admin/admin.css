@@ -44,3 +44,10 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
 @media(min-width:1025px){.welcome-bienvenue{font-size:55px}.welcome-first-name{font-size:72px}}
 @media(max-width:580px){.welcome-shell{padding:14px 2px;justify-content:center}.welcome-scene{width:100%;border-radius:0}.welcome-balloon{border-width:3px;box-shadow:none}.welcome-bienvenue{font-size:clamp(12px,4.1vw,24px)}.welcome-first-name{font-size:clamp(15px,6vw,31px)}.welcome-first-name::after{height:2px}.welcome-balloon::after{background-size:6px 6px;background-image:radial-gradient(#d41120 1px,transparent 1.2px)}}
 @media(prefers-reduced-motion:reduce){.welcome-progress span{animation:none;width:100%}}
+
+/* Suppression définitive : distinguer clairement l'action destructive. */
+.danger{border:1px solid #e66b7b;border-radius:11px;padding:12px 15px;background:#8d273b;color:#fff;font-weight:800;line-height:1.2}
+.danger:hover{background:#b12f47;border-color:#ff9daa}
+.danger:disabled{opacity:.55;cursor:wait}
+.delete-request-details{background:#2c2027;border:1px solid #72505b;border-radius:11px;padding:12px;overflow-wrap:anywhere;font-weight:700}
+#deleteRequestDialog{max-width:570px}
