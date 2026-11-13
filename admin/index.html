@@ -281,6 +281,7 @@
         <div class="modal-actions">
           <button type="button" class="danger" id="deleteInvoiceDraft" hidden>Supprimer le brouillon</button>
           <button type="button" class="secondary" id="archiveInvoice" hidden>Archiver la facture</button>
+          <button type="button" class="danger" id="resetInitialTestInvoice" hidden>Supprimer la facture de test</button>
           <button type="button" class="secondary" id="markInvoicePaid" hidden>Marquer comme payée</button>
           <button type="button" class="primary" id="sendInvoice" hidden>Envoyer la facture par e-mail</button>
         </div>
@@ -411,6 +412,25 @@
   <div class="modal-actions">
     <button type="button" class="secondary" id="cancelArchiveInvoice">Annuler</button>
     <button type="button" class="primary" id="confirmArchiveInvoice">Archiver la facture</button>
+  </div>
+</dialog>
+<dialog id="resetTestInvoiceDialog" aria-labelledby="resetTestInvoiceTitle">
+  <div class="modal-top"><h2 id="resetTestInvoiceTitle">Suppression exceptionnelle du test</h2></div>
+  <p id="resetTestInvoiceDescription">Cette opération supprimera la toute première facture de test et réinitialisera sa numérotation, uniquement si aucune autre facture n'a été émise.</p>
+  <p class="muted small">Une trace interne de l'opération est conservée. Cette option est réservée aux documents entièrement fictifs : elle ne doit jamais être utilisée pour une véritable opération commerciale.</p>
+  <p class="quote-lock-note">Confirme que cette facture n'a jamais été envoyée, remise, téléchargée pour usage comptable, payée ou enregistrée dans la comptabilité.</p>
+  <label class="invoice-test-confirmation">
+    <input id="resetTestInvoiceCheck" type="checkbox">
+    Je confirme qu'il s'agit uniquement d'un essai, sans aucune utilisation réelle.
+  </label>
+  <label class="invoice-test-confirmation">
+    Écris exactement SUPPRIMER TEST pour confirmer.
+    <input id="resetTestInvoiceText" type="text" autocomplete="off" maxlength="30" placeholder="SUPPRIMER TEST">
+  </label>
+  <p id="resetTestInvoiceError" class="quote-lock-note" hidden></p>
+  <div class="modal-actions">
+    <button type="button" id="cancelResetTestInvoice" class="secondary">Annuler</button>
+    <button type="button" id="confirmResetTestInvoice" class="danger" disabled>Supprimer définitivement le test</button>
   </div>
 </dialog>
 <dialog id="deleteInvoiceDialog" aria-labelledby="deleteInvoiceTitle">

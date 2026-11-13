@@ -1,6 +1,7 @@
 import { authorize, respond } from "../../_lib/admin-auth.js";
 import { ensureInvoiceTables, parseInvoice, validateIssuance, validInvoiceId, invoiceLocalDate, publicInvoice } from "../../_lib/invoice-core.js";
 import { quoteMailReady } from "../../_lib/quote-mail.js";
+import { eligibleInitialTestId } from "../../_lib/invoice-test-reset.js";
 
 const DRAFT_PROFILE="quote_issuer_profile";
 const validBooking=id=>id==null||id===""||validInvoiceId(id);
@@ -32,7 +33,9 @@ export async function onRequestGet(context){
       return {...invoice,sent_at:sent?.sent_at||null,sent_to:sent?.recipient||null,
         archived:Number(r.archived)===1,archived_at:r.archived_at||null};
     });
-    return respond({invoices,issuer,mail_ready:quoteMailReady(context.env)});
+    const test_reset_candidate_id=user.user?.role==='admin'
+      ?await eligibleInitialTestId(DB):null;
+    return respond({invoices,issuer,mail_ready:quoteMailReady(context.env),test_reset_candidate_id});
   }catch(error){
     console.warn("Erreur liste factures",error?.message);
     return respond({error:"Factures temporairement indisponibles."},503);

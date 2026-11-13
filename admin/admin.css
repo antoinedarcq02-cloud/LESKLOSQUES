@@ -128,3 +128,15 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
 .invoice-list-controls select{min-width:160px;width:auto;max-width:100%}
 #archiveInvoiceDialog{max-width:570px}
 #confirmArchiveInvoice:disabled{opacity:.55;cursor:wait}
+
+/* Confirmation renforcée : effacement exceptionnel du test initial uniquement. */
+#resetTestInvoiceDialog {max-width:580px}
+#resetTestInvoiceDialog .invoice-test-confirmation {display:block;margin:14px 0}
+#resetTestInvoiceDialog .invoice-test-confirmation input[type="checkbox"] {
+  display:inline-block;vertical-align:middle;width:19px;height:19px;
+  margin:0 7px 0 0;accent-color:#f07880
+}
+#resetTestInvoiceDialog .invoice-test-confirmation input[type="text"] {
+  display:block;margin-top:7px;max-width:270px
+}
+#confirmResetTestInvoice:disabled {opacity:.5;cursor:not-allowed}
