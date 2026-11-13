@@ -93,9 +93,9 @@ export async function onRequestPost({ request, env }) {
         return errorResponse("Trop de demandes en peu de temps. Merci de réessayer dans 15 minutes.", 429);
     }
 
-    const inserted = await env.DB.prepare(\`INSERT INTO bookings
+    const inserted = await env.DB.prepare(`INSERT INTO bookings
       (id,source,name,email,phone,event_type,event_date,location,package,message,status)
-      VALUES (?,?,?,?,?,?,?,?,?,?,'nouveau')\`)
+      VALUES (?,?,?,?,?,?,?,?,?,?,'nouveau')`)
       .bind(crypto.randomUUID(), "site", name, email, phone, eventType, date, location, pkg, message).run();
     // Ne confirmer au client qu'une demande réellement enregistrée.
     if (!inserted.success || Number(inserted.meta?.changes) !== 1)
