@@ -97,7 +97,7 @@ export async function onRequestPost(context){
       "Date prévue : "+(data.event_date||"à préciser"),
       "Lieu : "+(data.event_location||"à préciser"),
       "",
-      "Pour toute question, répondez simplement à ce message.",
+      "Merci de nous confirmer par retour d'e-mail si vous acceptez ce devis, ou de nous contacter pour toute question.",
       "",
       "Bien cordialement,",
       "Les Klosques",
@@ -107,7 +107,7 @@ export async function onRequestPost(context){
     const html="<p>Bonjour,</p><p>Vous trouverez en pièce jointe notre devis <strong>"+
       safe(number)+"</strong> concernant votre événement.</p><p>Date prévue : "+
       safe(data.event_date||"à préciser")+"<br>Lieu : "+safe(data.event_location||"à préciser")+
-      "</p><p>Pour toute question, répondez simplement à ce message.</p>"+
+      "</p><p>Merci de nous confirmer par retour d'e-mail si vous acceptez ce devis, ou de nous contacter pour toute question.</p>"+
       "<p>Bien cordialement,<br><strong>Les Klosques</strong><br>"+
       safe(REPLY_TO)+"</p>";
     let receipt;
