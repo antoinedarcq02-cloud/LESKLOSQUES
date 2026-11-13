@@ -1,5 +1,6 @@
 import { authorize, respond, cleanText, validDate } from "../../_lib/admin-auth.js";
 import { ensureQuotesTable } from "../../_lib/quote-table.js";
+import { quoteMailReady, ensureQuoteEmailLog } from "../../_lib/quote-mail.js";
 
 // Devis enregistrés dans D1 : création de la table lors du premier accès authentifié.
 // Le numéro est basé sur la clé primaire croissante ; une fois finalisé, le devis n'est plus modifiable.
@@ -93,15 +94,24 @@ export async function onRequestGet(context) {
   if (user.error) return user.error;
   try {
     await ensureQuotesTable(context.env.DB);
-    const [rows, profile] = await Promise.all([
+    await ensureQuoteEmailLog(context.env.DB);
+    const [rows, profile, sends] = await Promise.all([
       context.env.DB.prepare("SELECT * FROM official_quotes ORDER BY id DESC LIMIT 200").all(),
-      context.env.DB.prepare("SELECT value FROM site_content WHERE key=?").bind(PROFILE_KEY).first()
+      context.env.DB.prepare("SELECT value FROM site_content WHERE key=?").bind(PROFILE_KEY).first(),
+      context.env.DB.prepare("SELECT quote_id,recipient,sent_at FROM quote_email_sends ORDER BY id DESC LIMIT 500").all()
     ]);
     let issuer = {};
     if (profile?.value) {
       try { issuer = JSON.parse(profile.value); } catch { issuer = {}; }
     }
-    return respond({ quotes:(rows.results || []).map(cleanRow), issuer });
+    const lastSent = new Map();
+    for (const send of sends.results || [])
+      if (!lastSent.has(send.quote_id)) lastSent.set(send.quote_id,send);
+    const quotes=(rows.results||[]).map(row => {
+      const quote=cleanRow(row),sent=lastSent.get(row.id);
+      return { ...quote, sent_at:sent?.sent_at || null, sent_to:sent?.recipient || null };
+    });
+    return respond({ quotes, issuer, email_ready:quoteMailReady(context.env) });
   } catch (error) {
     console.warn("Erreur chargement devis", error?.message);
     return respond({ error:"Impossible d'accéder aux devis dans la base D1." }, 503);
