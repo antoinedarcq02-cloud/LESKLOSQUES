@@ -57,3 +57,26 @@ export async function onRequestPatch(context) {
     return respond({ error: "Enregistrement impossible." }, 503);
   }
 }
+
+
+// Supprimer uniquement une demande issue du formulaire public.
+// Chaque suppression exige une session de musicien et une requête de même origine.
+export async function onRequestDelete(context) {
+  const access = await authorize(context, true);
+  if (access.error) return access.error;
+  const id = context.params.id;
+  if (!/^[\da-f-]{36}$/.test(id || ""))
+    return respond({ error: "Identifiant invalide." }, 400);
+  try {
+    // Le filtre source=site évite toute suppression accidentelle de concerts créés manuellement.
+    const result = await context.env.DB.prepare(
+      "DELETE FROM bookings WHERE id=? AND source='site'"
+    ).bind(id).run();
+    if (!result.meta?.changes)
+      return respond({ error: "Demande introuvable ou suppression impossible pour une fiche concert manuelle." }, 404);
+    return respond({ ok: true, deleted: true });
+  } catch (error) {
+    console.warn("Erreur suppression demande client", error?.message || error);
+    return respond({ error: "Impossible de supprimer cette demande pour le moment." }, 503);
+  }
+}
