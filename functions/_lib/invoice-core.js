@@ -22,7 +22,8 @@ export async function ensureInvoiceTables(DB){
   await DB.batch([
     DB.prepare("CREATE TABLE IF NOT EXISTS official_invoices (id TEXT PRIMARY KEY,booking_id TEXT,quote_id INTEGER,data_json TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'brouillon' CHECK(status IN ('brouillon','emise')),number INTEGER UNIQUE,issued_at TEXT,paid INTEGER NOT NULL DEFAULT 0 CHECK(paid IN (0,1)),paid_at TEXT,created_at TEXT NOT NULL DEFAULT (datetime('now')),updated_at TEXT NOT NULL DEFAULT (datetime('now')),updated_by TEXT NOT NULL)"),
     DB.prepare("CREATE TABLE IF NOT EXISTS invoice_sequence (number INTEGER PRIMARY KEY AUTOINCREMENT,invoice_id TEXT UNIQUE NOT NULL)"),
-    DB.prepare("CREATE TABLE IF NOT EXISTS invoice_email_sends (id INTEGER PRIMARY KEY AUTOINCREMENT,invoice_id TEXT NOT NULL,recipient TEXT NOT NULL,provider TEXT NOT NULL,message_id TEXT,sent_by TEXT NOT NULL,sent_at TEXT NOT NULL DEFAULT (datetime('now')))")
+    DB.prepare("CREATE TABLE IF NOT EXISTS invoice_email_sends (id INTEGER PRIMARY KEY AUTOINCREMENT,invoice_id TEXT NOT NULL,recipient TEXT NOT NULL,provider TEXT NOT NULL,message_id TEXT,sent_by TEXT NOT NULL,sent_at TEXT NOT NULL DEFAULT (datetime('now')))"),
+    DB.prepare("CREATE TABLE IF NOT EXISTS invoice_archives (invoice_id TEXT PRIMARY KEY, archived INTEGER NOT NULL CHECK(archived IN (0,1)), archived_at TEXT, archived_by TEXT NOT NULL, changed_at TEXT NOT NULL DEFAULT (datetime('now')), changed_by TEXT NOT NULL)")
   ]);
 }
 export function parseInvoice(data){
