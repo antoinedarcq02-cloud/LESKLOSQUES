@@ -1,0 +1,22 @@
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#101014;color:#f7f4f5;font-size:16px}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 90% 0%,#3a1523,transparent 36%),#101014}
+.page{max-width:940px;margin:0 auto;padding:clamp(16px,4vw,50px)}.heading{margin-bottom:30px}
+h1{font-size:clamp(1.8rem,5vw,2.8rem);margin:12px 0}h2{font-size:1.18rem;margin:0}
+p,li{line-height:1.6;color:#d6cbd0}.eyebrow{font-size:.8rem;color:#fb7b8e;font-weight:700;letter-spacing:.15em}
+a{color:#ff9cad}.back{text-decoration:none;display:inline-block;margin-bottom:22px}.step{background:#1c1a21;border:1px solid #463a46;border-radius:18px;padding:clamp(18px,3vw,30px);margin:22px 0}
+.step-head{display:flex;align-items:center;gap:13px;margin-bottom:13px}
+.number{flex:0 0 auto;background:#bd324a;width:35px;height:35px;border-radius:50%;display:grid;place-items:center;font-weight:800}
+ol{padding-left:22px}li{margin:8px 0}code{font-size:.9em;color:#ffc9d2;overflow-wrap:anywhere}
+label{display:block;font-weight:650;margin:13px 0 7px}.optional,.hint{font-weight:400;color:#bfb1bb;font-size:.87rem}
+input[type=text],input[type=password],input:not([type]),input[type=email]{width:100%;min-width:0;padding:13px 14px;border-radius:10px;border:1px solid #76636b;background:#130f15;color:#fff;font:inherit}
+input:focus{outline:2px solid #ff8e9e;outline-offset:2px}button{font:inherit;border-radius:10px;padding:12px 15px;cursor:pointer;font-weight:700}
+button:disabled{opacity:.65;cursor:progress}.secondary{background:#332731;color:#fff;border:1px solid #79545e;margin:8px 8px 0 0}
+.secondary:hover{background:#4a343e}.primary{background:#d43c52;color:white;border:0;min-height:52px}
+.primary:hover{background:#ef4d64}.input-actions{display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px}.input-actions input{flex:1 1 250px}
+.musicians{display:grid;gap:16px}.musician{border:1px solid #52404d;border-radius:14px;padding:18px;margin:0;min-width:0}
+legend{font-weight:800;color:#fff;padding:0 8px}.musician legend small{font-size:.7rem;color:#ffaabc}.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ack{display:flex;gap:12px;align-items:flex-start;font-weight:400}.ack input{margin-top:6px;transform:scale(1.2)}
+.feedback{min-height:24px;color:#ffc0b9;font-weight:700}.feedback.good{color:#aae9b4}
+.success{background:#163123;border:1px solid #4bac71;padding:20px;border-radius:14px;margin-top:16px}
+.success h2{color:#b6ffca}footer{font-size:.8rem;color:#9f919c;text-align:center;margin:30px 0}
+@media(max-width:650px){.two{grid-template-columns:1fr}.input-actions{display:block}.input-actions button{width:100%}.musician{padding:12px}}
