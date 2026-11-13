@@ -3,3 +3,7 @@
   X-Frame-Options: DENY
   Referrer-Policy: no-referrer
   Cache-Control: no-store
+
+/admin/recuperer.html
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; frame-ancestors 'none'
+  Cache-Control: no-store
