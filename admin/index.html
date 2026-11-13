@@ -199,6 +199,13 @@
         </div>
         <button type="button" class="primary" id="newInvoice">+ Nouvelle facture</button>
       </div>
+      <div class="invoice-list-controls">
+        <label for="invoiceVisibility">Afficher les factures</label>
+        <select id="invoiceVisibility" aria-label="Filtrer les factures">
+          <option value="current">En cours</option>
+          <option value="archived">Archives</option>
+        </select>
+      </div>
       <div id="invoiceList" class="card-list" aria-live="polite"></div>
       <section id="invoiceEditorPanel" class="panel official-quote-panel" hidden>
         <div class="section-header">
@@ -206,7 +213,7 @@
           <button type="button" class="secondary" id="closeInvoice">Fermer</button>
         </div>
         <p id="invoiceNumber" class="muted small">Un numéro officiel sera attribué uniquement lors de l'émission.</p>
-        <p id="invoiceLocked" class="quote-lock-note" hidden>Cette facture est émise et ne peut plus être modifiée ni supprimée. Si elle est erronée, il faut établir une facture rectificative ou un avoir selon la situation.</p>
+        <p id="invoiceLocked" class="quote-lock-note" hidden>Cette facture est émise et ne peut plus être modifiée ni supprimée. Tu peux l'archiver pour la retirer de la liste courante, mais elle restera accessible dans les archives. Si elle est erronée, il faut établir une facture rectificative ou un avoir selon la situation.</p>
         <form id="invoiceForm">
           <h3>1. Client et prestation</h3>
           <label>Demande client (facultative)
@@ -273,6 +280,7 @@
         </form>
         <div class="modal-actions">
           <button type="button" class="danger" id="deleteInvoiceDraft" hidden>Supprimer le brouillon</button>
+          <button type="button" class="secondary" id="archiveInvoice" hidden>Archiver la facture</button>
           <button type="button" class="secondary" id="markInvoicePaid" hidden>Marquer comme payée</button>
           <button type="button" class="primary" id="sendInvoice" hidden>Envoyer la facture par e-mail</button>
         </div>
@@ -393,6 +401,16 @@
   <div class="modal-actions">
     <button type="button" class="secondary" id="cancelSendQuote">Annuler</button>
     <button type="button" class="primary" id="confirmSendQuote">Oui, envoyer le devis</button>
+  </div>
+</dialog>
+<dialog id="archiveInvoiceDialog" aria-labelledby="archiveInvoiceTitle">
+  <div class="modal-top"><h2 id="archiveInvoiceTitle">Archiver la facture ?</h2></div>
+  <p id="archiveInvoiceQuestion">Veux-tu retirer cette facture de la liste courante ?</p>
+  <p id="archiveInvoiceDetails" class="delete-request-details"></p>
+  <p class="muted small">Le document, son numéro, son PDF et son historique d'envoi seront conservés. Tu pourras le retrouver dans « Archives » et le restaurer.</p>
+  <div class="modal-actions">
+    <button type="button" class="secondary" id="cancelArchiveInvoice">Annuler</button>
+    <button type="button" class="primary" id="confirmArchiveInvoice">Archiver la facture</button>
   </div>
 </dialog>
 <dialog id="deleteInvoiceDialog" aria-labelledby="deleteInvoiceTitle">
