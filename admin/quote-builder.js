@@ -120,7 +120,7 @@ function fillQuoteForm(record = null) {
   if (linked && !Array.from($('quoteBooking').options).some(option => option.value === linked))
     $('quoteBooking').add(new Option('Demande archivée',linked));
   $('quoteBooking').value = linked;
-  const lines = data.lines?.length ? data.lines : [{label:'Prestation musicale Les Klosques',qty:1,price_cents:0}];
+  const lines = data.lines?.length ? data.lines : [{label:'',qty:1,price_cents:0}];
   for (const line of lines) quoteLine(line.label,line.qty,line.price_cents);
   $('quoteFormTitle').textContent = record ? 'Devis '+record.number : 'Nouveau devis';
   $('quoteNumber').textContent = record
@@ -142,10 +142,8 @@ function fillFromBooking() {
   };
   for (const [key,value] of Object.entries(fields))
     if (value) officialQuoteForm.elements.namedItem(key).value = value;
-  if (booking.package) {
-    $('quoteLines').replaceChildren();
-    quoteLine(booking.package,1,booking.quote_amount_cents || 0);
-  }
+  // Les prestations et leurs tarifs restent libres : ne pas recopier
+  // la formule choisie sur le site dans les lignes du devis.
   updateOfficialTotals();
 }
 function renderOfficialQuotes() {
