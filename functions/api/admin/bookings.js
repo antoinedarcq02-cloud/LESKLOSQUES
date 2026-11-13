@@ -19,6 +19,7 @@ export async function onRequestGet(context) {
         ), 0) AS quote_progress,
         COALESCE((
           SELECT MAX(CASE
+            WHEN i.status='emise' AND i.paid=1 THEN 4
             WHEN i.status='emise' AND EXISTS (
               SELECT 1 FROM invoice_email_sends e WHERE e.invoice_id=i.id
             ) THEN 3
