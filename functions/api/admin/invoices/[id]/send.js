@@ -11,7 +11,7 @@ function safe(s){
   }[c]));
 }
 async function deliver(env,mail){
-  if(env.EMAIL && env.QUOTE_FROM_EMAIL){
+  if(!(env.RESEND_API_KEY && env.RESEND_FROM_EMAIL) && env.EMAIL && env.QUOTE_FROM_EMAIL){
     const result=await env.EMAIL.send({
       from:{name:"Les Klosques",email:env.QUOTE_FROM_EMAIL},
       to:mail.to,replyTo:REPLY_TO,subject:mail.subject,
