@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111014">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Klosques Manager — Espace privé</title>
+<link rel="icon" href="/assets/favicon-klosques.png">
+<link rel="stylesheet" href="/admin/admin.css">
+<script src="/admin/admin.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <a class="logo" href="/"><img src="/assets/favicon-klosques.png" width="42" height="42" alt=""><span>LES KLOSQUES<small>MANAGER</small></span></a>
+  <div id="account" class="account" hidden><span id="identity"></span><button type="button" id="changeMyPassword" class="small-button">Mot de passe</button><button type="button" id="logoutBtn" class="small-button">Sortir</button></div>
+</header>
+<div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+<section id="login" class="login-shell" hidden>
+  <div class="panel login-panel">
+    <p class="eyebrow">ACCÈS RÉSERVÉ AUX QUATRE MUSICIENS</p>
+    <h1>Bienvenue dans Klosques Manager</h1>
+    <p class="muted">Connecte-toi avec ton identifiant et ton mot de passe personnel. Aucun code par email.</p>
+    <form id="loginForm">
+      <label for="loginUsername">Identifiant</label>
+      <input id="loginUsername" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="24" required placeholder="ex. antoine">
+      <label for="loginPassword">Mot de passe</label>
+      <input id="loginPassword" name="password" type="password" autocomplete="current-password" required placeholder="Ton mot de passe personnel">
+      <button class="primary full" id="loginBtn" type="submit">Se connecter</button>
+    </form>
+    <p class="muted small">Chaque musicien possède son propre compte. Si tu as oublié ton mot de passe, contacte la personne qui gère les comptes.</p>
+  </div>
+</section>
+<section id="setup" class="login-shell" hidden>
+  <div class="panel login-panel">
+    <p class="eyebrow">PREMIÈRE ACTIVATION UNIQUEMENT</p>
+    <h1>Créer le premier compte</h1>
+    <p class="muted">Le premier compte sera gestionnaire des accès. La clé d'initialisation est à configurer comme secret temporaire dans Cloudflare et à supprimer après cette étape.</p>
+    <form id="setupForm">
+      <label for="setupKey">Clé d'initialisation Cloudflare</label>
+      <input type="password" id="setupKey" name="setup_key" autocomplete="off" required placeholder="ADMIN_SETUP_KEY">
+      <label for="setupUsername">Identifiant du premier musicien</label>
+      <input id="setupUsername" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" pattern="[a-z][a-z0-9_-]{2,23}" maxlength="24" required placeholder="ex. antoine">
+      <label for="setupDisplay">Prénom affiché</label>
+      <input id="setupDisplay" name="display_name" maxlength="60" required placeholder="ex. Antoine">
+      <label for="setupPassword">Mot de passe personnel (15 caractères minimum)</label>
+      <input id="setupPassword" name="password" type="password" autocomplete="new-password" minlength="15" maxlength="128" required>
+      <label for="setupConfirm">Confirmer le mot de passe</label>
+      <input id="setupConfirm" name="confirm" type="password" autocomplete="new-password" minlength="15" maxlength="128" required>
+      <button class="primary full" id="setupSubmit" type="submit">Créer le premier compte</button>
+    </form>
+  </div>
+</section>
+<section id="passwordGate" class="login-shell" hidden>
+  <div class="panel login-panel">
+    <p class="eyebrow">SÉCURITÉ DU COMPTE</p>
+    <h1>Changer mon mot de passe</h1>
+    <p id="passwordExplanation" class="muted">Choisis un mot de passe personnel d'au moins 15 caractères.</p>
+    <form id="passwordForm">
+      <label for="currentPassword">Mot de passe actuel</label>
+      <input id="currentPassword" name="current_password" type="password" autocomplete="current-password" required>
+      <label for="newPassword">Nouveau mot de passe</label>
+      <input id="newPassword" name="new_password" type="password" autocomplete="new-password" minlength="15" maxlength="128" required>
+      <label for="newPasswordConfirm">Confirmer le nouveau mot de passe</label>
+      <input id="newPasswordConfirm" name="confirm" type="password" autocomplete="new-password" minlength="15" maxlength="128" required>
+      <button class="primary full" id="changePasswordSubmit" type="submit">Enregistrer mon nouveau mot de passe</button>
+      <button type="button" class="text-button" id="cancelPasswordChange">Revenir à l'administration</button>
+    </form>
+  </div>
+</section>
+<section id="welcome" class="welcome-shell" hidden aria-label="Message de bienvenue">
+  <div class="welcome-scene" role="img" aria-label="Un musicien souriant fait un pouce levé devant une bulle de bande dessinée">
+    <img class="welcome-backdrop" src="/admin/klosques-welcome.webp" alt="" width="1536" height="1024" loading="eager">
+    <div id="welcomeBalloon" class="welcome-balloon" aria-hidden="true">
+      <span class="welcome-bienvenue">Bienvenue</span>
+      <strong id="welcomeFirstName" class="welcome-first-name">Antoine !</strong>
+    </div>
+    <div class="welcome-progress" aria-hidden="true"><span></span></div>
+  </div>
+  <p class="welcome-screenreader" id="welcomeAnnounce" role="status" aria-live="polite">Bienvenue ! Accès à Klosques Manager…</p>
+</section>
+<div id="workspace" class="workspace" hidden>
+  <main class="content">
+    <div class="heading"><div><p class="eyebrow">ESPACE PRIVÉ DES MUSICIENS</p><h1 id="pageTitle">Tableau de bord</h1></div><button id="newBooking" class="primary" type="button">+ Concert</button></div>
+    <section id="panel-home" class="page">
+      <div class="stats">
+        <div class="stat"><span>Demandes à traiter</span><strong id="statRequests">0</strong></div>
+        <div class="stat"><span>Concerts confirmés</span><strong id="statConcerts">0</strong></div>
+        <div class="stat"><span>Devis envoyés</span><strong id="statQuotes">0</strong></div>
+        <div class="stat"><span>Dates en option</span><strong id="statOptions">0</strong></div>
+      </div>
+      <div class="section-header"><h2>À suivre</h2><span class="muted small">Demandes et concerts récents</span></div>
+      <div id="homeList" class="card-list"></div>
+    </section>
+    <section id="panel-agenda" class="page" hidden>
+      <div class="section-header"><h2>Agenda commun</h2><input id="agendaMonth" aria-label="Mois affiché" type="month"></div>
+      <p class="muted">Les dates en option et confirmées sont visibles ici. Aucune gestion de disponibilité individuelle.</p>
+      <div id="calendar" class="calendar"></div>
+      <div id="agendaList" class="card-list"></div>
+    </section>
+    <section id="panel-demandes" class="page" hidden>
+      <div class="section-header"><h2>Demandes clients</h2><select id="requestFilter" aria-label="Filtrer les demandes"><option value="all">Toutes</option><option value="nouveau">Nouvelles</option><option value="en_discussion">En discussion</option><option value="devis_envoye">Devis envoyé</option><option value="refuse">Refusées</option></select></div>
+      <div id="requestsList" class="card-list"></div>
+    </section>
+    <section id="panel-concerts" class="page" hidden>
+      <div class="section-header"><h2>Fiches concerts</h2><select id="concertFilter" aria-label="Filtrer les concerts"><option value="all">Tous les concerts</option><option value="option">En option</option><option value="confirme">Confirmés</option><option value="termine">Terminés</option></select></div>
+      <div id="concertsList" class="card-list"></div>
+    </section>
+    <section id="panel-devis" class="page" hidden>
+      <h2>Suivi des devis</h2>
+      <p class="muted">Ouvre un dossier pour renseigner le montant proposé, puis imprimer une proposition brouillon au format PDF. L'envoi et la validation restent manuels.</p>
+      <div id="quotesList" class="card-list"></div>
+    </section>
+    <section id="panel-site" class="page" hidden>
+      <div class="panel">
+        <h2>Modifier les textes et les vidéos du site</h2>
+        <p class="muted">Les quatre musiciens autorisés peuvent mettre à jour les textes principaux et les liens vidéo. Les photos restent gérées dans le dépôt GitHub pour le moment.</p>
+        <form id="siteContentForm">
+          <label>Accroche de l'accueil<input name="hero_lead" maxlength="180" value="Du son, de l’énergie et une bonne dose de fête."></label>
+          <label>Présentation courte de l'accueil<textarea name="hero_copy" maxlength="500" rows="3">Un groupe pop/rock festif pour faire vibrer vos soirées, fêtes privées, événements associatifs et rendez-vous publics.</textarea></label>
+          <label>Texte de présentation du groupe<textarea name="intro_text" maxlength="650" rows="4">Originaires du pays catalan, Les Klosques sont quatre musiciens réunis par une même envie : partager leur passion de la musique et faire vibrer le public avec des reprises festives des plus grands tubes des années 70 à aujourd’hui !</textarea></label>
+          <h2>Vidéos</h2>
+          <p class="muted small">Colle le lien YouTube ou son identifiant. Le lien du Reel Facebook est également accepté.</p>
+          <label>Vidéo YouTube 1<input name="video_1" value="kUTlcbnGmgw"></label>
+          <label>Vidéo YouTube 2<input name="video_2" value="njdBF5e3U4s"></label>
+          <label>Vidéo YouTube 3<input name="video_3" value="JQyRAMXzBfA"></label>
+          <label>Reel Facebook<input name="facebook_reel" value="1098640118264832"></label>
+          <div class="modal-actions"><a class="secondary link" href="/" target="_blank" rel="noopener">Voir le site ↗</a><button class="primary" type="submit">Publier les modifications</button></div>
+        </form>
+      </div>
+      <div class="panel"><h2>Organisation du groupe</h2><p>Aucun vote ni saisie de disponibilités personnelles n'est prévu. Vous échangez entre vous en dehors du site.</p></div>
+      <div class="panel" id="membersPanel" hidden>
+        <h2>Comptes des quatre musiciens</h2>
+        <p class="muted">Gestion réservée au premier compte administrateur. Chaque musicien dispose d'un mot de passe différent et peut le changer.</p>
+        <div id="memberList" class="member-list"></div>
+        <h3>Ajouter un musicien</h3>
+        <form id="memberCreateForm">
+          <div class="field-row">
+            <label>Identifiant (sans accents)<input name="username" required autocomplete="off" autocapitalize="none" spellcheck="false" pattern="[a-z][a-z0-9_-]{2,23}" maxlength="24" placeholder="ex. greg"></label>
+            <label>Prénom<input name="display_name" required maxlength="60" placeholder="ex. Greg"></label>
+          </div>
+          <label>Mot de passe provisoire individuel (15 caractères minimum)<input name="password" type="password" autocomplete="new-password" minlength="15" maxlength="128" required></label>
+          <label>Confirme ton propre mot de passe administrateur<input name="admin_password" type="password" autocomplete="current-password" required></label>
+          <button class="primary" type="submit">Ajouter ce musicien</button>
+        </form>
+        <h3>Réinitialiser le mot de passe d'un musicien</h3>
+        <form id="memberResetForm">
+          <label>Compte<select id="memberResetUsername" name="username" required></select></label>
+          <label>Nouveau mot de passe provisoire (15 caractères minimum)<input name="password" type="password" autocomplete="new-password" minlength="15" maxlength="128" required></label>
+          <label>Confirme ton mot de passe administrateur<input name="admin_password" type="password" autocomplete="current-password" required></label>
+          <button class="secondary" type="submit">Réinitialiser le mot de passe</button>
+        </form>
+        <p class="muted small">Communique chaque mot de passe provisoire directement au musicien concerné, par un moyen privé. Il devra le changer à sa première connexion.</p>
+      </div>
+
+    </section>
+  </main>
+  <nav class="bottom-nav" aria-label="Navigation de l'administration">
+    <button type="button" data-tab="home" class="active"><span>⌂</span>Accueil</button>
+    <button type="button" data-tab="agenda"><span>▦</span>Agenda</button>
+    <button type="button" data-tab="demandes"><span>✉</span>Demandes</button>
+    <button type="button" data-tab="concerts"><span>♫</span>Concerts</button>
+    <button type="button" data-tab="devis"><span>€</span>Devis</button>
+    <button type="button" data-tab="site"><span>⚙</span>Site</button>
+  </nav>
+</div>
+<dialog id="bookingDialog" aria-labelledby="dialogTitle">
+  <form id="bookingEditor">
+    <div class="modal-top"><h2 id="dialogTitle">Fiche concert</h2><button type="button" id="closeDialog" class="small-button" aria-label="Fermer">✕</button></div>
+    <div class="field-row">
+      <label>Nom / organisateur<input name="name" maxlength="150" required></label>
+      <label>Statut<select name="status">
+        <option value="nouveau">Nouvelle demande</option><option value="en_discussion">En discussion</option>
+        <option value="devis_envoye">Devis envoyé</option><option value="option">En option</option>
+        <option value="confirme">Confirmé</option><option value="termine">Terminé</option><option value="refuse">Refusé</option>
+      </select></label>
+    </div>
+    <div class="field-row"><label>Date<input type="date" name="event_date" required></label><label>Lieu<input name="location" maxlength="200" required></label></div>
+    <label>Prestation<input name="package" maxlength="200" placeholder="Choisir la formule ou préciser"></label>
+    <div class="field-row"><label>E-mail du client<input name="email" type="email" maxlength="254"></label><label>Téléphone<input name="phone" maxlength="50"></label></div>
+    <label>Type d'événement<input name="event_type" maxlength="100"></label>
+    <label>Détails de la demande<textarea name="message" rows="3" maxlength="2500"></textarea></label>
+    <label>Notes internes (visibles des 4 musiciens)<textarea name="notes" rows="4" maxlength="3000"></textarea></label>
+    <label>Montant proposé (€ TTC ou HT selon vos mentions)<input name="quote_euros" type="number" min="0" max="1000000" step="0.01" placeholder="Non renseigné"></label>
+    <p id="editorMeta" class="muted small"></p>
+    <div class="modal-actions">
+      <button type="button" id="printDraft" class="secondary">Proposition PDF (brouillon)</button>
+      <button type="submit" id="saveBooking" class="primary">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+</body>
+</html>
