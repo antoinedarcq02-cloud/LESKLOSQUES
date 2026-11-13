@@ -91,6 +91,10 @@
         <div class="stat"><span>Devis envoyés</span><strong id="statQuotes">0</strong></div>
         <div class="stat"><span>Dates en option</span><strong id="statOptions">0</strong></div>
       </div>
+      <div id="newRequestsPrompt" class="panel new-requests-prompt" hidden>
+        <p id="newRequestsPromptText"></p>
+        <button type="button" id="viewNewRequests" class="secondary">Voir les nouvelles demandes</button>
+      </div>
       <div class="section-header"><h2>À suivre</h2><span class="muted small">Demandes et concerts récents</span></div>
       <div id="homeList" class="card-list"></div>
     </section>
@@ -305,6 +309,20 @@
           <label>Reel Facebook<input name="facebook_reel" value="1098640118264832"></label>
           <div class="modal-actions"><a class="secondary link" href="/" target="_blank" rel="noopener">Voir le site ↗</a><button class="primary" type="submit">Publier les modifications</button></div>
         </form>
+      </div>
+      <div class="panel email-settings-panel" id="emailSettingsPanel" hidden>
+        <h2>Messagerie et notifications</h2>
+        <p class="muted">État de la configuration d'envoi pour les nouvelles demandes, les devis et les factures. Les secrets restent uniquement dans Cloudflare.</p>
+        <div id="emailConfigDetails" class="email-config-details" aria-live="polite">
+          <p class="muted">Vérification de la configuration…</p>
+        </div>
+        <p class="muted small">Pour les envois avec Resend : ajoute un domaine d'expédition vérifié, puis configure <code>RESEND_API_KEY</code> (secret) et <code>RESEND_FROM_EMAIL</code> dans Cloudflare. Pour les alertes, active <code>BOOKING_ALERTS_ENABLED=true</code>. Pour accuser automatiquement réception au client, active <code>BOOKING_RECEIPT_ENABLED=true</code>. Le destinataire des alertes est <code>LesKlosques@hotmail.com</code> par défaut, personnalisable avec <code>BOOKING_NOTIFICATION_TO</code> (1 à 4 adresses séparées par des virgules).</p>
+        <p class="muted small">Une adresse Hotmail peut recevoir les réponses et les notifications, mais l'expéditeur automatique doit appartenir au domaine vérifié dans Resend. Ne copie jamais de clé API dans ce formulaire, ni dans GitHub.</p>
+        <div class="modal-actions">
+          <button type="button" class="secondary" id="refreshEmailSettings">Actualiser l'état</button>
+          <button type="button" class="primary" id="sendTestEmail" disabled>Envoyer un e-mail de test</button>
+        </div>
+        <p id="emailTestFeedback" class="muted small" role="status" aria-live="polite"></p>
       </div>
       <div class="panel"><h2>Organisation du groupe</h2><p>Aucun vote ni saisie de disponibilités personnelles n'est prévu. Vous échangez entre vous en dehors du site.</p></div>
       <div class="panel" id="membersPanel" hidden>

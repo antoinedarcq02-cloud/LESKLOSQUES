@@ -14,7 +14,7 @@ function quoteNumber(row){
   return "DEV-"+String(row.created_at).slice(0,4)+"-"+String(row.id).padStart(5,"0");
 }
 async function deliver(env,message){
-  if(env.EMAIL && env.QUOTE_FROM_EMAIL){
+  if(!(env.RESEND_API_KEY && env.RESEND_FROM_EMAIL) && env.EMAIL && env.QUOTE_FROM_EMAIL){
     const result=await env.EMAIL.send({
       from:{name:"Les Klosques",email:env.QUOTE_FROM_EMAIL},to:message.to,
       replyTo:REPLY_TO,subject:message.subject,html:message.html,text:message.text,
