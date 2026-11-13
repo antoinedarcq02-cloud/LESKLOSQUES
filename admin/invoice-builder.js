@@ -329,7 +329,10 @@ $('confirmSendInvoice').addEventListener('click',async()=>{
     await loadInvoices();await refresh();
     const updated=invoiceState.invoices.find(i=>i.id===id);
     if(updated){invoiceState.current=updated;lockInvoiceEditor();}
-    notify('Le service de messagerie a accepté la facture PDF pour '+response.recipient+'.');
+    notify(response.recorded
+      ? 'Le service de messagerie a accepté la facture PDF pour '+response.recipient+'.'
+      : 'Le service a accepté la facture PDF pour '+response.recipient+
+        ', mais l’historique n’a pas pu être sauvegardé. Vérifie avant de renvoyer.');
   }catch(error){$('invoiceSendFeedback').textContent='Envoi non effectué : '+error.message;}
   finally{btn.disabled=false;}
 });
