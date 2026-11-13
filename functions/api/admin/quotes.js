@@ -12,7 +12,7 @@ const TEXT = {
   description: 900, conditions: 1400
 };
 const ISSUER = ["issuer_name","issuer_address","issuer_identifier","issuer_tax_number","issuer_contact","issuer_legal"];
-const VAT_MODES = ["franchise","20","10","5.5","0"];
+const VAT_MODES = ["non_precise","franchise","20","10","5.5","0"];
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function normalize(raw) {
@@ -55,6 +55,8 @@ function normalize(raw) {
   return data;
 }
 function ensureFinalizable(data) {
+  if (data.vat_mode === "non_precise")
+    throw new Error("Choisis le régime de TVA applicable avant de finaliser.");
   const required = {
     issuer_name:"le nom de la structure émettrice", issuer_address:"son adresse",
     issuer_identifier:"son identifiant officiel (SIRET, RNA ou autre)",
