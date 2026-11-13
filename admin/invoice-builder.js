@@ -237,6 +237,7 @@ async function saveInvoice(issue=false){
       data
     });
     await loadInvoices();
+    await refresh();
     fillInvoice(response.invoice);
     notify(issue?'Facture émise : '+response.invoice.number+'. Le numéro et le contenu sont désormais verrouillés.'
       :'Brouillon de facture enregistré.');
@@ -293,7 +294,7 @@ $('confirmPayInvoice').addEventListener('click',async()=>{
       action:choice.paid?'mark_paid':'mark_unpaid',id:choice.id
     });
     paymentDialog.close();pendingInvoicePayment=null;
-    await loadInvoices();fillInvoice(res.invoice);
+    await loadInvoices();await refresh();fillInvoice(res.invoice);
     notify(choice.paid?'Facture marquée comme payée.':'Facture marquée comme non réglée.');
   }catch(error){notify(error.message);}
   finally{button.disabled=false;}
