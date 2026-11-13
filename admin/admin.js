@@ -252,8 +252,39 @@ function openEditor(item) {
   price.value = item && item.quote_amount_cents != null ? String(item.quote_amount_cents/100) : '';
   $('editorMeta').textContent = item ? 'Créé le '+(item.created_at || '')+' · Dernière modification : '+(item.updated_by || 'non renseignée') : 'Fiche ajoutée manuellement. Aucun email envoyé automatiquement.';
   $('printDraft').disabled = !item;
+  // La suppression n'est proposée que pour les demandes issues du site.
+  $('deleteRequest').hidden = !item || item.source !== 'site';
   bookingDialog.showModal();
 }
+const deleteRequestDialog = $('deleteRequestDialog');
+$('deleteRequest').addEventListener('click', () => {
+  const item = state.current;
+  if (!item || item.source !== 'site') return;
+  $('deleteRequestDetails').textContent =
+    'Client : ' + item.name + ' · Date : ' + dateLabel(item.event_date) +
+    ' · Lieu : ' + (item.location || 'non précisé');
+  deleteRequestDialog.showModal();
+});
+$('cancelDelete').addEventListener('click', () => deleteRequestDialog.close());
+$('confirmDelete').addEventListener('click', async () => {
+  const item = state.current;
+  if (!item || item.source !== 'site') return;
+  const button = $('confirmDelete');
+  button.disabled = true;
+  notify('');
+  try {
+    await callApi('/api/admin/bookings/' + encodeURIComponent(item.id), { method: 'DELETE' });
+    deleteRequestDialog.close();
+    bookingDialog.close();
+    state.current = null;
+    await refresh();
+    notify('La demande a été supprimée définitivement.');
+  } catch (error) {
+    notify(error.message);
+  } finally {
+    button.disabled = false;
+  }
+});
 editor.addEventListener('submit', async event => {
   event.preventDefault();
   notify('');
