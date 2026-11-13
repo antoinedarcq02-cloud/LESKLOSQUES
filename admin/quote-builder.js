@@ -212,6 +212,8 @@ $('confirmDeleteQuote').addEventListener('click', async () => {
     deleteQuoteDialog.close();
     $('quoteFormPanel').hidden = true;
     renderOfficialQuotes();
+    // La demande liée perd automatiquement son indicateur si ce devis était le dernier.
+    await refresh();
     notify('Le devis a été supprimé définitivement.');
   } catch (error) {
     $('deleteQuoteMessage').textContent = 'Suppression impossible : ' + error.message;
@@ -247,6 +249,8 @@ async function saveOfficialQuote(finalize = false) {
       data
     });
     await loadOfficialQuotes();
+    // Met à jour immédiatement le badge sur la demande liée, sans actualiser la page.
+    await refresh();
     fillQuoteForm(response.quote);
     notify(finalize
       ? 'Devis finalisé et verrouillé. Tu peux l’imprimer en PDF et le transmettre manuellement après vérification.'
