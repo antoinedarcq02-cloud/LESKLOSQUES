@@ -15,7 +15,10 @@ export async function onRequestGet(context){
     const DB=context.env.DB;
     await ensureInvoiceTables(DB);
     const [rows,history,profile]=await Promise.all([
-      DB.prepare("SELECT * FROM official_invoices ORDER BY created_at DESC,id DESC LIMIT 200").all(),
+      DB.prepare(`SELECT i.*, COALESCE(a.archived,0) AS archived, a.archived_at
+        FROM official_invoices i
+        LEFT JOIN invoice_archives a ON a.invoice_id=i.id
+        ORDER BY i.created_at DESC,i.id DESC LIMIT 500`).all(),
       DB.prepare("SELECT invoice_id,recipient,sent_at FROM invoice_email_sends ORDER BY id DESC LIMIT 500").all(),
       DB.prepare("SELECT value FROM site_content WHERE key=?").bind(DRAFT_PROFILE).first()
     ]);
@@ -26,7 +29,8 @@ export async function onRequestGet(context){
       if(!last.has(event.invoice_id))last.set(event.invoice_id,event);
     const invoices=(rows.results||[]).map(r=>{
       const invoice=publicInvoice(r),sent=last.get(r.id);
-      return {...invoice,sent_at:sent?.sent_at||null,sent_to:sent?.recipient||null};
+      return {...invoice,sent_at:sent?.sent_at||null,sent_to:sent?.recipient||null,
+        archived:Number(r.archived)===1,archived_at:r.archived_at||null};
     });
     return respond({invoices,issuer,mail_ready:quoteMailReady(context.env)});
   }catch(error){
