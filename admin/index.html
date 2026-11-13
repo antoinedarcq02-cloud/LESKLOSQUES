@@ -185,7 +185,9 @@
         </form>
         <div class="modal-actions">
           <button type="button" class="danger" id="deleteOfficialQuote" hidden>Supprimer le devis</button>
+          <button type="button" class="primary" id="sendOfficialQuote" hidden>Envoyer le devis par e-mail</button>
         </div>
+        <p id="quoteSendHistory" class="quote-send-history" hidden></p>
       </div>
     </section>
     <section id="panel-site" class="page" hidden>
@@ -287,6 +289,18 @@
   <div class="modal-actions">
     <button type="button" id="cancelDeleteQuote" class="secondary">Annuler</button>
     <button type="button" id="confirmDeleteQuote" class="danger">Supprimer définitivement</button>
+  </div>
+</dialog>
+<dialog id="sendQuoteDialog" aria-labelledby="sendQuoteTitle" aria-describedby="sendQuoteInfo">
+  <div class="modal-top"><h2 id="sendQuoteTitle">Confirmer l'envoi du devis</h2></div>
+  <p id="sendQuoteInfo">Es-tu sûr de vouloir envoyer ce devis au client ?</p>
+  <p id="sendQuoteDestination" class="delete-request-details"></p>
+  <p class="muted small">Le devis finalisé sera envoyé en PDF à l'adresse e-mail indiquée par le client dans sa demande. Le message ne partira qu'après ta confirmation.</p>
+  <p class="quote-lock-note" id="sendQuoteUnavailable" hidden>L'envoi direct n'est pas encore activé : il faut configurer une adresse d'expédition vérifiée dans Cloudflare ou Resend.</p>
+  <p class="muted small" id="sendQuotePreviously" hidden>Ce devis a déjà fait l'objet d'un envoi. Confirme uniquement si tu souhaites le renvoyer.</p>
+  <div class="modal-actions">
+    <button type="button" class="secondary" id="cancelSendQuote">Annuler</button>
+    <button type="button" class="primary" id="confirmSendQuote">Oui, envoyer le devis</button>
   </div>
 </dialog>
 </body>
