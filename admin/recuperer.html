@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="theme-color" content="#111014">
+<title>Reconfigurer les 4 comptes — Klosques Manager</title>
+<link rel="stylesheet" href="/admin/recuperer.css">
+<script src="/admin/recuperer.js" defer></script>
+</head>
+<body>
+<main class="page">
+  <header class="heading">
+    <a href="/admin/" class="back">← Klosques Manager</a>
+    <p class="eyebrow">ACCÈS DE SECOURS · PRODUCTION</p>
+    <h1>Reconfigurer les 4 comptes</h1>
+    <p>Choisis toi-même les identifiants et les mots de passe des quatre musiciens, comme lors de nos essais Preview. Tous les mots de passe sont protégés directement sur Cloudflare.</p>
+  </header>
+  <section class="step">
+    <div class="step-head"><span class="number">1</span><h2>Créer une clé temporaire dans Cloudflare</h2></div>
+    <p>Cette étape protège la réinitialisation. Elle ne modifie pas les concerts, devis ou textes du site.</p>
+    <ol>
+      <li>Clique sur <strong>Générer une nouvelle clé sécurisée</strong> ci-dessous.</li>
+      <li>Copie cette clé et ouvre <strong>Cloudflare → Workers & Pages → lesklosques → Settings → Variables and secrets → Production</strong>.</li>
+      <li>Ajoute (ou remplace) un secret nommé <code>ADMIN_SETUP_KEY</code> en collant la valeur copiée.</li>
+      <li>Enregistre et assure-toi que le dernier déploiement de Production utilise cette configuration. Si nécessaire, redéploie la dernière version de <code>main</code>.</li>
+    </ol>
+    <label for="setupKey">Clé temporaire <span class="optional">(elle reste dans ce navigateur jusqu'à l'envoi)</span></label>
+    <div class="input-actions"><input type="password" id="setupKey" autocomplete="off" spellcheck="false" placeholder="Clé temporaire d'au moins 32 caractères"><button type="button" id="makeKey" class="secondary">Générer une nouvelle clé sécurisée</button><button type="button" id="copyKey" class="secondary">Copier</button></div>
+    <p class="hint">N'envoie jamais cette clé dans le chat. Ne modifie pas <code>ADMIN_PASSWORD_PEPPER</code> ni <code>ADMIN_SESSION_SECRET</code>.</p>
+  </section>
+  <form id="recoveryForm" novalidate>
+    <section class="step">
+      <div class="step-head"><span class="number">2</span><h2>Choisir les 4 accès</h2></div>
+      <p>Tu peux modifier librement les identifiants. Chaque mot de passe doit comporter <strong>au moins 15 caractères</strong> et être différent des trois autres. Tu peux le choisir ou le générer.</p>
+      <div id="musicians" class="musicians">
+        <fieldset class="musician" data-person="0">
+          <legend>1. Antoine <small>· Gestionnaire des comptes</small></legend>
+          <div class="two">
+            <div><label for="name0">Prénom affiché</label><input id="name0" name="name0" value="Antoine" maxlength="60" required></div>
+            <div><label for="user0">Identifiant de connexion</label><input id="user0" name="user0" value="antoine" minlength="3" maxlength="24" autocapitalize="none" spellcheck="false" required></div>
+          </div>
+          <div class="two">
+            <div><label for="pass0">Mot de passe choisi</label><input type="password" id="pass0" name="pass0" minlength="15" maxlength="128" autocomplete="new-password" required></div>
+            <div><label for="confirm0">Confirmer le mot de passe</label><input type="password" id="confirm0" name="confirm0" minlength="15" maxlength="128" autocomplete="new-password" required></div>
+          </div>
+          <button type="button" class="secondary generatePassword" data-person="0">Générer un mot de passe fort</button>
+        </fieldset>
+        <fieldset class="musician" data-person="1">
+          <legend>2. Greg</legend>
+          <div class="two">
+            <div><label for="name1">Prénom affiché</label><input id="name1" name="name1" value="Greg" maxlength="60" required></div>
+            <div><label for="user1">Identifiant de connexion</label><input id="user1" name="user1" value="greg" minlength="3" maxlength="24" autocapitalize="none" spellcheck="false" required></div>
+          </div>
+          <div class="two">
+            <div><label for="pass1">Mot de passe choisi</label><input type="password" id="pass1" name="pass1" minlength="15" maxlength="128" autocomplete="new-password" required></div>
+            <div><label for="confirm1">Confirmer le mot de passe</label><input type="password" id="confirm1" name="confirm1" minlength="15" maxlength="128" autocomplete="new-password" required></div>
+          </div>
+          <button type="button" class="secondary generatePassword" data-person="1">Générer un mot de passe fort</button>
+        </fieldset>
+        <fieldset class="musician" data-person="2">
+          <legend>3. Jérémy</legend>
+          <div class="two">
+            <div><label for="name2">Prénom affiché</label><input id="name2" name="name2" value="Jérémy" maxlength="60" required></div>
+            <div><label for="user2">Identifiant de connexion</label><input id="user2" name="user2" value="jeremy" minlength="3" maxlength="24" autocapitalize="none" spellcheck="false" required></div>
+          </div>
+          <div class="two">
+            <div><label for="pass2">Mot de passe choisi</label><input type="password" id="pass2" name="pass2" minlength="15" maxlength="128" autocomplete="new-password" required></div>
+            <div><label for="confirm2">Confirmer le mot de passe</label><input type="password" id="confirm2" name="confirm2" minlength="15" maxlength="128" autocomplete="new-password" required></div>
+          </div>
+          <button type="button" class="secondary generatePassword" data-person="2">Générer un mot de passe fort</button>
+        </fieldset>
+        <fieldset class="musician" data-person="3">
+          <legend>4. Galdric</legend>
+          <div class="two">
+            <div><label for="name3">Prénom affiché</label><input id="name3" name="name3" value="Galdric" maxlength="60" required></div>
+            <div><label for="user3">Identifiant de connexion</label><input id="user3" name="user3" value="galdric" minlength="3" maxlength="24" autocapitalize="none" spellcheck="false" required></div>
+          </div>
+          <div class="two">
+            <div><label for="pass3">Mot de passe choisi</label><input type="password" id="pass3" name="pass3" minlength="15" maxlength="128" autocomplete="new-password" required></div>
+            <div><label for="confirm3">Confirmer le mot de passe</label><input type="password" id="confirm3" name="confirm3" minlength="15" maxlength="128" autocomplete="new-password" required></div>
+          </div>
+          <button type="button" class="secondary generatePassword" data-person="3">Générer un mot de passe fort</button>
+        </fieldset>
+      </div>
+    </section>
+    <section class="step">
+      <div class="step-head"><span class="number">3</span><h2>Enregistrer les quatre accès</h2></div>
+      <p>Après confirmation, les quatre identifiants et mots de passe seront mis à jour ensemble. Les anciennes sessions seront déconnectées. Les concerts et les devis resteront en place.</p>
+      <label class="ack"><input type="checkbox" id="ack" required><span>J'ai enregistré les quatre mots de passe et j'ai bien ajouté la clé temporaire dans Cloudflare Production.</span></label>
+      <button type="submit" id="submitBtn" class="primary">Enregistrer les 4 comptes</button>
+      <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+      <div id="success" class="success" hidden>
+        <h2>Les quatre comptes ont été reconfigurés !</h2>
+        <p><strong>Action indispensable :</strong> supprime le secret <code>ADMIN_SETUP_KEY</code> dans Cloudflare Production, puis redéploie. Ne touche pas aux deux autres secrets.</p>
+        <p>Ensuite, ouvre <a href="/admin/">Klosques Manager</a> et connecte-toi avec le nouvel identifiant et le mot de passe d'Antoine.</p>
+      </div>
+    </section>
+  </form>
+  <footer>Outil exceptionnel de récupération · Aucun mot de passe n'est envoyé par e-mail ni stocké dans cette page.</footer>
+</main>
+</body>
+</html>
