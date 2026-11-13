@@ -137,6 +137,8 @@ function lockInvoiceEditor(){
     control.disabled=issued||control.name==='issue_date';
   $('invoiceLocked').hidden=!issued;
   $('deleteInvoiceDraft').hidden=!invoice||issued;
+  $('archiveInvoice').hidden=!issued;
+  $('archiveInvoice').textContent=invoice?.archived?'Restaurer la facture':'Archiver la facture';
   $('saveInvoice').hidden=issued;
   $('issueInvoice').hidden=issued;
   $('printInvoice').disabled=!invoice;
@@ -185,10 +187,11 @@ function fillInvoice(invoice=null){
   $('invoiceEditorPanel').scrollIntoView({block:'start',behavior:'smooth'});
 }
 function renderInvoices(){
-  const rows=invoiceState.invoices;
+  const showArchived=$('invoiceVisibility').value==='archived';
+  const rows=invoiceState.invoices.filter(inv=>Boolean(inv.archived)===showArchived);
   $('invoiceList').innerHTML=rows.length?rows.map(inv=>{
     const safe=escapeHtml,t=invoiceAmounts(inv.data);
-    const label=invoiceStatusLabel(inv);
+    const label=inv.archived?'Archivée · '+invoiceStatusLabel(inv):invoiceStatusLabel(inv);
     const category=inv.paid?'confirmed':inv.status==='emise'?'pending':'';
     return '<button type="button" class="booking-card" data-invoice-id="'+safe(inv.id)+'">'+
       '<div class="card-top"><span class="date">'+safe(inv.number||'Brouillon non numéroté')+'</span>'+
@@ -198,7 +201,9 @@ function renderInvoices(){
       '<p>'+safe(t.pending?'Montant TTC à préciser':'Total TTC : '+invoiceMoney(t.ttc))+'</p>'+
       (inv.sent_at?'<p class="small quote-email-sent">E-mail envoyé le '+safe(inv.sent_at)+'</p>':'')+
       '<p class="small">Ouvrir la facture →</p></button>';
-  }).join(''):'<p class="empty">Aucune facture pour le moment. Clique sur « Nouvelle facture ».</p>';
+  }).join(''):showArchived
+    ?'<p class="empty">Aucune facture archivée.</p>'
+    :'<p class="empty">Aucune facture en cours. Clique sur « Nouvelle facture ».</p>';
 }
 async function loadInvoices(){
   if(!state.logged)return;
@@ -214,6 +219,11 @@ async function loadInvoices(){
     renderInvoices();
   }catch(error){notify(error.message);}
 }
+$('invoiceVisibility').addEventListener('change',()=>{
+  $('invoiceEditorPanel').hidden=true;
+  invoiceState.current=null;
+  renderInvoices();
+});
 $('newInvoice').addEventListener('click',()=>fillInvoice());
 $('closeInvoice').addEventListener('click',()=>{$('invoiceEditorPanel').hidden=true;invoiceState.current=null;});
 $('addInvoiceLine').addEventListener('click',()=>newInvoiceLine());
@@ -259,6 +269,46 @@ $('printInvoice').addEventListener('click',()=>{
   const invoice=invoiceState.current;
   if(!invoice)return;
   window.open('/api/admin/invoices/'+encodeURIComponent(invoice.id)+'/pdf','_blank','noopener');
+});
+// Une facture émise ne doit pas être effacée. L'archivage est réversible et
+// conserve sa numérotation, son PDF et son historique de paiement et d'e-mails.
+let pendingInvoiceArchive=null;
+const archiveInvoiceDialog=$('archiveInvoiceDialog');
+$('archiveInvoice').addEventListener('click',()=>{
+  const invoice=invoiceState.current;
+  if(!invoice||invoice.status!=='emise')return;
+  const action=invoice.archived?'restore':'archive';
+  pendingInvoiceArchive={id:invoice.id,action};
+  $('archiveInvoiceTitle').textContent=action==='archive'
+    ?'Archiver la facture ?':'Restaurer la facture ?';
+  $('archiveInvoiceQuestion').textContent=action==='archive'
+    ?'Es-tu sûr de vouloir retirer cette facture de la liste courante ?'
+    :'Veux-tu remettre cette facture dans la liste en cours ?';
+  $('archiveInvoiceDetails').textContent=
+    (invoice.number||'Facture')+' · '+(invoice.data.client_name||'Client non précisé');
+  $('confirmArchiveInvoice').textContent=action==='archive'
+    ?'Archiver la facture':'Restaurer la facture';
+  archiveInvoiceDialog.showModal();
+});
+$('cancelArchiveInvoice').addEventListener('click',()=>archiveInvoiceDialog.close());
+archiveInvoiceDialog.addEventListener('close',()=>{pendingInvoiceArchive=null;});
+$('confirmArchiveInvoice').addEventListener('click',async()=>{
+  const pending=pendingInvoiceArchive;
+  if(!pending)return;
+  const button=$('confirmArchiveInvoice');
+  button.disabled=true;
+  try{
+    await jsonCall('/api/admin/invoices/'+encodeURIComponent(pending.id)+'/archive',
+      'POST',{action:pending.action});
+    archiveInvoiceDialog.close();
+    invoiceState.current=null;
+    $('invoiceEditorPanel').hidden=true;
+    await loadInvoices();
+    notify(pending.action==='archive'
+      ?'Facture archivée. Elle reste disponible dans « Archives ».'
+      :'Facture restaurée dans la liste en cours.');
+  }catch(error){notify(error.message);}
+  finally{button.disabled=false;}
 });
 let pendingInvoiceDelete=null;
 const invoiceDeleteDialog=$('deleteInvoiceDialog');
