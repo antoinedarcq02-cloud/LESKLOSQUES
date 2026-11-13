@@ -93,3 +93,12 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
 .booking-quote-status.done {
   border-color:#398b62;background:#193d2c;color:#b5f6cf;
 }
+
+/* Suivi de l'envoi manuel d'un devis au client. */
+.quote-send-history{
+  color:#b4f4c7;background:#173b29;border:1px solid #3a8461;
+  border-radius:11px;padding:12px 15px;margin-top:12px;font-size:.88rem;
+}
+.booking-card .quote-email-sent{color:#adf3c5;font-weight:800}
+#sendQuoteDialog{max-width:570px}
+#sendQuoteDialog .primary:disabled{opacity:.55;cursor:not-allowed}

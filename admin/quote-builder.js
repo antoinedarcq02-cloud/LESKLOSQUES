@@ -2,7 +2,7 @@
 
 // Éditeur privé de devis. Tous les documents sont conservés dans D1,
 // chaque devis finalisé devient non modifiable.
-const officialQuoteState = {quotes:[],issuer:{},current:null};
+const officialQuoteState = {quotes:[],issuer:{},current:null,mailReady:false};
 const officialQuoteFields = [
   'issuer_name','issuer_address','issuer_identifier','issuer_tax_number','issuer_contact','issuer_legal',
   'client_name','client_address','client_email','event_date','event_time','event_location',
@@ -90,6 +90,12 @@ function updateQuoteLock() {
   $('printOfficialQuote').disabled = !officialQuoteState.current;
   $('finalizeOfficialQuote').hidden = locked;
   $('saveOfficialQuote').hidden = locked;
+  $('sendOfficialQuote').hidden = !locked;
+  const sent = officialQuoteState.current?.sent_at;
+  $('quoteSendHistory').hidden = !sent;
+  $('quoteSendHistory').textContent = sent
+    ? 'Dernier envoi enregistré : ' + sent + ' · ' + (officialQuoteState.current.sent_to || '')
+    : '';
 }
 function fillQuoteForm(record = null) {
   officialQuoteState.current = record;
@@ -153,6 +159,7 @@ function renderOfficialQuotes() {
         '<h3>'+safe(quote.data.client_name || 'Client à préciser')+'</h3>' +
         '<p>'+safe(quote.data.event_date ? dateLabel(quote.data.event_date) : 'Date à préciser')+'</p>' +
         '<p>'+safe(officialTotals(quote.data).pending ? 'Montant TTC à préciser' : 'Montant TTC : '+officialMoney(officialTotals(quote.data).ttc))+'</p>' +
+        (quote.sent_at ? '<p class="small quote-email-sent">E-mail transmis le '+safe(quote.sent_at)+'</p>' : '') +
         '<p class="small">Ouvrir le devis →</p></button>';
       }).join('')
     : '<p class="empty">Aucun devis enregistré pour le moment. Clique sur « Nouveau devis ».</p>';
@@ -163,6 +170,7 @@ async function loadOfficialQuotes() {
     const data = await callApi('/api/admin/quotes');
     officialQuoteState.quotes = data.quotes || [];
     officialQuoteState.issuer = data.issuer || {};
+    officialQuoteState.mailReady = data.email_ready === true;
     renderOfficialQuotes();
   } catch(error) { notify(error.message); }
 }
@@ -220,6 +228,53 @@ $('confirmDeleteQuote').addEventListener('click', async () => {
   } finally {
     button.disabled = false;
   }
+});
+// Envoi volontaire : choix du devis finalisé, destinataire repris de la demande
+// client, confirmation explicite, puis API Cloudflare. Aucun envoi automatique.
+let pendingSendQuote = null;
+const sendQuoteDialog = $('sendQuoteDialog');
+$('sendOfficialQuote').addEventListener('click',()=>{
+  const quote=officialQuoteState.current;
+  if(!quote || quote.status!=='finalise')return;
+  const request=state.items.find(item=>item.id===quote.booking_id);
+  if(!request || !request.email){
+    notify('Ce devis doit être lié à une demande client contenant une adresse e-mail pour être envoyé.');
+    return;
+  }
+  pendingSendQuote=quote.id;
+  $('sendQuoteInfo').textContent='Es-tu vraiment sûr de vouloir envoyer le devis '+quote.number+' par e-mail ?';
+  $('sendQuoteDestination').textContent='Destinataire : '+request.name+' — '+request.email;
+  $('sendQuoteUnavailable').hidden=officialQuoteState.mailReady;
+  $('sendQuotePreviously').hidden=!quote.sent_at;
+  $('confirmSendQuote').disabled=!officialQuoteState.mailReady;
+  sendQuoteDialog.showModal();
+});
+$('cancelSendQuote').addEventListener('click',()=>{
+  pendingSendQuote=null;
+  sendQuoteDialog.close();
+});
+sendQuoteDialog.addEventListener('close',()=>{pendingSendQuote=null;});
+$('confirmSendQuote').addEventListener('click',async()=>{
+  const id=pendingSendQuote;
+  if(!Number.isSafeInteger(id)||id<1 || !officialQuoteState.mailReady)return;
+  const button=$('confirmSendQuote');
+  button.disabled=true;
+  $('sendQuoteInfo').textContent='Envoi en cours vers le service de messagerie…';
+  try{
+    const result=await jsonCall('/api/admin/quotes/'+encodeURIComponent(id)+'/send','POST',{confirm_send:true});
+    pendingSendQuote=null;
+    sendQuoteDialog.close();
+    await loadOfficialQuotes();
+    const updated=officialQuoteState.quotes.find(q=>q.id===id);
+    if(updated){officialQuoteState.current=updated;updateQuoteLock();}
+    await refresh();
+    notify(result.recorded
+      ? 'Le service de messagerie a accepté l’envoi du devis PDF à '+result.recipient+'.'
+      : 'Le service de messagerie a accepté l’envoi à '+result.recipient+
+        ', mais l’historique n’a pas pu être enregistré. Vérifie avant de renvoyer.');
+  }catch(error){
+    $('sendQuoteInfo').textContent='Envoi non effectué : '+error.message;
+  }finally{button.disabled=false;}
 });
 $('saveQuoteProfile').addEventListener('click',async () => {
   const button = $('saveQuoteProfile');
