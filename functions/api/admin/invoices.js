@@ -69,6 +69,10 @@ export async function onRequestPost(context){
     const issue=body.action==="issue";
     if(issue)data.issue_date=invoiceLocalDate();
     if(id){
+      const existing=await DB.prepare("SELECT status FROM official_invoices WHERE id=?").bind(id).first();
+      if(!existing)return respond({error:"Brouillon de facture introuvable."},404);
+      if(existing.status!=="brouillon")
+        return respond({error:"Une facture émise ne peut plus être modifiée."},409);
       if(issue){
         // Un numéro ne naît qu'à l'émission. D1.batch est transactionnel :
         // aucun saut de numéro si la modification de la facture échoue.
