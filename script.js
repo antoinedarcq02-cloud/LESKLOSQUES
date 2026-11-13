@@ -86,7 +86,7 @@ quoteForm.addEventListener('submit', async event => {
   const button = document.getElementById('quoteSubmit');
   const payload = Object.fromEntries(['name', 'email', 'phone', 'eventType', 'location', 'date', 'package', 'message', 'website'].map(k => [k, form.get(k)]));
   button.disabled = true;
-  quoteStatus.textContent = 'Envoi de votre demande de devis…';
+  quoteStatus.textContent = 'Enregistrement de votre demande de devis…';
   try {
     const response = await fetch('/api/bookings', {
       method: 'POST',
@@ -94,10 +94,10 @@ quoteForm.addEventListener('submit', async event => {
       body: JSON.stringify(payload)
     });
     const result = await response.json();
-    if (!response.ok) throw new Error(result.error || 'Impossible d’envoyer votre demande.');
+    if (!response.ok || result.saved !== true) throw new Error(result.error || 'Impossible d’enregistrer votre demande.');
     quoteForm.reset();
     showQuoteStep(1);
-    quoteStatus.textContent = 'Merci ! Votre demande de devis a été transmise au groupe. Nous reviendrons vers vous après étude et validation. Aucun devis n’est envoyé automatiquement.';
+    quoteStatus.textContent = 'Merci ! Votre demande de devis a bien été enregistrée. Les Klosques vont l’étudier et vous répondront personnellement. Aucun devis ni réservation n’est confirmé automatiquement.';
   } catch (error) {
     quoteStatus.textContent = `${error.message} Vous pouvez aussi nous écrire à LesKlosques@hotmail.com.`;
   } finally {
