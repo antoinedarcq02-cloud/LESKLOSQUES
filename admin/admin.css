@@ -140,3 +140,13 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
   display:block;margin-top:7px;max-width:270px
 }
 #confirmResetTestInvoice:disabled {opacity:.5;cursor:not-allowed}
+
+/* Bouton de création visible uniquement sur la page Concerts. */
+#panel-concerts .concert-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+#panel-concerts .concert-actions select{max-width:220px}
+#panel-concerts .concert-actions button{white-space:nowrap}
+@media(max-width:550px){
+  #panel-concerts .section-header{flex-wrap:wrap}
+  #panel-concerts .concert-actions{width:100%;justify-content:space-between}
+  #panel-concerts .concert-actions select{flex:1;min-width:0}
+}
