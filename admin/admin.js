@@ -160,7 +160,7 @@ function setPage(page) {
   document.querySelectorAll('[data-tab]').forEach(el => el.classList.toggle('active', el.dataset.tab === page));
   $('pageTitle').textContent = {
     home:'Tableau de bord',agenda:'Agenda',demandes:'Demandes clients',
-    concerts:'Fiches concerts',devis:'Devis',site:'Gestion du site'
+    concerts:'Fiches concerts',devis:'Devis',factures:'Factures',site:'Gestion du site'
   }[page] || 'Klosques Manager';
   render();
 }
