@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="/admin/admin.css">
 <script src="/admin/admin.js" defer></script>
 <script src="/admin/quote-builder.js" defer></script>
+<script src="/admin/invoice-builder.js" defer></script>
 </head>
 <body>
 <header class="topbar">
@@ -190,6 +191,95 @@
         <p id="quoteSendHistory" class="quote-send-history" hidden></p>
       </div>
     </section>
+    <section id="panel-factures" class="page" hidden>
+      <div class="section-header">
+        <div>
+          <h2>Factures Les Klosques</h2>
+          <p class="muted small">Factures détaillées, numérotées à l'émission, sauvegardées, imprimables. Aucune transmission automatique.</p>
+        </div>
+        <button type="button" class="primary" id="newInvoice">+ Nouvelle facture</button>
+      </div>
+      <div id="invoiceList" class="card-list" aria-live="polite"></div>
+      <section id="invoiceEditorPanel" class="panel official-quote-panel" hidden>
+        <div class="section-header">
+          <h2 id="invoiceEditorTitle">Nouvelle facture</h2>
+          <button type="button" class="secondary" id="closeInvoice">Fermer</button>
+        </div>
+        <p id="invoiceNumber" class="muted small">Un numéro officiel sera attribué uniquement lors de l'émission.</p>
+        <p id="invoiceLocked" class="quote-lock-note" hidden>Cette facture est émise et ne peut plus être modifiée ni supprimée. Si elle est erronée, il faut établir une facture rectificative ou un avoir selon la situation.</p>
+        <form id="invoiceForm">
+          <h3>1. Client et prestation</h3>
+          <label>Demande client (facultative)
+            <select id="invoiceBooking"><option value="">Facture indépendante / sans demande</option></select>
+          </label>
+          <label>Devis d'origine (facultatif)
+            <select id="invoiceQuote"><option value="">Aucun devis associé</option></select>
+          </label>
+          <button type="button" class="secondary" id="importInvoiceQuote" hidden>Reprendre les prestations détaillées du devis</button>
+          <p class="muted small">Les tarifs restent libres. Les lignes du devis ne sont reprises que si tu cliques sur ce bouton.</p>
+          <div class="field-row">
+            <label>Client / organisateur *<input name="client_name" maxlength="160" required></label>
+            <label>E-mail du client<input name="client_email" type="email" maxlength="254"></label>
+          </div>
+          <label>Adresse complète du client *<textarea name="client_address" rows="2" maxlength="350"></textarea></label>
+          <div class="field-row">
+            <label>Type de client<select name="client_type"><option value="particulier">Particulier / non professionnel</option><option value="professionnel">Entreprise / professionnel</option></select></label>
+            <label>SIREN / SIRET du client professionnel (si applicable)<input name="client_identifier" maxlength="100"></label>
+          </div>
+          <div class="field-row">
+            <label>Date de réalisation de la prestation *<input type="date" name="event_date"></label>
+            <label>Heure de la prestation (facultative)<input type="time" name="event_time"></label>
+          </div>
+          <label>Lieu de la prestation *<input name="event_location" maxlength="240"></label>
+          <h3>2. Coordonnées de la structure qui facture</h3>
+          <p class="muted small">Indique les véritables informations légales de la structure émettrice, pas seulement le nom du groupe.</p>
+          <label>Nom / raison sociale *<input name="issuer_name" maxlength="160"></label>
+          <label>Adresse complète de la structure *<textarea name="issuer_address" rows="2" maxlength="350"></textarea></label>
+          <div class="field-row">
+            <label>Identifiant officiel (SIRET / RNA selon le cas) *<input name="issuer_identifier" maxlength="90"></label>
+            <label>N° de TVA intracommunautaire (si applicable)<input name="issuer_tax_number" maxlength="70"></label>
+          </div>
+          <label>Contact de la structure<input name="issuer_contact" maxlength="180"></label>
+          <label>Autres mentions légales (statut, registre…) <textarea name="issuer_legal" rows="2" maxlength="250"></textarea></label>
+          <h3>3. Prestations et prix séparés</h3>
+          <p class="muted small">Inscris une ligne par poste : Les Klosques, équipe technique, DJ, déplacements, etc. Prix unitaires HT.</p>
+          <div class="quote-lines-header" aria-hidden="true"><span>Prestation</span><span>Qté</span><span>Prix unitaire HT</span><span></span></div>
+          <div id="invoiceLines"></div>
+          <button type="button" class="secondary" id="addInvoiceLine">+ Ajouter une prestation</button>
+          <label>TVA applicable
+            <select name="vat_mode">
+              <option value="non_precise">À préciser (brouillon uniquement)</option>
+              <option value="franchise">TVA non applicable — franchise en base (si éligible)</option>
+              <option value="20">TVA 20 %</option><option value="10">TVA 10 %</option>
+              <option value="5.5">TVA 5,5 %</option><option value="0">TVA 0 % (régime à justifier)</option>
+            </select>
+          </label>
+          <p id="invoiceTotals" class="quote-total">Total HT : 0,00 € · TVA et TTC : à préciser</p>
+          <h3>4. Paiement et mentions</h3>
+          <div class="field-row">
+            <label>Date d'émission (fixée lors de la finalisation)<input name="issue_date" type="date" disabled></label>
+            <label>Date limite de paiement *<input name="payment_due_date" type="date"></label>
+          </div>
+          <label>Modalités de paiement *<textarea name="payment_terms" rows="3" maxlength="600" placeholder="Exemple : virement bancaire, IBAN de la structure, délai, acompte à déduire…"></textarea></label>
+          <label>Précisions de la prestation<textarea name="description" rows="3" maxlength="900"></textarea></label>
+          <label>Conditions particulières<textarea name="conditions" rows="3" maxlength="1400"></textarea></label>
+          <label>Pénalités de retard (à préciser pour les clients professionnels)<textarea name="late_penalties" rows="2" maxlength="250" placeholder="Taux ou modalités applicables aux professionnels"></textarea></label>
+          <p class="muted small">La finalisation verrouille les montants, les coordonnées et les mentions. En cas d'erreur après émission, une rectification ou un avoir sera nécessaire.</p>
+          <div class="modal-actions official-quote-actions">
+            <button type="button" class="secondary" id="printInvoice" disabled>Télécharger le PDF</button>
+            <button type="button" class="secondary" id="saveInvoice">Enregistrer le brouillon</button>
+            <button type="button" class="primary" id="issueInvoice">Émettre la facture</button>
+          </div>
+        </form>
+        <div class="modal-actions">
+          <button type="button" class="danger" id="deleteInvoiceDraft" hidden>Supprimer le brouillon</button>
+          <button type="button" class="secondary" id="markInvoicePaid" hidden>Marquer comme payée</button>
+          <button type="button" class="primary" id="sendInvoice" hidden>Envoyer la facture par e-mail</button>
+        </div>
+        <p id="invoiceEmailHistory" class="quote-send-history" hidden></p>
+      </section>
+      <p class="muted small">Attention : pour les opérations concernées par la réforme française de facturation électronique, un simple PDF envoyé par e-mail ne remplace pas une facture électronique transmise par une plateforme agréée.</p>
+    </section>
     <section id="panel-site" class="page" hidden>
       <div class="panel">
         <h2>Modifier les textes et les vidéos du site</h2>
@@ -240,6 +330,7 @@
     <button type="button" data-tab="demandes"><span>✉</span>Demandes</button>
     <button type="button" data-tab="concerts"><span>♫</span>Concerts</button>
     <button type="button" data-tab="devis"><span>€</span>Devis</button>
+    <button type="button" data-tab="factures"><span>▤</span>Factures</button>
     <button type="button" data-tab="site"><span>⚙</span>Site</button>
   </nav>
 </div>
@@ -301,6 +392,37 @@
   <div class="modal-actions">
     <button type="button" class="secondary" id="cancelSendQuote">Annuler</button>
     <button type="button" class="primary" id="confirmSendQuote">Oui, envoyer le devis</button>
+  </div>
+</dialog>
+<dialog id="deleteInvoiceDialog" aria-labelledby="deleteInvoiceTitle">
+  <div class="modal-top"><h2 id="deleteInvoiceTitle">Supprimer le brouillon ?</h2></div>
+  <p>Es-tu vraiment sûr de vouloir supprimer ce brouillon de facture ?</p>
+  <p id="deleteInvoiceDetails" class="delete-request-details"></p>
+  <p class="muted small">Cette suppression est définitive. Elle ne touchera ni la demande client ni le devis associé.</p>
+  <div class="modal-actions">
+    <button type="button" class="secondary" id="cancelDeleteInvoice">Annuler</button>
+    <button type="button" class="danger" id="confirmDeleteInvoice">Supprimer définitivement</button>
+  </div>
+</dialog>
+<dialog id="sendInvoiceDialog" aria-labelledby="sendInvoiceTitle">
+  <div class="modal-top"><h2 id="sendInvoiceTitle">Confirmer l'envoi de la facture</h2></div>
+  <p>Veux-tu vraiment envoyer cette facture et son PDF au client ?</p>
+  <p id="invoiceSendDestination" class="delete-request-details"></p>
+  <p id="invoiceSendWarning" class="quote-lock-note" hidden>L'envoi par e-mail n'est pas encore configuré. Une adresse d'expédition vérifiée est nécessaire.</p>
+  <p id="invoiceSendPreviously" class="muted small" hidden>Cette facture a déjà été envoyée. Vérifie avant de la renvoyer.</p>
+  <p id="invoiceSendFeedback" class="muted small"></p>
+  <div class="modal-actions">
+    <button type="button" class="secondary" id="cancelSendInvoice">Annuler</button>
+    <button type="button" class="primary" id="confirmSendInvoice">Oui, envoyer la facture</button>
+  </div>
+</dialog>
+<dialog id="payInvoiceDialog" aria-labelledby="payInvoiceTitle">
+  <div class="modal-top"><h2 id="payInvoiceTitle">Confirmer le règlement</h2></div>
+  <p id="payInvoiceMessage">Confirmer que cette facture a été réglée ?</p>
+  <p class="muted small">Cette action sert au suivi interne. Elle n'envoie pas de mail au client.</p>
+  <div class="modal-actions">
+    <button type="button" class="secondary" id="cancelPayInvoice">Annuler</button>
+    <button type="button" class="primary" id="confirmPayInvoice">Confirmer</button>
   </div>
 </dialog>
 </body>
