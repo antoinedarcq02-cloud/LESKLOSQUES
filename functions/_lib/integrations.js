@@ -66,7 +66,9 @@ export async function ensureIntegrationTables(DB){
     DB.prepare("CREATE TABLE IF NOT EXISTS connected_services (provider TEXT PRIMARY KEY CHECK(provider IN ('google','microsoft')), encrypted_refresh TEXT NOT NULL, account_label TEXT NOT NULL DEFAULT '', connected_by TEXT NOT NULL, connected_at TEXT NOT NULL DEFAULT (datetime('now')))"),
     DB.prepare("CREATE TABLE IF NOT EXISTS oauth_connect_states (nonce TEXT PRIMARY KEY, provider TEXT NOT NULL, code_verifier TEXT NOT NULL, started_by TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT (datetime('now')))"),
     DB.prepare("CREATE TABLE IF NOT EXISTS google_concert_links (booking_id TEXT PRIMARY KEY, calendar_id TEXT NOT NULL, event_id TEXT NOT NULL, synced_at TEXT NOT NULL DEFAULT (datetime('now')))"),
-    DB.prepare("CREATE TABLE IF NOT EXISTS google_event_optouts (booking_id TEXT PRIMARY KEY, created_at TEXT NOT NULL DEFAULT (datetime('now')))")
+    DB.prepare("CREATE TABLE IF NOT EXISTS google_event_optouts (booking_id TEXT PRIMARY KEY, created_at TEXT NOT NULL DEFAULT (datetime('now')))"),
+    // File de suppression durable : un incident Google ne doit plus bloquer D1.
+    DB.prepare("CREATE TABLE IF NOT EXISTS google_pending_removals (booking_id TEXT PRIMARY KEY,calendar_id TEXT NOT NULL DEFAULT '',event_id TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT (datetime('now')))")
   ]);
 }
 export async function getConnected(DB,provider){

@@ -2,6 +2,7 @@ import {authorize,respond} from "../../_lib/admin-auth.js";
 import {monthBounds} from "../../_lib/google.js";
 import {resolveKlosquesCalendars} from "../../_lib/klosques-calendars.js";
 import {syncRequestToGoogle} from "../../_lib/booking-google-sync.js";
+import {flushPendingGoogleRemovals} from "../../_lib/booking-google-removal.js";
 import {
   ensureIntegrationTables,getConnected,providerAccessToken
 } from "../../_lib/integrations.js";
@@ -91,6 +92,12 @@ export async function onRequestGet(context){
       "SELECT id FROM bookings WHERE source='site' AND status='nouveau'"
     ).all();
     const waitingIds=new Set((waiting||[]).map(row=>row.id));
+    // Une suppression volontaire disparaît immédiatement de l'Agenda commun,
+    // même si Google n'est pas encore accessible. La file D1 la retentera.
+    const {results:pendingRemovals}=await DB.prepare(
+      "SELECT booking_id FROM google_pending_removals LIMIT 1000"
+    ).all();
+    const pendingIds=new Set((pendingRemovals||[]).map(row=>row.booking_id));
     let events=[],truncated=false;
     for(const [kind,calendar] of Object.entries(calendars)){
       let pageToken="",pages=0;
@@ -107,8 +114,9 @@ export async function onRequestGet(context){
         const result=await response.json().catch(()=>({}));
         for(const event of result.items||[]){
           if(event.status==="cancelled")continue;
-          if(kind==="concerts"&&waitingIds.has(
-            event.extendedProperties?.private?.klosquesBookingId))continue;
+          if(kind==="concerts"&&(
+            waitingIds.has(event.extendedProperties?.private?.klosquesBookingId)||
+            pendingIds.has(event.extendedProperties?.private?.klosquesBookingId)))continue;
           const safe=conciseEvent(event,kind);
           if(safe)events.push(safe);
         }
@@ -125,6 +133,7 @@ export async function onRequestGet(context){
       connected:true,month,events,
       calendars:{concerts:calendars.concerts.name,unavailable:calendars.unavailable.name},
       links:(results||[]).filter(r=>r.calendar_id===calendars.concerts.id),
+      pending_google_removals:pendingIds.size,
       truncated
     });
   }catch(error){
@@ -146,7 +155,8 @@ async function cleanupOldDeletedSiteEvents(env){
   const {results}=await DB.prepare(
     "SELECT l.booking_id,l.calendar_id,l.event_id FROM google_concert_links l "+
     "LEFT JOIN bookings b ON b.id=l.booking_id "+
-    "WHERE b.id IS NULL LIMIT 20"
+    "WHERE b.id IS NULL AND NOT EXISTS("+
+    "SELECT 1 FROM google_pending_removals q WHERE q.booking_id=l.booking_id) LIMIT 20"
   ).all();
   if(!results?.length)return{removed:0,failed:0};
   const connection=await getConnected(DB,"google");
@@ -239,12 +249,18 @@ export async function onRequestPost(context){
         }
       }
     }
-    // Rattraper aussi les suppressions déjà faites par les anciennes versions,
-    // mais uniquement si l'événement porte les deux preuves d'une demande site.
+    // Retenter les suppressions explicites restées en file après une coupure
+    // de Google (ou une panne réseau), avant les anciens orphelins.
+    const retry=await flushPendingGoogleRemovals(context.env,{limit:20});
+    // Les anciennes associations sans dossier sont traitées seulement si
+    // deux preuves indépendantes confirment l'origine "demande du site".
     const old=await cleanupOldDeletedSiteEvents(context.env);
     return respond({
       ok:true,processed:(results||[]).length,cleaned,
-      orphaned_removed:old.removed,failed:failed+old.failed
+      orphaned_removed:old.removed,
+      queued_removed:retry.removed+retry.already_absent,
+      pending_google_removals:retry.pending,
+      failed:failed+old.failed+retry.failed
     });
   }catch(error){
     console.warn("Rattrapage demandes Google impossible",error?.message);

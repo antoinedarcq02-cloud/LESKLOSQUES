@@ -288,7 +288,15 @@ function currentGoogleEvents(month) {
     event.calendar==='concerts'&&event.own_event&&linked.has(event.id)
   ));
 }
+function linkedSiteRequestId(event) {
+  if(event.calendar!=='concerts')return '';
+  const link=state.googleLinks.find(l=>l.event_id===event.id);
+  if(!link)return '';
+  const booking=state.items.find(b=>b.id===link.booking_id&&b.source==='site');
+  return booking?.id||'';
+}
 function sharedCalendarCard(event) {
+  const siteRequestId=linkedSiteRequestId(event);
   const unavailable=event.calendar==='unavailable';
   const kind=unavailable?'google-unavailable':'google-concert';
   const label=unavailable?'KLOSQUES PAS DISPO PARTAGE':'KLOSQUES PARTAGE';
@@ -305,7 +313,10 @@ function sharedCalendarCard(event) {
     (['admin','member'].includes(state.role)?
       '<button type="button" class="secondary" data-google-delete="1" '+
       'data-google-calendar="'+escapeHtml(event.calendar)+'" '+
-      'data-google-id="'+escapeHtml(event.id)+'">Supprimer de Google Agenda</button>':'')+
+      'data-google-id="'+escapeHtml(event.id)+'">'+
+      (siteRequestId?'Retirer uniquement de Google':'Supprimer de Google Agenda')+'</button>'+
+      (siteRequestId?'<button type="button" class="danger" data-delete-linked-request="'+
+        escapeHtml(siteRequestId)+'">Supprimer la demande et son événement</button>':''):'')+
     '</article>';
 }
 // Les concerts confirmés liés à Google sont affichés sous forme de fiches
@@ -319,7 +330,10 @@ function linkedGoogleDeleteAction(item) {
   return '<div class="integration-actions">'+
     '<button type="button" class="secondary" data-google-delete="1" '+
     'data-google-calendar="concerts" data-google-id="'+escapeHtml(event.id)+'">'+
-    'Supprimer cet événement de Google Agenda</button></div>';
+    (item.source==='site'?'Retirer uniquement de Google':'Supprimer cet événement de Google Agenda')+'</button>'+
+    (item.source==='site'?'<button type="button" class="danger" data-delete-linked-request="'+
+      escapeHtml(item.id)+'">Supprimer la demande et son événement</button>':'')+
+    '</div>';
 }
 function renderCalendar() {
   const month=$('agendaMonth').value;
@@ -439,9 +453,9 @@ $('confirmDelete').addEventListener('click', async () => {
     // Ne jamais conserver les anciens événements Google en mémoire après
     // avoir confirmé la suppression d'un dossier.
     if(state.googleMonth)await loadGoogleCalendar();
-    notify(outcome.google_status==='not_connected'
-      ?'Demande supprimée. Google Agenda est déconnecté : son contenu n’a pas pu être vérifié.'
-      :'La demande a été supprimée et Google Agenda actualisé.');
+    notify(outcome.google_status==='pending'
+      ?(outcome.google_warning||'Demande supprimée du Manager. Suppression Google en attente.')
+      :'La demande et son événement Google associé ont été supprimés.');
   } catch (error) {
     notify(error.message);
   } finally {
