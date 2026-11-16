@@ -205,6 +205,9 @@ function closeGoogleEventDialog(){
   if(!$('saveGoogleEvent').disabled)googleEventDialog.close();
 }
 $('closeGoogleEvent').addEventListener('click',closeGoogleEventDialog);
+googleEventDialog.addEventListener('cancel',event=>{
+  if($('saveGoogleEvent').disabled)event.preventDefault();
+});
 $('cancelGoogleEvent').addEventListener('click',closeGoogleEventDialog);
 googleEventForm.addEventListener('submit',async event=>{
   event.preventDefault();
@@ -236,7 +239,7 @@ googleEventForm.addEventListener('submit',async event=>{
     :dateLabel(payload.start_date)+' au '+dateLabel(payload.end_date);
   const times=allDay?' (toute la journée)':' de '+startTime+' à '+endTime;
   if(!window.confirm('Créer « '+payload.title+' » dans '+calendarName+
-    ' le '+period+times+' ?\\n\\nL’événement sera réellement enregistré dans Google Agenda.'))return;
+    ' le '+period+times+' ?'+String.fromCharCode(10,10)+'L’événement sera réellement enregistré dans Google Agenda.'))return;
   const save=$('saveGoogleEvent');
   save.disabled=true;
   feedback.textContent='Création de l’événement sur Google Agenda…';
