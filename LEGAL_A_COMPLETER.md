@@ -23,7 +23,7 @@ Points de conformité et d'exploitation restant à traiter :
 - Adresse de contact du groupe : LesKlosques@hotmail.com.
 - Formulaire avec nom/organisation, e-mail, téléphone, formule, type et date d'événement, lieu et message facultatif.
 - Dossiers sauvegardés dans la base Cloudflare D1 et accessibles aux membres autorisés du Manager.
-- Notifications et PDF de devis/facture par Microsoft Outlook ; option Resend selon configuration.
+- Notifications et PDF de devis/facture par Microsoft Outlook ; Resend n’est pas utilisé.
 - Google Agenda synchronise les dates, lieux et références internes pour les demandes en cours ; pas les coordonnées du client.
 - Lecteurs YouTube/Facebook présents sur le site public.
 
