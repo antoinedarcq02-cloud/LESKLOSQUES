@@ -170,17 +170,12 @@ function lockInvoiceEditor(){
     invoice.id!==invoiceState.testResetCandidateId;
   $('saveInvoice').hidden=issued;
   $('issueInvoice').hidden=issued;
-  // Liens natifs plutôt qu'une fenêtre JavaScript : ouverture plus fiable
-  // sur Android/iPhone et séparation de l'aperçu et du téléchargement.
+  // L'accès à l'API PDF est authentifié. Sur certains mobiles, une
+  // navigation directe vers un nouvel onglet perd le cookie de session.
+  // L'aperçu et le téléchargement passent donc par fetch() dans le Manager.
   const preview=$('previewInvoice'),download=$('printInvoice');
   preview.hidden=download.hidden=!invoice;
-  if(invoice){
-    const pdfUrl='/api/admin/invoices/'+encodeURIComponent(invoice.id)+'/pdf';
-    preview.href=pdfUrl;
-    download.href=pdfUrl+'?download=1';
-  }else{
-    preview.removeAttribute('href');download.removeAttribute('href');
-  }
+  preview.disabled=download.disabled=!invoice;
   $('sendInvoice').hidden=!issued;
   $('markInvoicePaid').hidden=!issued;
   $('markInvoicePaid').textContent=invoice?.paid?'Marquer comme non réglée':'Marquer comme payée';
@@ -317,7 +312,80 @@ async function saveInvoice(issue=false){
 }
 $('saveInvoice').addEventListener('click',()=>saveInvoice(false));
 $('issueInvoice').addEventListener('click',()=>saveInvoice(true));
-// L'aperçu et le téléchargement sont des liens directs gérés par le navigateur.
+// Récupère le PDF depuis la session active (cookie HttpOnly transmis à fetch),
+// puis ouvre uniquement un URL blob local. L'API n'est jamais exposée sans auth.
+const invoicePdfPreviewUrls=new Set();
+window.addEventListener('pagehide',()=>{
+  for(const url of invoicePdfPreviewUrls)URL.revokeObjectURL(url);
+  invoicePdfPreviewUrls.clear();
+});
+function downloadInvoicePdfBlob(url,filename){
+  const link=document.createElement('a');
+  link.href=url;
+  link.download=filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(()=>{
+    URL.revokeObjectURL(url);
+    invoicePdfPreviewUrls.delete(url);
+  },60000);
+}
+async function showInvoicePdf(download=false){
+  const invoice=invoiceState.current;
+  if(!invoice?.id){
+    notify('Enregistre le brouillon avant de visualiser la facture.');
+    return;
+  }
+  // Ouvrir l'onglet pendant le clic pour ne pas déclencher le bloqueur
+  // de fenêtres contextuelles après l'attente réseau.
+  const newTab=download?null:window.open('about:blank','_blank');
+  if(newTab){
+    try{
+      newTab.document.title='Ouverture de la facture';
+      newTab.document.body.textContent='Chargement du PDF de la facture…';
+    }catch{}
+  }
+  const previewButton=$('previewInvoice'),downloadButton=$('printInvoice');
+  previewButton.disabled=true;downloadButton.disabled=true;
+  try{
+    const response=await fetch(
+      '/api/admin/invoices/'+encodeURIComponent(invoice.id)+'/pdf',
+      {credentials:'same-origin',cache:'no-store',headers:{Accept:'application/pdf'}}
+    );
+    if(!response.ok){
+      if(response.status===401)throw Error('La session a expiré. Reconnecte-toi dans KLOSQUE MANAGER.');
+      const message=await response.text().catch(()=>'');
+      throw Error(message&&message.length<180?message:'La génération du PDF a échoué.');
+    }
+    if(!String(response.headers.get('Content-Type')||'').toLowerCase().includes('application/pdf'))
+      throw Error('Le serveur n’a pas retourné de PDF. Reconnecte-toi puis réessaie.');
+    const blob=await response.blob();
+    if(!blob.size)throw Error('Le fichier PDF est vide.');
+    const url=URL.createObjectURL(blob);
+    invoicePdfPreviewUrls.add(url);
+    const filename=(invoice.number||'BROUILLON-'+invoice.id.slice(0,8))+'.pdf';
+    if(download){
+      downloadInvoicePdfBlob(url,filename);
+    }else if(newTab&&!newTab.closed){
+      // Aucun cookie n'est nécessaire dans l'onglet de visualisation :
+      // les octets proviennent déjà de la requête authentifiée.
+      newTab.location.replace(url);
+      try{newTab.opener=null;}catch{}
+    }else{
+      downloadInvoicePdfBlob(url,filename);
+      notify('Ton navigateur a bloqué l’aperçu. Le PDF a été téléchargé à la place.');
+    }
+  }catch(error){
+    if(newTab&&!newTab.closed)newTab.close();
+    notify('PDF non ouvert : '+error.message);
+  }finally{
+    const ready=Boolean(invoiceState.current?.id);
+    previewButton.disabled=downloadButton.disabled=!ready;
+  }
+}
+$('previewInvoice').addEventListener('click',()=>showInvoicePdf(false));
+$('printInvoice').addEventListener('click',()=>showInvoicePdf(true));
 // Une facture émise ne doit pas être effacée. L'archivage est réversible et
 // conserve sa numérotation, son PDF et son historique de paiement et d'e-mails.
 let pendingInvoiceArchive=null;
