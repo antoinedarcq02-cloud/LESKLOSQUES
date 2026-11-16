@@ -194,3 +194,32 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
   .reminders-panel .section-header{flex-wrap:wrap}
   .reminders-panel .section-header button{width:100%}
 }
+
+/* Connexion Google Agenda et boîte Outlook, sans action sur les données externes
+   tant qu'un bouton de synchronisation n'a pas été confirmé. */
+.integration-panel{margin:22px 0}
+.integration-panel .section-header{gap:10px;align-items:start}
+.integration-items{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));gap:12px;margin:13px 0}
+.external-item{
+  display:flex;flex-direction:column;align-items:flex-start;gap:8px;
+  min-width:0;border:1px solid #4a404b;background:#231f26;
+  border-radius:12px;padding:14px 16px
+}
+.external-item strong{line-height:1.35;overflow-wrap:anywhere}
+.external-item p{margin:0;overflow-wrap:anywhere;line-height:1.5}
+.external-status{
+  align-self:flex-start;padding:4px 9px;border-radius:16px;
+  border:1px solid #a2824b;color:#ffe3ad;
+  font-size:.77rem;font-weight:750
+}
+.integration-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:10px 0}
+.integration-actions button,.integration-actions .link{font-size:.86rem;padding:9px 11px;text-decoration:none}
+#outlookMailList .external-item{gap:10px}
+#outlookMailList .external-item strong{font-size:1.04rem}
+#googlePublishPanel{margin-top:22px}
+#googlePublishPanel h3{margin:10px 0}
+@media(max-width:600px){
+  .integration-panel .section-header{flex-wrap:wrap}
+  .integration-panel .section-header>button{width:100%}
+  .integration-actions button,.integration-actions .link{flex:1;min-width:125px;text-align:center}
+}
