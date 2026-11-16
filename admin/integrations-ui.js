@@ -390,7 +390,7 @@ document.querySelector('[data-tab="messagerie"]').addEventListener('click',loadO
 function handleConnectionReturn(){
   const url=new URL(window.location.href);
   const status=url.searchParams.get('connexion')||'';
-  if(!/^(google|microsoft)-(ok|erreur|expire|refuse|configuration|mauvais-compte|permissions)$/.test(status))return;
+  if(!/^(google|microsoft)-(ok|erreur|expire|refuse|configuration|mauvais-compte|permissions|session|identifiants|jeton|profil|renouvellement)$/.test(status))return;
   url.searchParams.delete('connexion');
   window.history.replaceState(null,'',url.pathname+url.search+url.hash);
   setPage('site');
@@ -398,5 +398,10 @@ function handleConnectionReturn(){
   notify(status.endsWith('-ok')?provider+' connecté avec succès.':
     status.endsWith('mauvais-compte')?'Compte Microsoft incorrect : autorise uniquement LesKlosques@hotmail.com.':
     status.endsWith('permissions')?'Autorisation Mail.Send manquante : reconnecte Hotmail et accepte le droit d’envoyer des e-mails.':
+    status.endsWith('identifiants')?'Secret Microsoft refusé. Dans Cloudflare, MICROSOFT_CLIENT_SECRET doit contenir la VALEUR du secret client Azure, et non son ID.':
+    status.endsWith('session')?'La session de connexion Microsoft a été perdue. Recommence depuis le bouton Connecter Hotmail, dans le même navigateur.':
+    status.endsWith('renouvellement')?'Microsoft n’a pas remis l’accès durable à la boîte. Reconnecte Hotmail et accepte toutes les autorisations demandées.':
+    status.endsWith('profil')?'Microsoft a autorisé l’accès, mais la vérification du profil a échoué. Réessaie la connexion.':
+    status.endsWith('jeton')?'Microsoft n’a pas pu terminer l’autorisation. Vérifie le secret client et réessaie la connexion.':
     'Connexion '+provider+' non terminée. Vérifie le compte, les autorisations et la configuration.');
 }
