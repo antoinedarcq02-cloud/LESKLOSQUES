@@ -186,7 +186,10 @@ $('newGoogleEvent').addEventListener('click',()=>{
   googleEventForm.reset();
   googleEventNonce=crypto.randomUUID();
   const month=$('agendaMonth').value;
-  const today=new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Paris'});
+  const dateParts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{
+    timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit'
+  }).formatToParts(new Date()).map(part=>[part.type,part.value]));
+  const today=dateParts.year+'-'+dateParts.month+'-'+dateParts.day;
   const chosen=state.selectedDay||
     (today.startsWith(month)?today:month+'-01');
   googleEventField('start_date').value=chosen;
