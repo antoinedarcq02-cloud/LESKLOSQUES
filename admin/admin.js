@@ -63,7 +63,8 @@ async function signedIn(account, showWelcome = false) {
   $('membersPanel').hidden = account.role !== 'admin';
   $('emailSettingsPanel').hidden = account.role !== 'admin';
   $('externalConnectionsPanel').hidden = account.role !== 'admin';
-  $('newGoogleEvent').hidden = account.role !== 'admin';
+  $('newGoogleEvent').hidden = false;
+  $('newGoogleEvent').disabled = true; // Activé après vérification de la connexion Google.
   document.querySelector('[data-tab="messagerie"]').hidden = account.role !== 'admin';
   $('cancelPasswordChange').hidden = state.mustChangePassword;
   $('passwordExplanation').textContent = state.mustChangePassword

@@ -116,12 +116,14 @@ async function loadGoogleCalendar(){
     // Empêcher le retour d'une ancienne requête d'écraser un nouveau mois.
     if(serial!==googleCalendarRequestSerial||!state.logged||month!==$('agendaMonth').value)return;
     if(!data.connected){
+      $('newGoogleEvent').disabled=true;
       state.googleEvents=[];state.googleLinks=[];state.googleMonth=month;
       renderCalendar();
       status.textContent='Google Agenda non connecté : le responsable peut le relier dans Site → Connexions.';
       $('googlePublishPanel').hidden=true;
       return;
     }
+    $('newGoogleEvent').disabled=false;
     state.googleEvents=Array.isArray(data.events)?data.events:[];
     state.googleLinks=Array.isArray(data.links)?data.links:[];
     state.googleMonth=month;
@@ -131,6 +133,7 @@ async function loadGoogleCalendar(){
     if(state.role==='admin')renderGooglePublishing(state.googleLinks);
   }catch(error){
     if(serial!==googleCalendarRequestSerial||!state.logged||month!==$('agendaMonth').value)return;
+    $('newGoogleEvent').disabled=true;
     state.googleEvents=[];state.googleLinks=[];state.googleMonth=month;
     renderCalendar();
     status.textContent='Lecture Google indisponible : '+error.message;
@@ -182,7 +185,7 @@ function updateGoogleEventTimeFields(){
   }
 }
 $('newGoogleEvent').addEventListener('click',()=>{
-  if(!state.logged||state.role!=='admin')return;
+  if(!state.logged||!['admin','member'].includes(state.role)||$('newGoogleEvent').disabled)return;
   googleEventForm.reset();
   googleEventNonce=crypto.randomUUID();
   const month=$('agendaMonth').value;
@@ -214,7 +217,7 @@ googleEventDialog.addEventListener('cancel',event=>{
 $('cancelGoogleEvent').addEventListener('click',closeGoogleEventDialog);
 googleEventForm.addEventListener('submit',async event=>{
   event.preventDefault();
-  if(!state.logged||state.role!=='admin'||!googleEventNonce)return;
+  if(!state.logged||!['admin','member'].includes(state.role)||!googleEventNonce)return;
   const start=googleEventField('start_date').value;
   const end=googleEventField('end_date').value;
   const allDay=googleEventField('all_day').checked;
