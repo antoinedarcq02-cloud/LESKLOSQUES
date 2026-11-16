@@ -98,7 +98,9 @@ export async function onRequestDelete(context) {
       ok:true,deleted:true,
       google_status:pending?"pending":"removed",
       ...(pending?{google_warning:
-        "Demande supprimée du Manager. L'événement Google n'a pas pu être retiré pour le moment : sa suppression sera retentée à la prochaine consultation de l'Agenda connecté."}:{})
+        "Demande supprimée du Manager. Google Agenda : "+
+        (google.reason||"suppression non confirmée.")+
+        " Une nouvelle tentative sera effectuée à la prochaine consultation de l'Agenda connecté."}:{})
     });
   } catch (error) {
     console.warn("Erreur suppression demande client", error?.message || error);
