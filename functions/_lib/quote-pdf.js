@@ -158,9 +158,12 @@ export function createQuotePdf(quote){
     text("A : "+String(q.client_name||"Client a preciser"),355,568,8.8,true);
     let cy=554;
     cy=para(q.client_address||"",355,cy,190,8.3,11);
-    if(q.client_email)para(q.client_email,355,cy-3,190,8.3,11);
-    text("PRESTATION : "+dateLabel(q.event_date)+(q.event_time?" a "+q.event_time:""),56,488,8.4,true);
-    para(q.event_location||"",56,474,480,8.2,10);
+    if(q.client_email)cy=para(q.client_email,355,cy-3,190,8.3,11);
+    // Les coordonnees longues repoussent le tableau plutot que de le recouvrir.
+    const eventY=Math.min(488,y-25,cy-30);
+    text("PRESTATION : "+dateLabel(q.event_date)+(q.event_time?" a "+q.event_time:""),56,eventY,8.4,true);
+    const afterPlace=para(q.event_location||"",56,eventY-14,480,8.2,10);
+    return Math.min(444,afterPlace-22);
   }
   const breaks=[55,294,347,465,548];
   function tableHead(top){
@@ -183,8 +186,17 @@ export function createQuotePdf(quote){
     stroke(55,770,548,770);
     return tableHead(744);
   }
-  drawFirstHeader();
-  let y=tableHead(444);
+  const tableTop=drawFirstHeader();
+  let y;
+  if(tableTop<245){
+    // L'en-tete legal complet occupe la premiere page : commencer le tableau
+    // sur la suivante, sans masquer les informations du devis.
+    pageEnd();
+    text(brand,55,782,12,true,"0.43 0.43 0.43");
+    text("DEVIS "+String(quote.number||"")+" (suite)",350,782,9,true);
+    stroke(55,770,548,770);
+    y=tableHead(744);
+  }else y=tableHead(tableTop);
   for(const row of totals.rows){
     const labelLines=wrap(row.label,43);
     const height=Math.max(28,12+labelLines.length*11);
