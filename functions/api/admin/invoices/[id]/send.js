@@ -4,7 +4,7 @@ import { createInvoicePdf, encodePdfBase64 } from "../../../../_lib/invoice-pdf.
 import { quoteMailReady } from "../../../../_lib/quote-mail.js";
 import {microsoftMailReady,sendMicrosoftMail} from "../../../../_lib/microsoft-mail.js";
 
-const EMAIL=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL=/^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/;
 const REPLY_TO="LesKlosques@hotmail.com";
 function safe(s){
   return String(s??"").replace(/[&<>"']/g,c=>({
@@ -55,6 +55,9 @@ export async function onRequestPost(context){
     body=JSON.parse(raw);
   }catch{return respond({error:"Confirmation invalide."},400);}
   if(body?.confirm_send!==true)return respond({error:"Confirmation explicite requise avant l'envoi."},400);
+  if(typeof body.recipient!=="string"||body.recipient.length>254||!EMAIL.test(body.recipient.trim()))
+    return respond({error:"Renseigne une seule adresse e-mail de destinataire valide."},400);
+  const recipient=body.recipient.trim();
   if(!await quoteMailReady(context.env))
     return respond({error:"Envoi non configuré : il faut une adresse d'expédition vérifiée et un service d'e-mail."},503);
   const DB=context.env.DB;
@@ -64,22 +67,24 @@ export async function onRequestPost(context){
     if(!row)return respond({error:"Facture introuvable."},404);
     if(row.status!=="emise")return respond({error:"Émets la facture avant l'envoi."},409);
     const invoice=publicInvoice(row);
-    let destination=invoice.data.client_email;
-    if(row.booking_id){
-      const booking=await DB.prepare("SELECT name,email FROM bookings WHERE id=?").bind(row.booking_id).first();
-      if(!booking)return respond({error:"La demande client associée a été supprimée."},409);
-      destination=booking.email;
-    }
-    const recipient=String(destination||"").trim();
-    if(!EMAIL.test(recipient)||recipient.length>254)
-      return respond({error:"Adresse e-mail client absente ou invalide."},409);
+    // Le destinataire est confirmé par le musicien ; une facture peut
+    // n'être liée à aucune demande client ou être transmise à une adresse
+    // communiquée après sa finalisation.
     const previous=await DB.prepare(
-      "SELECT sent_at FROM invoice_email_sends WHERE invoice_id=? AND recipient=? ORDER BY id DESC LIMIT 1"
+      "SELECT sent_at FROM invoice_email_sends WHERE invoice_id=? AND lower(recipient)=lower(?) ORDER BY id DESC LIMIT 1"
     ).bind(row.id,recipient).first();
     if(previous?.sent_at){
       const stamp=Date.parse(previous.sent_at.replace(" ","T")+"Z");
       if(Number.isFinite(stamp)&&Date.now()-stamp<120000)
-        return respond({error:"Cette facture vient d'être envoyée. Attends deux minutes avant de la renvoyer."},429);
+        return respond({error:"Cette facture vient d'être envoyée à cette adresse. Attends deux minutes avant de la renvoyer."},429);
+    }
+    const recent=await DB.prepare(
+      "SELECT sent_at FROM invoice_email_sends WHERE invoice_id=? ORDER BY id DESC LIMIT 1"
+    ).bind(row.id).first();
+    if(recent?.sent_at){
+      const stamp=Date.parse(recent.sent_at.replace(" ","T")+"Z");
+      if(Number.isFinite(stamp)&&Date.now()-stamp<15000)
+        return respond({error:"Un envoi vient d'être effectué pour cette facture. Patiente quelques secondes."},429);
     }
     const pdf=createInvoicePdf(invoice);
     if(pdf.length>4*1024*1024)return respond({error:"Le PDF dépasse la taille autorisée."},413);
