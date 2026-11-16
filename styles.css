@@ -654,3 +654,10 @@ footer .footer-logo-white { display: block; width: 175px; height: 80px; max-widt
   background: #ffffff;
   border-color: #ffffff;
 }
+
+
+/* Pages légales : accès permanent depuis le pied du site public. */
+.footer-legal{display:flex;flex-direction:column;gap:6px;align-items:flex-start;flex-shrink:0}
+.footer-legal a{color:#e8dfe0;font-size:11px;text-decoration:underline;text-underline-offset:3px}
+.footer-legal a:hover,.footer-legal a:focus-visible{color:#ff8d99}
+@media(max-width:800px){.footer-legal{flex-direction:row;gap:16px;flex-wrap:wrap}}
