@@ -3,16 +3,16 @@ Dernière mise à jour : 16 novembre 2026
 
 Ces informations ne sont pas connues avec certitude dans le dépôt. Ne pas publier de données inventées.
 
-Situation confirmée par les musiciens : Les Klosques est un collectif de quatre musiciens, sans association ni société propre au groupe. Ne pas présenter Happy Live 66 comme l'éditeur du site. Ne pas inventer de numéro RNA/SIREN/SIRET au nom du collectif.
+Situation confirmée : Les Klosques est un groupe de quatre musiciens, sans association ni société propre au groupe, engagé par l'association Happy Live 66 pour ses prestations musicales. Le fait d'engager le groupe ne suffit pas à identifier Happy Live 66 comme éditeur du site. Ce rôle reste à confirmer. Ne pas inventer de numéro RNA/SIREN/SIRET au nom du groupe.
 
-1. Identifier la personne physique (ou les personnes physiques) responsable(s) de l'édition du site, avec prénom et nom.
+1. Confirmer si l'éditeur juridique du site est Happy Live 66 ou une/des personnes physiques du groupe, puis renseigner son identité exacte (ou ses identités).
 2. Adresse postale de l'éditeur à communiquer selon le cadre juridique applicable.
 3. Nom du directeur ou de la directrice de publication.
 4. Téléphone de contact, si requis.
-5. Identifier la ou les personnes responsables des traitements de données du formulaire de devis ; déterminer si une responsabilité conjointe existe entre les membres du groupe.
+5. Identifier les responsables réels des traitements de données du formulaire (musiciens, association Happy Live 66 ou responsabilité conjointe), suivant les décisions prises effectivement.
 6. Durée de conservation des demandes sans suite et procédure réelle de purge (aucune purge automatique en place).
 7. Vérifier les contrats de sous-traitance, transferts hors EEE et conditions des lecteurs intégrés YouTube/Facebook et des éventuels traceurs/cookies.
-8. Clarifier la structure contractante qui intervient effectivement pour une prestation, ses obligations fiscales/comptables et l'émetteur de la facture. Ceci est distinct de l'éditeur du site.
+8. Vérifier les rôles et coordonnées juridiques de Happy Live 66 dans l'engagement des musiciens, la contractualisation des prestations et la facturation. Ne pas supposer que la structure contractante est automatiquement éditrice du site.
 
 Éléments vérifiés dans le code :
 - Adresse de contact du groupe : LesKlosques@hotmail.com.
