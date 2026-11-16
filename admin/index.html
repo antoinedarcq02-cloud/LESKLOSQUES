@@ -112,25 +112,22 @@
       <div id="homeList" class="card-list"></div>
     </section>
     <section id="panel-agenda" class="page" hidden>
-      <div class="section-header"><h2>Agenda commun</h2><input id="agendaMonth" aria-label="Mois affiché" type="month"></div>
-      <p class="muted">Les dates en option et confirmées sont visibles ici. Aucune gestion de disponibilité individuelle.</p>
-      <div id="calendar" class="calendar"></div>
-      <div id="agendaList" class="card-list"></div>
-      <section id="googleCalendarPanel" class="panel integration-panel" aria-labelledby="googleCalendarTitle">
-        <div class="section-header">
-          <div><h2 id="googleCalendarTitle">Google Agenda</h2>
-            <p class="muted small">Seuls les deux agendas du groupe sont affichés : KLOSQUES PARTAGE pour les concerts et KLOSQUES PAS DISPO PARTAGE pour les indisponibilités. Aucun agenda personnel.</p>
-          </div>
+      <div class="section-header agenda-header">
+        <h2>Agenda commun</h2>
+        <div class="agenda-controls">
+          <input id="agendaMonth" aria-label="Mois affiché" type="month">
           <button type="button" class="secondary" id="refreshGoogleCalendar">Actualiser Google</button>
         </div>
-        <p id="googleCalendarStatus" class="muted small" role="status">Google Agenda non encore chargé.</p>
-        <div id="googleCalendarEvents" class="integration-items"></div>
-        <div id="googlePublishPanel" hidden>
-          <h3>Concerts confirmés à synchroniser</h3>
-          <p class="muted small">Les concerts confirmés sont publiés uniquement dans KLOSQUES PARTAGE, après confirmation, en journée entière. Le calendrier PAS DISPO n'est jamais modifié ici.</p>
-          <div id="googlePublishItems" class="integration-items"></div>
-        </div>
-      </section>
+      </div>
+      <p class="muted">Concerts du Manager et événements des agendas partagés <strong>KLOSQUES PARTAGE</strong> et <strong>KLOSQUES PAS DISPO PARTAGE</strong>, réunis dans le même calendrier.</p>
+      <div class="agenda-legend" aria-label="Légende de l'agenda">
+        <span><i class="legend-dot legend-manager"></i> Concerts Manager</span>
+        <span><i class="legend-dot legend-shared"></i> KLOSQUES PARTAGE</span>
+        <span><i class="legend-dot legend-unavailable"></i> KLOSQUES PAS DISPO PARTAGE</span>
+      </div>
+      <p id="googleCalendarStatus" class="muted small" role="status" aria-live="polite">Chargement de Google Agenda en attente.</p>
+      <div id="calendar" class="calendar"></div>
+      <div id="agendaList" class="card-list"></div>
     </section>
     <section id="panel-demandes" class="page" hidden>
       <div class="section-header"><h2>Demandes clients</h2><select id="requestFilter" aria-label="Filtrer les demandes"><option value="all">Toutes</option><option value="nouveau">Nouvelles</option><option value="en_discussion">En discussion</option><option value="devis_envoye">Devis envoyé</option><option value="refuse">Refusées</option></select></div>
@@ -360,6 +357,11 @@
           <button id="refreshConnections" class="secondary" type="button">Actualiser</button>
         </div>
         <p class="muted small">Google : configurer GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET. Microsoft : configurer MICROSOFT_CLIENT_ID et MICROSOFT_CLIENT_SECRET dans Cloudflare. Pour Google, les calendriers KLOSQUES PARTAGE et KLOSQUES PAS DISPO PARTAGE doivent être visibles dans le compte connecté. Reconnecte Google pour accorder l'accès à la liste des calendriers. Une simple connexion ne modifie aucun événement ni message.</p>
+        <div id="googlePublishPanel" hidden>
+          <h3>Synchroniser les concerts confirmés avec KLOSQUES PARTAGE</h3>
+          <p class="muted small">Seuls les concerts confirmés sont publiés dans KLOSQUES PARTAGE, après ton accord. Le calendrier PAS DISPO n'est jamais modifié.</p>
+          <div id="googlePublishItems" class="integration-items"></div>
+        </div>
       </section>
       <div class="panel email-settings-panel" id="emailSettingsPanel" hidden>
         <h2>Messagerie et notifications</h2>
