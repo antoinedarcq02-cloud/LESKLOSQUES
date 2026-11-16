@@ -3,11 +3,10 @@ import {resolveKlosquesCalendars} from "./klosques-calendars.js";
 
 // Synchronisation non bloquante des demandes du formulaire public.
 // Seul KLOSQUES PARTAGE est modifié. Aucune donnée de contact client n'est
-// transférée vers Google. Les dossiers "nouveau" restent libres/transparent.
+// transférée vers Google. Les dossiers "nouveau" ne sont pas publiés.
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ACTIVE=new Set(["nouveau","en_discussion","devis_envoye","option","confirme","termine"]);
+const ACTIVE=new Set(["en_discussion","devis_envoye","option","confirme","termine"]);
 const LABELS={
-  nouveau:"Demande à traiter",
   en_discussion:"Demande en discussion",
   devis_envoye:"Devis envoyé",
   option:"Date en option",
@@ -50,7 +49,10 @@ export async function syncRequestToGoogle(env,booking,{remove=false}={}){
   ).bind(booking.id).first();
   if(latest&&latest.source!=="site")return{skipped:true};
   const active=latest||booking;
-  const removeEvent=remove||!latest||active.status==="refuse";
+  // Une demande en attente de traitement ne doit figurer sur aucun agenda.
+  // Supprimer aussi l'ancienne entrée Google si elle avait été publiée avant
+  // cette règle, sans toucher à la fiche client stockée dans D1.
+  const removeEvent=remove||!latest||active.status==="nouveau"||active.status==="refuse";
   if(!removeEvent&&(!ACTIVE.has(active.status)||
       !/^\d{4}-\d{2}-\d{2}$/.test(active.event_date||"")))return{skipped:true};
   const token=await providerAccessToken(env,"google");

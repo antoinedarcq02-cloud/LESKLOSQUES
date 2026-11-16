@@ -1,6 +1,7 @@
 import {authorize,respond} from "../../_lib/admin-auth.js";
 import {monthBounds} from "../../_lib/google.js";
 import {resolveKlosquesCalendars} from "../../_lib/klosques-calendars.js";
+import {syncRequestToGoogle} from "../../_lib/booking-google-sync.js";
 import {
   ensureIntegrationTables,getConnected,providerAccessToken
 } from "../../_lib/integrations.js";
@@ -82,6 +83,14 @@ export async function onRequestGet(context){
     // Identifier les deux calendriers de groupe par leurs noms exacts.
     // Aucun événement de l'agenda personnel "primary" n'est lu.
     const calendars=await resolveKlosquesCalendars(context.env,token);
+    // Masquer immédiatement les anciennes demandes encore en attente,
+    // même si leur événement Google historique n'a pas encore été nettoyé.
+    // Seul un marqueur privé de dossier du site est concerné : les
+    // événements ajoutés directement par les musiciens restent visibles.
+    const {results:waiting}=await DB.prepare(
+      "SELECT id FROM bookings WHERE source='site' AND status='nouveau'"
+    ).all();
+    const waitingIds=new Set((waiting||[]).map(row=>row.id));
     let events=[],truncated=false;
     for(const [kind,calendar] of Object.entries(calendars)){
       let pageToken="",pages=0;
@@ -98,6 +107,8 @@ export async function onRequestGet(context){
         const result=await response.json().catch(()=>({}));
         for(const event of result.items||[]){
           if(event.status==="cancelled")continue;
+          if(kind==="concerts"&&waitingIds.has(
+            event.extendedProperties?.private?.klosquesBookingId))continue;
           const safe=conciseEvent(event,kind);
           if(safe)events.push(safe);
         }
@@ -119,5 +130,56 @@ export async function onRequestGet(context){
   }catch(error){
     console.warn("Lecture Google Agenda impossible",error?.message);
     return respond({error:"Impossible de lire les deux agendas partagés Klosques. Vérifie leur présence dans le compte Google et reconnecte Google depuis Site si nécessaire."},503);
+  }
+}
+
+/**
+ * Rattrapage sûr des anciennes demandes "nouveau" déjà publiées.
+ * Déclenché par l'Agenda commun d'un musicien connecté. Seules les
+ * associations connues dans D1 sont parcourues. La fonction de synchronisation
+ * relit le statut courant et vérifie le marqueur privé Google avant d'effacer.
+ * Aucun événement des agendas personnels ou PAS DISPO n'est modifié.
+ */
+export async function onRequestPost(context){
+  const user=await authorize(context,true);
+  if(user.error)return user.error;
+  if(!["admin","member"].includes(user.user?.role))
+    return respond({error:"Action réservée aux comptes des musiciens."},403);
+  let body;
+  try{
+    const raw=await context.request.text();
+    if(raw.length>200)return respond({error:"Requête trop longue."},413);
+    body=JSON.parse(raw);
+  }catch{return respond({error:"Requête invalide."},400);}
+  if(body?.action!=="cleanup_waiting_requests"||body?.confirm!==true)
+    return respond({error:"Action non confirmée."},400);
+  try{
+    await ensureIntegrationTables(context.env.DB);
+    const {results}=await context.env.DB.prepare(
+      "SELECT b.id,b.source,b.status,b.event_date,b.location FROM bookings b "+
+      "JOIN google_concert_links l ON l.booking_id=b.id "+
+      "WHERE b.source='site' AND b.status='nouveau' LIMIT 20"
+    ).all();
+    let cleaned=0,failed=0;
+    // Volume limité par consultation pour ne pas saturer Google Calendar.
+    // La fonction recontrôle le statut ; si la demande a progressé depuis
+    // notre SELECT elle est mise à jour, pas supprimée.
+    for(let i=0;i<(results||[]).length;i+=4){
+      const group=results.slice(i,i+4);
+      const outcomes=await Promise.allSettled(
+        group.map(booking=>syncRequestToGoogle(context.env,booking))
+      );
+      for(const outcome of outcomes){
+        if(outcome.status==="fulfilled"&&!outcome.value?.skipped)cleaned++;
+        else if(outcome.status==="rejected"){
+          failed++;
+          console.warn("Nettoyage demande Google impossible",outcome.reason?.message);
+        }
+      }
+    }
+    return respond({ok:true,processed:(results||[]).length,cleaned,failed});
+  }catch(error){
+    console.warn("Rattrapage demandes Google impossible",error?.message);
+    return respond({error:"Nettoyage des anciennes demandes indisponible. Tu peux toujours consulter les dossiers."},503);
   }
 }
