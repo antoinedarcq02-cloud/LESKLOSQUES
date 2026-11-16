@@ -117,7 +117,7 @@ function cleanupOldWaitingRequests(){
     action:'cleanup_waiting_requests',confirm:true
   }).then(async result=>{
     if(result.failed)notify('Certains anciens événements de demandes restent sur Google. Actualise l’agenda pour réessayer.');
-    if((result.cleaned||0)+(result.orphaned_removed||0)>0&&state.page==='agenda')
+    if((result.cleaned||0)+(result.orphaned_removed||0)+(result.queued_removed||0)>0&&state.page==='agenda')
       await loadGoogleCalendar();
   }).catch(error=>{
     console.warn('Nettoyage des anciennes demandes Google indisponible',error.message);
@@ -149,8 +149,10 @@ async function loadGoogleCalendar(){
     state.googleLinks=Array.isArray(data.links)?data.links:[];
     state.googleMonth=month;
     renderCalendar();
+    const pending=Number(data.pending_google_removals)||0;
     status.textContent='Les deux agendas partagés sont intégrés au calendrier commun'+
-      (data.truncated?' · Certains événements Google ne sont pas encore chargés.':'.');
+      (data.truncated?' · Certains événements Google ne sont pas encore chargés.':'.')+
+      (pending?' · '+pending+' suppression(s) Google en attente de traitement.':'');
     // Les nouvelles demandes restent uniquement dans "Demandes clients".
     // Enregistrer "En discussion" les rend ensuite visibles dans Google.
     cleanupOldWaitingRequests();
@@ -191,6 +193,31 @@ $('googlePublishItems').addEventListener('click',async event=>{
     await loadGoogleCalendar();
   }catch(error){notify(error.message);}
   finally{target.disabled=false;}
+});
+
+// Enlever en une seule action la demande issue du site ET son événement
+// Google, sans confondre cette option avec "Retirer uniquement de Google".
+$('agendaList').addEventListener('click',async event=>{
+  const button=event.target.closest('[data-delete-linked-request]');
+  if(!button||!state.logged||!['admin','member'].includes(state.role))return;
+  const booking=state.items.find(b=>b.id===button.dataset.deleteLinkedRequest&&b.source==='site');
+  if(!booking)return notify('Cette demande n’est plus disponible. Actualise les dossiers.');
+  if(!window.confirm('Supprimer définitivement la demande du site pour le '+
+    dateLabel(booking.event_date)+' à '+booking.location+' ?\n\n'+
+    'Son événement Google associé sera supprimé immédiatement si possible. '+
+    'En cas de panne Google, la demande disparaîtra du Manager et son événement '+
+    'sera placé en attente de suppression, sans toucher aux autres événements.'))return;
+  button.disabled=true;
+  try{
+    const outcome=await callApi('/api/admin/bookings/'+encodeURIComponent(booking.id),
+      {method:'DELETE'});
+    await refresh();
+    await loadGoogleCalendar();
+    notify(outcome.google_status==='pending'
+      ?(outcome.google_warning||'Demande supprimée. Google Agenda reste à synchroniser.')
+      :'La demande et son événement Google ont été supprimés.');
+  }catch(error){notify(error.message);}
+  finally{button.disabled=false;}
 });
 
 // Suppression ciblée d'un événement dans l'un des deux agendas partagés.
