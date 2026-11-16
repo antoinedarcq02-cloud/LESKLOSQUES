@@ -173,32 +173,17 @@
           <p class="muted small">À compléter avec les véritables informations de la structure qui facture, pas seulement le nom du groupe.</p>
           <label>Nom / raison sociale *<input name="issuer_name" maxlength="160" placeholder="Nom juridique de l'association, société ou entreprise"></label>
           <label>Adresse complète de la structure *<textarea name="issuer_address" rows="2" maxlength="350"></textarea></label>
-          <div class="field-row">
-            <label>Identifiant officiel (SIRET, RNA selon la structure) *<input name="issuer_identifier" maxlength="90"></label>
-            <label>Numéro de TVA intracommunautaire (si applicable)<input name="issuer_tax_number" maxlength="70"></label>
-          </div>
+          <label>Identifiant officiel (SIRET, RNA selon la structure) *<input name="issuer_identifier" maxlength="90"></label>
           <label>Contact professionnel (email / téléphone)<input name="issuer_contact" maxlength="180"></label>
           <label>Autres mentions légales (statut, immatriculation… selon votre situation)<textarea name="issuer_legal" rows="2" maxlength="250"></textarea></label>
           <button type="button" id="saveQuoteProfile" class="secondary">Mémoriser ces coordonnées pour les prochains devis</button>
           <h3>3. Prestations et prix</h3>
-          <p class="muted small">Tous les prix unitaires ci-dessous sont indiqués hors taxes (HT). Ajoute une ligne pour les frais de déplacement si nécessaire.</p>
-          <div class="quote-lines-header" aria-hidden="true"><span>Prestation</span><span>Qté</span><span>Prix unitaire HT</span><span></span></div>
+          <p class="muted small" id="quotePricingInfo">Saisis directement les prix TTC proposés au client. Ajoute une ligne pour les frais de déplacement si nécessaire.</p>
+          <div class="quote-lines-header" aria-hidden="true"><span>Prestation</span><span>Qté</span><span id="quotePriceTypeText">Prix unitaire TTC</span><span></span></div>
           <div id="quoteLines"></div>
           <button id="addQuoteLine" type="button" class="secondary">+ Ajouter une prestation</button>
-          <div class="field-row">
-            <label>TVA applicable
-              <select name="vat_mode">
-                <option value="non_precise">Régime de TVA à préciser (brouillon seulement)</option>
-                <option value="franchise">TVA non applicable — franchise en base (si éligible)</option>
-                <option value="20">TVA 20 %</option>
-                <option value="10">TVA 10 %</option>
-                <option value="5.5">TVA 5,5 %</option>
-                <option value="0">TVA 0 % (autre régime à justifier)</option>
-              </select>
-            </label>
-          </div>
-          <p class="muted small">Le bon taux de TVA et l'éligibilité à la franchise sont à vérifier avec la structure émettrice.</p>
-          <div class="quote-total" id="quoteTotals">Total HT : 0,00 € · TVA : 0,00 € · Total TTC : 0,00 €</div>
+          <div class="quote-total" id="quoteTotals">Total TTC : 0,00 €</div>
+          <p class="muted small">Les mentions fiscales éventuellement obligatoires sur le devis restent à vérifier selon la situation de la structure émettrice.</p>
           <h3>4. Conditions et validité</h3>
           <div class="field-row">
             <label>Date du devis *<input name="issue_date" type="date"></label>
