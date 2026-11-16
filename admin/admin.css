@@ -224,9 +224,43 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
   .integration-actions button,.integration-actions .link{flex:1;min-width:125px;text-align:center}
 }
 
-/* Les deux calendriers Google du groupe, séparés visuellement. */
-#googleCalendarEvents{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:16px}
-.external-calendar-group{min-width:0;border:1px solid #49414a;border-radius:12px;padding:13px;background:#1a171c}
-.external-calendar-group h3{font-size:1rem;margin:3px 0 5px}
-.external-calendar-group>.external-item{margin:9px 0}
-@media(max-width:550px){#googleCalendarEvents{grid-template-columns:1fr}}
+/* Google et Manager dans le même agenda, avec sources identifiables. */
+.agenda-header{flex-wrap:wrap}
+.agenda-controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.agenda-controls #agendaMonth{min-width:140px}
+.agenda-legend{display:flex;gap:15px;flex-wrap:wrap;margin:10px 0 6px;font-size:.81rem;color:#d7c8cf}
+.agenda-legend span{display:inline-flex;align-items:center;gap:7px}
+.legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%}
+.legend-manager{background:#74e4a8}
+.legend-shared{background:#89c9ff}
+.legend-unavailable{background:#dfabff}
+#googleCalendarStatus{margin:6px 0 10px}
+.cal-grid .day{min-width:0;min-height:92px;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:5px}
+.cal-grid .day.selected{outline:2px solid #ff9eac;outline-offset:-2px}
+.cal-day-number{font-weight:800;align-self:flex-start}
+.cal-day-entries{min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:3px;flex:1}
+.cal-day-entry{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  border-radius:4px;padding:2px 4px;text-align:left;font-size:.68rem;line-height:1.35}
+.cal-day-entry.manager{background:#493039;color:#ffdae0}
+.cal-day-entry.google-concert{background:#163b56;color:#c7eaff}
+.cal-day-entry.google-unavailable{background:#3c2750;color:#eed8ff}
+.cal-day-more{font-size:.68rem;align-self:flex-start;color:#ded3d9}
+.cal-grid .dots{margin-top:auto}
+.dot.google-concert{background:#89c9ff}
+.dot.google-unavailable{background:#dfabff}
+.google-agenda-card{cursor:default;border-left:4px solid #89c9ff}
+.google-agenda-card.google-unavailable{border-left-color:#dfabff}
+.google-agenda-card:hover{border-color:#89c9ff;background:#1b181d}
+.google-agenda-card.google-unavailable:hover{border-color:#dfabff}
+.google-agenda-card .google-tag{max-width:100%;white-space:normal;overflow-wrap:anywhere;font-size:.69rem}
+.google-tag.google-concert{background:#163b56;color:#c7eaff}
+.google-tag.google-unavailable{background:#3c2750;color:#eed8ff}
+.google-agenda-card .card-top{flex-wrap:wrap}
+@media(max-width:650px){
+  .agenda-controls{width:100%}
+  .agenda-controls #agendaMonth{flex:1}
+  .cal-grid .day{min-height:56px;gap:3px}
+  .cal-day-entries{display:none}
+  .cal-grid .dots{gap:2px}
+  .google-agenda-card .google-tag{font-size:.66rem}
+}
