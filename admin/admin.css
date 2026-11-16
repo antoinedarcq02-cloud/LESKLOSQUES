@@ -171,3 +171,26 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
   .email-settings-panel .modal-actions{display:flex;flex-wrap:wrap}
   .email-settings-panel .modal-actions button{flex:1;min-width:160px}
 }
+
+/* Rappels de suivi : visibles uniquement dans l'accueil du Manager. */
+.reminders-panel{margin:16px 0 22px}
+.reminders-panel .section-header{gap:12px;align-items:start}
+.reminders-panel .section-header h2{margin-bottom:6px}
+.reminders-panel .section-header p{max-width:630px}
+.reminders-panel .section-header button{flex-shrink:0}
+.reminders-count{
+  display:inline-block;min-width:29px;padding:2px 7px;margin-left:5px;
+  border:1px solid #a98145;border-radius:20px;color:#ffe2ad;
+  background:#322719;font-size:.8em;text-align:center;vertical-align:middle
+}
+#remindersList{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px;margin:12px 0}
+#remindersList .manager-reminder-card{
+  display:flex;flex-direction:column;align-items:flex-start;text-align:left;
+  gap:7px;min-width:0;margin:0;padding:15px;height:100%
+}
+.manager-reminder-card strong{color:#ffe2ad;line-height:1.3}
+.manager-reminder-card .reminder-action{color:#f3cda3;font-weight:750;font-size:.88rem;margin-top:auto}
+@media(max-width:550px){
+  .reminders-panel .section-header{flex-wrap:wrap}
+  .reminders-panel .section-header button{width:100%}
+}

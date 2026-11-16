@@ -11,6 +11,7 @@
 <script src="/admin/admin.js" defer></script>
 <script src="/admin/quote-builder.js" defer></script>
 <script src="/admin/invoice-builder.js" defer></script>
+<script src="/admin/reminders.js" defer></script>
 </head>
 <body>
 <header class="topbar">
@@ -95,6 +96,17 @@
         <p id="newRequestsPromptText"></p>
         <button type="button" id="viewNewRequests" class="secondary">Voir les nouvelles demandes</button>
       </div>
+      <section id="remindersPanel" class="panel reminders-panel" aria-labelledby="remindersTitle">
+        <div class="section-header">
+          <div>
+            <h2 id="remindersTitle">Rappels à traiter <span id="remindersCount" class="reminders-count">0</span></h2>
+            <p class="muted small">Demandes sans réponse depuis 48 h, devis envoyés sans suite depuis 7 jours et factures envoyées dont l'échéance est dépassée.</p>
+          </div>
+          <button id="refreshReminders" class="secondary" type="button">Actualiser</button>
+        </div>
+        <div id="remindersList" aria-live="polite"><p class="muted small">Chargement des rappels…</p></div>
+        <p class="muted small">Ces rappels restent internes au Manager. Aucun e-mail de relance n'est envoyé automatiquement.</p>
+      </section>
       <div class="section-header"><h2>À suivre</h2><span class="muted small">Demandes et concerts récents</span></div>
       <div id="homeList" class="card-list"></div>
     </section>
