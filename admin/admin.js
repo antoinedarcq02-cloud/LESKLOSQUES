@@ -1,5 +1,16 @@
 'use strict';
 
+// Retire l'ancien service worker PWA lors de la prochaine ouverture du Manager.
+// Ne touche pas aux éventuels autres services installés sur ce domaine.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    const managerScope = new URL('/admin/', window.location.origin).href;
+    for (const registration of registrations) {
+      if (registration.scope === managerScope) registration.unregister();
+    }
+  }).catch(() => {});
+}
+
 const $ = id => document.getElementById(id);
 const STATUSES = {
   nouveau:'Nouvelle demande',en_discussion:'En discussion',devis_envoye:'Devis envoyé',
