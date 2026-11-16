@@ -73,7 +73,6 @@ async function signedIn(account, showWelcome = false) {
   if (showWelcome) await welcomeMusician(account.display_name || account.username);
   showScreen('workspace');
   await refresh();
-  await loadReminders();
   await loadSiteContent();
   if (state.role === 'admin') {
     await loadMembers();
@@ -190,6 +189,8 @@ async function refresh() {
     state.items = data.bookings || [];
     notify('');
     render();
+    // Recalculer les rappels lorsqu'un dossier est modifié sur l'accueil.
+    if(state.page==='home')await loadReminders();
   } catch (error) {
     notify(error.message);
   }
