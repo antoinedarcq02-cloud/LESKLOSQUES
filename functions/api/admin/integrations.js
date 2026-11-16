@@ -49,8 +49,10 @@ export async function onRequestPost(context){
   try{
     await ensureIntegrationTables(context.env.DB);
     await context.env.DB.prepare("DELETE FROM connected_services WHERE provider=?").bind(payload.provider).run();
+    // Un éventuel ancien jeton Google stocké comme secret Cloudflare reste actif.
+    const legacy_remains=payload.provider==="google"&&!!context.env.GOOGLE_REFRESH_TOKEN;
     // Les concerts ajoutés dans Google et les messages Outlook ne sont pas supprimés.
-    return respond({ok:true,disconnected:true});
+    return respond({ok:true,disconnected:!legacy_remains,legacy_remains});
   }catch(error){
     console.warn("Déconnexion impossible",error?.message);
     return respond({error:"Impossible de déconnecter le compte."},503);
