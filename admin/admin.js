@@ -523,8 +523,9 @@ async function loadEmailSettings(){
     const root=$('emailConfigDetails');
     root.replaceChildren();
     const rows=[
-      ['Expéditeur Resend',info.provider_ready?'Variables détectées':'Non configuré'],
-      ['Envoi des devis et factures',info.documents_ready?'Variables détectées':'Non configuré'],
+      ['Hotmail (LesKlosques@hotmail.com)',info.microsoft_ready?'Envoi autorisé':'À connecter / réautoriser dans Site → Connexions'],
+      ['Expéditeur Resend (optionnel)',info.provider_ready?'Variables détectées':'Non configuré'],
+      ['Envoi des devis et factures',info.documents_ready?'Disponible':'Non configuré'],
       ['Alerte au groupe',info.alerts_ready?'Activée':info.alerts_enabled?'Configuration incomplète':'Désactivée'],
       ['Accusé de réception au client',info.receipt_ready?'Activé':info.receipt_enabled?'Configuration incomplète':'Désactivé'],
       ['Destinataires des alertes',(info.notification_to||[]).join(', ')||'À vérifier'],
@@ -535,7 +536,7 @@ async function loadEmailSettings(){
       p.textContent=label+' : '+value;
       root.appendChild(p);
     }
-    $('sendTestEmail').disabled=!info.provider_ready;
+    $('sendTestEmail').disabled=!(info.provider_ready||info.microsoft_ready);
   }catch(error){
     $('emailConfigDetails').textContent='État de messagerie indisponible : '+error.message;
     $('sendTestEmail').disabled=true;
