@@ -56,6 +56,12 @@ export async function onRequestGet(context){
     const tokens=await response.json().catch(()=>({}));
     if(!response.ok||!tokens.refresh_token||!tokens.access_token)
       return finish(origin,provider,"erreur");
+    // La permission Mail.Send est obligatoire pour autoriser les envois
+    // depuis le compte du groupe. Un jeton déjà connecté en lecture seule
+    // ne donne jamais le droit d'envoyer des messages.
+    if(provider==="microsoft"&&typeof tokens.scope==="string"&&
+       !tokens.scope.split(/\s+/).some(scope=>scope.toLowerCase()==="mail.send"))
+      return finish(origin,provider,"permissions");
     let label="Google Agenda";
     if(provider==="microsoft"){
       const profileResponse=await fetch(
@@ -73,6 +79,14 @@ export async function onRequestGet(context){
       label=allowed;
     }
     await saveConnected(context.env,provider,tokens.refresh_token,label,pending.started_by);
+    if(provider==="microsoft"){
+      // Le consentement à l'envoi ne peut provenir que d'une connexion
+      // Microsoft refaite avec les nouvelles permissions.
+      await DB.prepare(
+        "INSERT INTO microsoft_mail_authorizations(provider,account_label) VALUES('microsoft',?) "+
+        "ON CONFLICT(provider) DO UPDATE SET account_label=excluded.account_label,authorized_at=datetime('now')"
+      ).bind(label).run();
+    }
     return finish(origin,provider,"ok");
   }catch(error){
     console.warn("Échec de connexion OAuth",provider,error?.message);
