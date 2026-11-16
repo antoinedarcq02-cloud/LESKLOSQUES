@@ -431,12 +431,17 @@ $('confirmDelete').addEventListener('click', async () => {
   button.disabled = true;
   notify('');
   try {
-    await callApi('/api/admin/bookings/' + encodeURIComponent(item.id), { method: 'DELETE' });
+    const outcome=await callApi('/api/admin/bookings/' + encodeURIComponent(item.id), { method: 'DELETE' });
     deleteRequestDialog.close();
     bookingDialog.close();
     state.current = null;
     await refresh();
-    notify('La demande a été supprimée définitivement.');
+    // Ne jamais conserver les anciens événements Google en mémoire après
+    // avoir confirmé la suppression d'un dossier.
+    if(state.googleMonth)await loadGoogleCalendar();
+    notify(outcome.google_status==='not_connected'
+      ?'Demande supprimée. Google Agenda est déconnecté : son contenu n’a pas pu être vérifié.'
+      :'La demande a été supprimée et Google Agenda actualisé.');
   } catch (error) {
     notify(error.message);
   } finally {
@@ -455,14 +460,18 @@ editor.addEventListener('submit', async event => {
     notify('Montant invalide.'); button.disabled = false; return;
   }
   try {
+    let googleWarning='';
     if (state.current) {
-      await jsonCall('/api/admin/bookings/'+encodeURIComponent(state.current.id),'PATCH',{...data,quote_amount_cents:cents});
+      const updated=await jsonCall('/api/admin/bookings/'+encodeURIComponent(state.current.id),'PATCH',{...data,quote_amount_cents:cents});
+      googleWarning=updated.google_warning||'';
     } else {
       const created = await jsonCall('/api/admin/bookings','POST',data);
       if (cents !== null) await jsonCall('/api/admin/bookings/'+encodeURIComponent(created.booking.id),'PATCH',{quote_amount_cents:cents});
     }
     bookingDialog.close();
     await refresh();
+    if(state.googleMonth)await loadGoogleCalendar();
+    if(googleWarning)notify(googleWarning);
   } catch(error) { notify(error.message); }
   finally { button.disabled = false; }
 });

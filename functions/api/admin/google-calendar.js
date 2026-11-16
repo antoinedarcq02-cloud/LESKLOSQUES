@@ -133,6 +133,68 @@ export async function onRequestGet(context){
   }
 }
 
+// Événements orphelins des anciennes suppressions : ne nettoyer que ceux
+// dont la description et le marqueur privé prouvent l'origine "demande site".
+// Les concerts manuels, les événements indépendants et PAS DISPO sont exclus.
+const SITE_LABELS=[
+  "Demande à traiter","Demande en discussion","Devis envoyé",
+  "Date en option","Concert confirmé","Concert terminé"
+];
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+async function cleanupOldDeletedSiteEvents(env){
+  const DB=env.DB;
+  const {results}=await DB.prepare(
+    "SELECT l.booking_id,l.calendar_id,l.event_id FROM google_concert_links l "+
+    "LEFT JOIN bookings b ON b.id=l.booking_id "+
+    "WHERE b.id IS NULL LIMIT 20"
+  ).all();
+  if(!results?.length)return{removed:0,failed:0};
+  const connection=await getConnected(DB,"google");
+  if(!connection&&!env.GOOGLE_REFRESH_TOKEN)return{removed:0,failed:results.length};
+  const token=await providerAccessToken(env,"google");
+  const calendars=await resolveKlosquesCalendars(env,token);
+  const calendar=calendars.concerts;
+  if(!["owner","writer","writerWithoutPrivateAccess"].includes(calendar.accessRole))
+    return{removed:0,failed:results.length};
+  let removed=0,failed=0;
+  for(const link of results){
+    if(!UUID.test(link.booking_id)||link.calendar_id!==calendar.id||!link.event_id)continue;
+    const url="https://www.googleapis.com/calendar/v3/calendars/"+
+      encodeURIComponent(calendar.id)+"/events/"+encodeURIComponent(link.event_id);
+    try{
+      const response=await fetch(url,{headers:{Authorization:"Bearer "+token}});
+      if(response.status===404||response.status===410){
+        // L'entrée Google n'existe plus, seule l'association D1 est obsolète.
+        await DB.prepare(
+          "DELETE FROM google_concert_links WHERE booking_id=? AND calendar_id=? AND event_id=?"
+        ).bind(link.booking_id,calendar.id,link.event_id).run();
+        continue;
+      }
+      if(!response.ok)throw Error("Lecture Google refusée ("+response.status+").");
+      const item=await response.json();
+      const proof=SITE_LABELS.some(label=>String(item.description||"").startsWith(
+        label+" dans Klosques Manager. Référence interne : "+link.booking_id+"."
+      ));
+      if(item.extendedProperties?.private?.klosquesBookingId!==link.booking_id||
+         !proof||!item.etag)continue;
+      const deleted=await fetch(url+"?sendUpdates=none",{
+        method:"DELETE",
+        headers:{Authorization:"Bearer "+token,"If-Match":item.etag}
+      });
+      if(!deleted.ok&&deleted.status!==404&&deleted.status!==410)
+        throw Error("Suppression Google refusée ("+deleted.status+").");
+      await DB.prepare(
+        "DELETE FROM google_concert_links WHERE booking_id=? AND calendar_id=? AND event_id=?"
+      ).bind(link.booking_id,calendar.id,link.event_id).run();
+      removed++;
+    }catch(error){
+      failed++;
+      console.warn("Ancien événement de demande non nettoyé",error?.message);
+    }
+  }
+  return{removed,failed};
+}
+
 /**
  * Rattrapage sûr des anciennes demandes "nouveau" déjà publiées.
  * Déclenché par l'Agenda commun d'un musicien connecté. Seules les
@@ -177,7 +239,13 @@ export async function onRequestPost(context){
         }
       }
     }
-    return respond({ok:true,processed:(results||[]).length,cleaned,failed});
+    // Rattraper aussi les suppressions déjà faites par les anciennes versions,
+    // mais uniquement si l'événement porte les deux preuves d'une demande site.
+    const old=await cleanupOldDeletedSiteEvents(context.env);
+    return respond({
+      ok:true,processed:(results||[]).length,cleaned,
+      orphaned_removed:old.removed,failed:failed+old.failed
+    });
   }catch(error){
     console.warn("Rattrapage demandes Google impossible",error?.message);
     return respond({error:"Nettoyage des anciennes demandes indisponible. Tu peux toujours consulter les dossiers."},503);

@@ -110,15 +110,18 @@ let pendingGoogleCleanupRunning=false;
 function cleanupOldWaitingRequests(){
   if(pendingGoogleCleanupRunning||!state.logged)return;
   pendingGoogleCleanupRunning=true;
-  // Nettoyage des seuls anciens événements "nouveau" associés à une
-  // demande du site. L'affichage de l'agenda n'attend pas cette opération.
+  // Nettoyage des anciens événements "nouveau" et des demandes supprimées
+  // laissées sur Google par une version précédente. L'affichage n'attend pas
+  // la vérification côté serveur des événements concernés.
   jsonCall('/api/admin/google-calendar','POST',{
     action:'cleanup_waiting_requests',confirm:true
-  }).then(result=>{
-    if(result.failed)notify('Certaines anciennes demandes en attente restent sur Google. Actualise l’agenda pour réessayer.');
+  }).then(async result=>{
+    if(result.failed)notify('Certains anciens événements de demandes restent sur Google. Actualise l’agenda pour réessayer.');
+    if((result.cleaned||0)+(result.orphaned_removed||0)>0&&state.page==='agenda')
+      await loadGoogleCalendar();
   }).catch(error=>{
     console.warn('Nettoyage des anciennes demandes Google indisponible',error.message);
-    notify('Anciennes demandes Google : nettoyage différé. Actualise l’agenda pour réessayer.');
+    notify('Anciens événements Google : nettoyage différé. Actualise l’agenda pour réessayer.');
   }).finally(()=>{pendingGoogleCleanupRunning=false;});
 }
 async function loadGoogleCalendar(){
