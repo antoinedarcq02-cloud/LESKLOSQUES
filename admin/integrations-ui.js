@@ -172,6 +172,31 @@ $('googlePublishItems').addEventListener('click',async event=>{
   finally{target.disabled=false;}
 });
 
+// Suppression ciblée d'un événement dans l'un des deux agendas partagés.
+$('agendaList').addEventListener('click',async event=>{
+  const button=event.target.closest('[data-google-delete]');
+  if(!button||!state.logged||!['admin','member'].includes(state.role))return;
+  const item=state.googleEvents.find(e=>e.calendar===button.dataset.googleCalendar&&
+    e.id===button.dataset.googleId);
+  if(!item)return notify('Cet événement n’est plus chargé. Actualise Google Agenda.');
+  const where=item.calendar==='concerts'?'KLOSQUES PARTAGE':'KLOSQUES PAS DISPO PARTAGE';
+  if(!window.confirm('SUPPRESSION DANS GOOGLE AGENDA\n\n'+
+    'Événement : '+item.title+'\nAgenda : '+where+'\nDate : '+dateLabel(item.date)+
+    '\n\nCette action supprime réellement cet événement du calendrier partagé. '+
+    'La fiche éventuelle dans Klosques Manager sera conservée. '+
+    'Pour une demande issue du site, la synchronisation automatique restera désactivée après suppression.\n\nConfirmer la suppression ?'))return;
+  button.disabled=true;
+  try{
+    await jsonCall('/api/admin/google-calendar/delete','POST',{
+      calendar:item.calendar,event_id:item.id,expected_title:item.title,
+      expected_date:item.date,expected_etag:item.etag,confirm:true
+    });
+    notify('Événement supprimé de '+where+'.');
+    await loadGoogleCalendar();
+  }catch(error){notify(error.message);}
+  finally{button.disabled=false;}
+});
+
 // Ajouter un événement directement dans un calendrier partagé, sans créer
 // de fiche concert. Même UUID si une requête doit être retentée après une coupure.
 const googleEventDialog=$('googleEventDialog');
