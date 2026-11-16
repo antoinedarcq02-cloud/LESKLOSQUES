@@ -41,9 +41,15 @@ export async function syncRequestToGoogle(env,booking,{remove=false}={}){
   await ensureIntegrationTables(DB);
   const connection=await getConnected(DB,"google");
   if(!connection&&!env.GOOGLE_REFRESH_TOKEN)return{skipped:true};
-  const removeEvent=remove||booking.status==="refuse";
-  if(!removeEvent&&(!ACTIVE.has(booking.status)||
-      !/^\d{4}-\d{2}-\d{2}$/.test(booking.event_date||"")))return{skipped:true};
+  // Vérifier l'état courant : le dossier peut changer pendant le job.
+  const latest=await DB.prepare(
+    "SELECT id,source,event_date,location,status FROM bookings WHERE id=?"
+  ).bind(booking.id).first();
+  if(latest&&latest.source!=="site")return{skipped:true};
+  const active=latest||booking;
+  const removeEvent=remove||!latest||active.status==="refuse";
+  if(!removeEvent&&(!ACTIVE.has(active.status)||
+      !/^\d{4}-\d{2}-\d{2}$/.test(active.event_date||"")))return{skipped:true};
   const token=await providerAccessToken(env,"google");
   const calendars=await resolveKlosquesCalendars(env,token);
   const calendar=calendars.concerts;
@@ -73,19 +79,19 @@ export async function syncRequestToGoogle(env,booking,{remove=false}={}){
       .bind(booking.id,calendar.id).run();
     return{removed:true};
   }
-  const status=LABELS[booking.status];
-  const location=normalize(booking.location).slice(0,110);
+  const status=LABELS[active.status];
+  const location=normalize(active.location).slice(0,110);
   const title="Les Klosques — "+status+(location?" — "+location:"");
   const payload={
     summary:title.slice(0,150),
-    location:normalize(booking.location).slice(0,180),
+    location:normalize(active.location).slice(0,180),
     description:status+" dans Klosques Manager. Référence interne : "+booking.id+
       ". Retrouvez le dossier et les informations du client dans Manager uniquement.",
-    start:{date:booking.event_date},end:{date:nextDay(booking.event_date)},
+    start:{date:active.event_date},end:{date:nextDay(active.event_date)},
     visibility:"private",
     // Une demande non confirmée ne doit PAS bloquer les disponibilités
     // du formulaire public. Le concert confirmé, lui, occupe la date.
-    transparency:["confirme","termine"].includes(booking.status)?"opaque":"transparent",
+    transparency:["confirme","termine"].includes(active.status)?"opaque":"transparent",
     reminders:{useDefault:false},
     extendedProperties:{private:{klosquesBookingId:booking.id}}
   };
