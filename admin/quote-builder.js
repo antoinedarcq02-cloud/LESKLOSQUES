@@ -13,6 +13,13 @@ const directQuotePricing = () => !officialQuoteState.current ||
   officialQuoteState.current.data?.vat_mode === 'ttc_sans_ventilation';
 const officialQuoteForm = $('officialQuoteForm');
 const officialMoney = cents => (cents / 100).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
+// Un devis n'est indiqué « envoyé » qu'après un envoi d'e-mail journalisé.
+// La finalisation seule n'est jamais une preuve d'envoi.
+function quoteEmailStatus(quote) {
+  return quote?.sent_at
+    ? {label:'Devis envoyé',className:'confirmed'}
+    : {label:'En attente d’envoi',className:'pending'};
+}
 const officialToday = (date = new Date()) => [
   date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')
 ].join('-');
@@ -93,7 +100,13 @@ function populateBookingSelect() {
   picker.value = old;
 }
 function updateQuoteLock() {
-  const locked = officialQuoteState.current?.status === 'finalise';
+  const quote = officialQuoteState.current;
+  const locked = quote?.status === 'finalise';
+  const statusBadge = $('quoteEmailStatus');
+  const emailStatus = quoteEmailStatus(quote);
+  statusBadge.hidden = !quote;
+  statusBadge.className = 'tag ' + emailStatus.className;
+  statusBadge.textContent = emailStatus.label;
   for (const control of officialQuoteForm.querySelectorAll('input,textarea,select,button')) {
     control.disabled = locked;
   }
@@ -166,10 +179,11 @@ function renderOfficialQuotes() {
   $('officialQuotesList').innerHTML = officialQuoteState.quotes.length
     ? officialQuoteState.quotes.map(quote => {
         const safe = escapeHtml;
+        const delivery = quoteEmailStatus(quote);
         return '<button type="button" class="booking-card" data-quote-id="'+quote.id+'">' +
         '<div class="card-top"><span class="date">'+safe(quote.number)+'</span>' +
-        '<span class="tag '+(quote.status === 'finalise'?'confirmed':'pending')+'">'+
-        (quote.status === 'finalise'?'Finalisé':'Brouillon')+'</span></div>' +
+        '<span class="tag '+delivery.className+'">'+safe(delivery.label)+'</span></div>' +
+        (quote.status === 'brouillon' ? '<p class="small">Brouillon à finaliser avant l’envoi</p>' : '') +
         '<h3>'+safe(quote.data.client_name || 'Client à préciser')+'</h3>' +
         '<p>'+safe(quote.data.event_date ? dateLabel(quote.data.event_date) : 'Date à préciser')+'</p>' +
         '<p>'+safe(officialTotals(quote.data).pending ? 'Montant TTC à préciser' : 'Montant TTC : '+officialMoney(officialTotals(quote.data).ttc))+'</p>' +
