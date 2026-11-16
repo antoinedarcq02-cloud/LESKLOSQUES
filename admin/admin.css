@@ -282,3 +282,11 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
 /* Factures : liens directs pour l'aperçu PDF et le téléchargement sur mobile. */
 .invoice-pdf-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;min-height:44px}
 .invoice-pdf-link:hover,.invoice-pdf-link:focus-visible{color:#fff;border-color:#ca7883}
+
+/* Application KLOSQUE MANAGER : invitation d'installation discrète et tactile. */
+.install-manager-entry{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:20px 0 0;padding:13px 14px;border:1px solid #56414d;border-radius:12px;background:#241d23}
+.install-manager-entry button{flex-shrink:0;min-height:44px}
+.install-manager-entry p{flex:1 1 185px;margin:0}
+.install-manager-home{margin:0 0 19px}
+@media(max-width:550px){.install-manager-entry{flex-direction:column;align-items:stretch}.install-manager-entry button{width:100%}}
+@media(display-mode:standalone){body{padding-top:env(safe-area-inset-top,0px)}.workspace .content{padding-bottom:calc(115px + env(safe-area-inset-bottom,0px))}}
