@@ -118,6 +118,7 @@ function cleanupOldWaitingRequests(){
     if(result.failed)notify('Certaines anciennes demandes en attente restent sur Google. Actualise l’agenda pour réessayer.');
   }).catch(error=>{
     console.warn('Nettoyage des anciennes demandes Google indisponible',error.message);
+    notify('Anciennes demandes Google : nettoyage différé. Actualise l’agenda pour réessayer.');
   }).finally(()=>{pendingGoogleCleanupRunning=false;});
 }
 async function loadGoogleCalendar(){
