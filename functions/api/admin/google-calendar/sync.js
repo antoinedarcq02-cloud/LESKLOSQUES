@@ -49,7 +49,7 @@ export async function onRequestPost(context){
     if(payload.action==="remove"&&!linked)
       return respond({error:"Ce concert n'est pas associé à un événement publié par Manager."},404);
     const booking=payload.action==="publish"?
-      await DB.prepare("SELECT id,name,location,event_date,status,source FROM bookings WHERE id=?").bind(id).first():null;
+      await DB.prepare("SELECT id,name,location,event_date,status FROM bookings WHERE id=?").bind(id).first():null;
     if(payload.action==="publish"&&(!booking||booking.status!=="confirme"||!validDate(booking.event_date)))
       return respond({error:"Seuls les concerts confirmés et datés peuvent être ajoutés dans Google Agenda."},409);
     // IDs déterministes valides en base32hex, sans doublon en cas de réponse réseau perdue.
@@ -65,10 +65,6 @@ export async function onRequestPost(context){
         const removed=await eventRequest(url,token,"DELETE");
         if(!removed.ok&&removed.status!==404)throw Error("Suppression Google refusée "+removed.status);
       }
-      // Un retrait manuel d'une demande du site doit empêcher sa recréation.
-      const origin=await DB.prepare("SELECT source FROM bookings WHERE id=?").bind(id).first();
-      if(origin?.source==="site")
-        await DB.prepare("INSERT OR IGNORE INTO google_event_optouts(booking_id) VALUES(?)").bind(id).run();
       await DB.prepare("DELETE FROM google_concert_links WHERE booking_id=? AND calendar_id=?")
         .bind(id,cal).run();
       return respond({ok:true,action:"removed"});
@@ -89,8 +85,6 @@ export async function onRequestPost(context){
         return respond({error:"L'événement Google vient d'être créé. Actualise puis réessaie, pour éviter un doublon."},409);
       throw Error("Écriture Google refusée "+operation.status);
     }
-    // Une republication manuelle explicite réactive la synchronisation du dossier.
-    await DB.prepare("DELETE FROM google_event_optouts WHERE booking_id=?").bind(id).run();
     await DB.prepare(
       "INSERT INTO google_concert_links(booking_id,calendar_id,event_id) VALUES(?,?,?) ON CONFLICT(booking_id) DO UPDATE SET calendar_id=excluded.calendar_id,event_id=excluded.event_id,synced_at=datetime('now')"
     ).bind(id,cal,eventId).run();
