@@ -4,11 +4,13 @@
 // chaque devis finalisé devient non modifiable.
 const officialQuoteState = {quotes:[],issuer:{},current:null,mailReady:false};
 const officialQuoteFields = [
-  'issuer_name','issuer_address','issuer_identifier','issuer_tax_number','issuer_contact','issuer_legal',
+  'issuer_name','issuer_address','issuer_identifier','issuer_contact','issuer_legal',
   'client_name','client_address','client_email','event_date','event_time','event_location',
-  'issue_date','valid_until','payment_terms','description','conditions','vat_mode'
+  'issue_date','valid_until','payment_terms','description','conditions'
 ];
-const officialIssuerFields = ['issuer_name','issuer_address','issuer_identifier','issuer_tax_number','issuer_contact','issuer_legal'];
+const officialIssuerFields = ['issuer_name','issuer_address','issuer_identifier','issuer_contact','issuer_legal'];
+const directQuotePricing = () => !officialQuoteState.current ||
+  officialQuoteState.current.data?.vat_mode === 'ttc_sans_ventilation';
 const officialQuoteForm = $('officialQuoteForm');
 const officialMoney = cents => (cents / 100).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
 const officialToday = (date = new Date()) => [
@@ -30,7 +32,7 @@ function quoteLine(label = '',qty = 1,priceCents = 0) {
   quantity.setAttribute('aria-label','Quantité'); quantity.className = 'quote-line-qty'; quantity.value = String(qty);
   const price = document.createElement('input');
   price.type = 'number'; price.min = '0'; price.max = '1000000'; price.step = '0.01';
-  price.setAttribute('aria-label','Prix HT en euros'); price.className = 'quote-line-price'; price.value = priceCents ? (priceCents/100).toFixed(2) : '';
+  price.setAttribute('aria-label',directQuotePricing()?'Prix TTC en euros':'Prix HT en euros'); price.className = 'quote-line-price'; price.value = priceCents ? (priceCents/100).toFixed(2) : '';
   const remove = document.createElement('button');
   remove.type = 'button'; remove.className = 'small-button quote-line-remove';
   remove.setAttribute('aria-label','Retirer cette ligne'); remove.textContent = '✕';
@@ -43,6 +45,10 @@ function quoteLine(label = '',qty = 1,priceCents = 0) {
 function collectOfficialQuote() {
   const data = {};
   for (const key of officialQuoteFields) data[key] = officialQuoteForm.elements.namedItem(key).value.trim();
+  // Les anciens devis conservent leur régime historique, y compris en brouillon.
+  // Les nouveaux devis n'imposent aucun régime fiscal : prix saisis TTC.
+  data.vat_mode = officialQuoteState.current?.data?.vat_mode || 'ttc_sans_ventilation';
+  data.issuer_tax_number = officialQuoteState.current?.data?.issuer_tax_number || '';
   data.lines = Array.from($('quoteLines').children).map(row => {
     const label = row.querySelector('.quote-line-label').value.trim();
     const qty = Number(row.querySelector('.quote-line-qty').value);
@@ -57,17 +63,19 @@ function collectOfficialQuote() {
 }
 function officialTotals(data) {
   const ht = data.lines.reduce((total,line) => total + Math.round(line.qty * line.price_cents),0);
+  const direct = data.vat_mode === 'ttc_sans_ventilation';
   const pending = data.vat_mode === 'non_precise';
-  const percent = pending || data.vat_mode === 'franchise' ? 0 : Number(data.vat_mode);
+  const percent = direct || pending || data.vat_mode === 'franchise' ? 0 : Number(data.vat_mode);
   const vat = Math.round(ht * percent / 100);
-  return {ht,vat,ttc:ht+vat,pending};
+  return {ht,vat,ttc:ht+vat,pending,direct};
 }
 function updateOfficialTotals() {
   try {
     const data = collectOfficialQuote();
     const t = officialTotals(data);
-    $('quoteTotals').textContent = t.pending
-      ? 'Total HT : ' + officialMoney(t.ht) + ' · TVA et TTC : à préciser'
+    $('quoteTotals').textContent = t.direct
+      ? 'Total TTC : ' + officialMoney(t.ttc)
+      : t.pending ? 'Total HT : ' + officialMoney(t.ht) + ' · TVA et TTC : à préciser'
       : 'Total HT : ' + officialMoney(t.ht) + ' · TVA : ' + officialMoney(t.vat) +
         ' · Total TTC : ' + officialMoney(t.ttc);
   } catch { $('quoteTotals').textContent = 'Vérifie les prix et les quantités.'; }
@@ -105,7 +113,7 @@ function fillQuoteForm(record = null) {
   const data = record?.data || {};
   for (const field of officialQuoteFields) {
     const input = officialQuoteForm.elements.namedItem(field);
-    if (input) input.value = data[field] || (field === 'vat_mode' ? 'non_precise' : '');
+    if (input) input.value = data[field] || '';
   }
   if (!record) {
     for (const key of officialIssuerFields) {
@@ -120,6 +128,11 @@ function fillQuoteForm(record = null) {
   if (linked && !Array.from($('quoteBooking').options).some(option => option.value === linked))
     $('quoteBooking').add(new Option('Demande archivée',linked));
   $('quoteBooking').value = linked;
+  const direct = directQuotePricing();
+  $('quotePriceTypeText').textContent = direct ? 'Prix unitaire TTC' : 'Prix unitaire HT';
+  $('quotePricingInfo').textContent = direct
+    ? 'Saisis directement les prix TTC proposés au client. Ajoute une ligne pour les frais de déplacement si nécessaire.'
+    : 'Ancien devis : les prix sont indiqués HT. Le calcul fiscal d’origine reste conservé.';
   const lines = data.lines?.length ? data.lines : [{label:'',qty:1,price_cents:0}];
   for (const line of lines) quoteLine(line.label,line.qty,line.price_cents);
   $('quoteFormTitle').textContent = record ? 'Devis '+record.number : 'Nouveau devis';
@@ -176,7 +189,6 @@ $('newQuote').addEventListener('click',()=>fillQuoteForm());
 $('closeQuote').addEventListener('click',()=>{$('quoteFormPanel').hidden = true;officialQuoteState.current = null;});
 $('quoteBooking').addEventListener('change',fillFromBooking);
 $('addQuoteLine').addEventListener('click',()=>quoteLine());
-officialQuoteForm.elements.namedItem('vat_mode').addEventListener('change',updateOfficialTotals);
 $('officialQuotesList').addEventListener('click',event => {
   const card = event.target.closest('[data-quote-id]');
   if (!card) return;
@@ -339,7 +351,8 @@ function quoteDocumentHtml(quote) {
   const htmlLine=value=>safe(value).replace(/\n/g,'<br>');
   const totals=officialTotals(data);
   const taxable=!totals.pending;
-  const rate=taxable&&data.vat_mode!=='franchise'?Number(data.vat_mode):0;
+  const direct=totals.direct;
+  const rate=direct || !taxable || data.vat_mode==='franchise'?0:Number(data.vat_mode);
   let cumulativeHT=0,previousTax=0;
   const rows=data.lines.map(line=>{
     const ht=Math.round(line.qty*line.price_cents);
@@ -413,10 +426,10 @@ function quoteDocumentHtml(quote) {
     '<table><thead><tr><th>DESCRIPTION</th><th>QUANTITÉ</th><th>PRIX UNITAIRE ('+
     (taxable?'TTC':'HT')+')</th><th>MONTANT ('+(taxable?'TTC':'HT')+
     ')</th></tr></thead><tbody>'+rows+'</tbody></table>'+
-    '<table class="totals"><tbody><tr><td class="label">SOUS-TOTAL HT</td><td class="price">'+
-    safe(officialMoney(totals.ht))+'</td></tr><tr><td class="label">'+
-    (taxable?taxLabel:'TVA À PRÉCISER')+'</td><td class="price">'+
-    safe(taxable?officialMoney(totals.vat):'—')+'</td></tr>'+
+    '<table class="totals"><tbody><tr><td class="label">'+(direct?'SOUS-TOTAL':'SOUS-TOTAL HT')+
+    '</td><td class="price">'+safe(officialMoney(totals.ht))+'</td></tr>'+
+    (direct?'':'<tr><td class="label">'+(taxable?taxLabel:'TVA À PRÉCISER')+
+    '</td><td class="price">'+safe(taxable?officialMoney(totals.vat):'—')+'</td></tr>')+
     '<tr class="grand"><td class="label">TOTAL TTC</td><td class="price">'+
     safe(taxable?officialMoney(totals.ttc):'À préciser')+'</td></tr></tbody></table>'+
     (data.vat_mode==='franchise'?'<p class="vat-note">TVA non applicable, art. 293 B du CGI</p>':'')+

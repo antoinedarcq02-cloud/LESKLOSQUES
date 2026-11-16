@@ -62,8 +62,9 @@ function numberValue(value){
 function amounts(data){
   const rows=[];
   let htSum=0,previousTax=0;
+  const direct=data.vat_mode==="ttc_sans_ventilation";
   const taxable=data.vat_mode!=="non_precise";
-  const rate=taxable&&data.vat_mode!=="franchise"?Number(data.vat_mode):0;
+  const rate=taxable&&!direct&&data.vat_mode!=="franchise"?Number(data.vat_mode):0;
   if(!Number.isFinite(rate)||rate<0||rate>100)throw Error("TVA invalide.");
   for(const row of data.lines){
     const qty=numberValue(row.qty),unit=Number(row.price_cents);
@@ -81,7 +82,7 @@ function amounts(data){
     });
     previousTax=cumulativeTax;
   }
-  return{rows,ht:htSum,tax:previousTax,ttc:htSum+previousTax,taxable,rate};
+  return{rows,ht:htSum,tax:previousTax,ttc:htSum+previousTax,taxable,rate,direct};
 }
 function makePdf(objects){
   const parts=[],offsets=[0];let cursor=0;
@@ -222,8 +223,11 @@ export function createQuotePdf(quote){
     centered(value,465,548,y-15,emphasis?9:8,emphasis);
     y-=height;
   }
-  totalRow("SOUS-TOTAL HT",money(totals.ht));
-  if(totals.taxable){
+  totalRow(totals.direct?"SOUS-TOTAL":"SOUS-TOTAL HT",money(totals.ht));
+  if(totals.direct){
+    // Prix directement TTC : aucune TVA fictive ni régime d'exonération supposé.
+    totalRow("TOTAL TTC",money(totals.ttc),true);
+  }else if(totals.taxable){
     totalRow(q.vat_mode==="franchise"?"TVA NON APPLIC.":"TVA "+String(q.vat_mode)+" %",money(totals.tax));
     totalRow("TOTAL TTC",money(totals.ttc),true);
   }else{

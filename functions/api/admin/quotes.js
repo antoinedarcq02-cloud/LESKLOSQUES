@@ -14,7 +14,9 @@ const TEXT = {
   description: 900, conditions: 1400
 };
 const ISSUER = ["issuer_name","issuer_address","issuer_identifier","issuer_tax_number","issuer_contact","issuer_legal"];
-const VAT_MODES = ["non_precise","franchise","20","10","5.5","0"];
+// Prix directement TTC sans indication de régime fiscal pour les nouveaux devis.
+// Les valeurs historiques restent admises pour les devis déjà enregistrés.
+const VAT_MODES = ["ttc_sans_ventilation","non_precise","franchise","20","10","5.5","0"];
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function normalize(raw) {
@@ -27,7 +29,7 @@ function normalize(raw) {
     data[key] = cleanText(raw[key], max);
   }
   if (!VAT_MODES.includes(raw.vat_mode))
-    throw new Error("Choisis le régime de TVA applicable.");
+    throw new Error("Informations de prix du devis incorrectes.");
   data.vat_mode = raw.vat_mode;
   if (data.client_email && !EMAIL.test(data.client_email))
     throw new Error("Adresse e-mail du client incorrecte.");
