@@ -14,13 +14,13 @@
   "theme_color": "#111014",
   "icons": [
     {
-      "src": "/admin/icons/manager-192.png",
+      "src": "/assets/favicon-klosques.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/admin/icons/manager-512.png",
+      "src": "/assets/favicon-klosques.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
