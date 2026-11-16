@@ -301,8 +301,25 @@ function sharedCalendarCard(event) {
     '<span class="tag google-tag '+kind+'">'+escapeHtml(label)+'</span></div>'+
     '<h3>'+escapeHtml(event.title)+'</h3>'+
     (!unavailable&&event.location?'<p>📍 '+escapeHtml(event.location)+'</p>':'')+
-    '<p class="muted small">Événement du calendrier partagé Google · lecture seule</p>'+
+    '<p class="muted small">Événement du calendrier partagé Google</p>'+
+    (['admin','member'].includes(state.role)?
+      '<button type="button" class="secondary" data-google-delete="1" '+
+      'data-google-calendar="'+escapeHtml(event.calendar)+'" '+
+      'data-google-id="'+escapeHtml(event.id)+'">Supprimer de Google Agenda</button>':'')+
     '</article>';
+}
+// Les concerts confirmés liés à Google sont affichés sous forme de fiches
+// Manager (sans doublon Google) : proposer aussi leur suppression ciblée ici.
+function linkedGoogleDeleteAction(item) {
+  if(!['admin','member'].includes(state.role))return '';
+  const link=state.googleLinks.find(l=>l.booking_id===item.id);
+  if(!link)return '';
+  const event=state.googleEvents.find(e=>e.calendar==='concerts'&&e.id===link.event_id);
+  if(!event)return '';
+  return '<div class="integration-actions">'+
+    '<button type="button" class="secondary" data-google-delete="1" '+
+    'data-google-calendar="concerts" data-google-id="'+escapeHtml(event.id)+'">'+
+    'Supprimer cet événement de Google Agenda</button></div>';
 }
 function renderCalendar() {
   const month=$('agendaMonth').value;
@@ -353,7 +370,7 @@ function renderCalendar() {
     event.date<monthEnd&&(!event.end_date||event.end_date>month+'-01'))
     .filter(event=>!state.selectedDay||googleEventOnDate(event,state.selectedDay));
   const combined=[
-    ...monthItems.map(item=>({date:item.event_date,html:itemCard(item),kind:0})),
+    ...monthItems.map(item=>({date:item.event_date,html:itemCard(item)+linkedGoogleDeleteAction(item),kind:0})),
     ...monthGoogle.map(event=>({date:event.date,html:sharedCalendarCard(event),kind:1}))
   ].sort((a,b)=>a.date.localeCompare(b.date)||a.kind-b.kind);
   $('agendaList').innerHTML=combined.length

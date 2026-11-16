@@ -37,6 +37,8 @@ URL d'administration : https://lesklosques.pages.dev/admin/
 - **La demande reste enregistrée même si Google Agenda est momentanément indisponible.** Dans ce cas, la synchronisation peut être retentée en modifiant/enregistrant le dossier plus tard. Cette fonction s'applique aux **nouvelles demandes et aux dossiers modifiés après déploiement** : les anciennes demandes n'ont pas de rattrapage automatique tant qu'elles ne sont pas réenregistrées.
 - Les concerts créés manuellement dans Manager ne sont pas touchés par ce déclencheur automatique, et les événements Google créés directement depuis Agenda restent indépendants.
 
+**Supprimer un événement Google depuis Agenda commun :** les comptes de musiciens connectés peuvent retirer un événement visible de **KLOSQUES PARTAGE** ou **KLOSQUES PAS DISPO PARTAGE**, y compris s'il a été créé directement dans Google. La confirmation affiche le titre, la date et le calendrier ciblé. Le serveur revérifie le calendrier, les droits d'écriture et la version de l'événement avant suppression. Aucune fiche de concert n'est effacée de Manager. Pour les demandes du site, une suppression explicite de leur événement bloque la republication automatique lors des changements du dossier. La suppression d'une occurrence récurrente ne supprime pas nécessairement toute la série. Les événements masqués par dédoublonnage et liés à un concert confirmé restent retirables depuis **Site → Connexions**.
+
 **Créer directement un événement Google depuis Agenda commun :**
 
 1. Se connecter avec **l'un des quatre comptes de musicien** de Klosques Manager (administrateur ou membre). Les visiteurs du site public n'y ont pas accès ; l'administrateur garde seul la configuration de la connexion OAuth.

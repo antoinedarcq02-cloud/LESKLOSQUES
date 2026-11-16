@@ -39,6 +39,9 @@ export async function syncRequestToGoogle(env,booking,{remove=false}={}){
   const DB=env.DB;
   if(!DB)return{skipped:true};
   await ensureIntegrationTables(DB);
+  // Une suppression manuelle ne doit pas provoquer une republication ultérieure.
+  const optout=await DB.prepare("SELECT booking_id FROM google_event_optouts WHERE booking_id=?").bind(booking.id).first();
+  if(optout)return{skipped:true,manually_removed:true};
   const connection=await getConnected(DB,"google");
   if(!connection&&!env.GOOGLE_REFRESH_TOKEN)return{skipped:true};
   // Vérifier l'état courant : le dossier peut changer pendant le job.
