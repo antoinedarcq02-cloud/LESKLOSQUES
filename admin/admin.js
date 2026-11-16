@@ -301,7 +301,11 @@ function sharedCalendarCard(event) {
     '<span class="tag google-tag '+kind+'">'+escapeHtml(label)+'</span></div>'+
     '<h3>'+escapeHtml(event.title)+'</h3>'+
     (!unavailable&&event.location?'<p>📍 '+escapeHtml(event.location)+'</p>':'')+
-    '<p class="muted small">Événement du calendrier partagé Google · lecture seule</p>'+
+    '<p class="muted small">Événement du calendrier partagé Google</p>'+
+    (['admin','member'].includes(state.role)?
+      '<button type="button" class="secondary" data-google-delete="1" '+
+      'data-google-calendar="'+escapeHtml(event.calendar)+'" '+
+      'data-google-id="'+escapeHtml(event.id)+'">Supprimer de Google Agenda</button>':'')+
     '</article>';
 }
 function renderCalendar() {
