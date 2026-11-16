@@ -31,9 +31,14 @@ export async function sendMicrosoftMail(env,{to,subject,html,text,replyTo,attach
   if(typeof html!=="string"||html.length>30000||
      typeof text!=="string"||text.length>30000)
     throw Error("Contenu du message invalide.");
+  // Pour les devis et factures PDF, privilégier un message texte simple :
+  // aucun style HTML ou lien non nécessaire dans la correspondance client.
+  // Les alertes internes et les e-mails de test conservent leur présentation.
+  // Cette présentation ne peut pas garantir un classement hors des spams.
+  const documentMail=attachment!==undefined;
   const message={
     subject,
-    body:{contentType:"HTML",content:html},
+    body:{contentType:documentMail?"Text":"HTML",content:documentMail?text:html},
     toRecipients:[{emailAddress:{address:to}}],
     ...(replyTo?{replyTo:[{emailAddress:{address:replyTo}}]}:{})
   };
