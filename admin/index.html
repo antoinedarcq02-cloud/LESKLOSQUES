@@ -119,7 +119,7 @@
       <section id="googleCalendarPanel" class="panel integration-panel" aria-labelledby="googleCalendarTitle">
         <div class="section-header">
           <div><h2 id="googleCalendarTitle">Google Agenda</h2>
-            <p class="muted small">Consulte les événements du calendrier relié et repère les dates déjà occupées.</p>
+            <p class="muted small">Seuls les deux agendas du groupe sont affichés : KLOSQUES PARTAGE pour les concerts et KLOSQUES PAS DISPO PARTAGE pour les indisponibilités. Aucun agenda personnel.</p>
           </div>
           <button type="button" class="secondary" id="refreshGoogleCalendar">Actualiser Google</button>
         </div>
@@ -127,7 +127,7 @@
         <div id="googleCalendarEvents" class="integration-items"></div>
         <div id="googlePublishPanel" hidden>
           <h3>Concerts confirmés à synchroniser</h3>
-          <p class="muted small">Publication uniquement sur confirmation, en journée entière car l'heure du concert n'est pas encore enregistrée dans le dossier. La mise à jour ne modifie que les événements créés par Manager. Aucune suppression automatique.</p>
+          <p class="muted small">Les concerts confirmés sont publiés uniquement dans KLOSQUES PARTAGE, après confirmation, en journée entière. Le calendrier PAS DISPO n'est jamais modifié ici.</p>
           <div id="googlePublishItems" class="integration-items"></div>
         </div>
       </section>
@@ -359,7 +359,7 @@
           <button id="disconnectOutlook" class="secondary" type="button" hidden>Déconnecter Hotmail</button>
           <button id="refreshConnections" class="secondary" type="button">Actualiser</button>
         </div>
-        <p class="muted small">Google : configurer GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET. Microsoft : configurer MICROSOFT_CLIENT_ID et MICROSOFT_CLIENT_SECRET. Les liens ne deviennent utilisables qu'après cette configuration dans Cloudflare. Le calendrier Google et la boîte Hotmail ne sont jamais modifiés par la simple connexion.</p>
+        <p class="muted small">Google : configurer GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET. Microsoft : configurer MICROSOFT_CLIENT_ID et MICROSOFT_CLIENT_SECRET dans Cloudflare. Pour Google, les calendriers KLOSQUES PARTAGE et KLOSQUES PAS DISPO PARTAGE doivent être visibles dans le compte connecté. Reconnecte Google pour accorder l'accès à la liste des calendriers. Une simple connexion ne modifie aucun événement ni message.</p>
       </section>
       <div class="panel email-settings-panel" id="emailSettingsPanel" hidden>
         <h2>Messagerie et notifications</h2>

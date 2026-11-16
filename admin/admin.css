@@ -223,3 +223,10 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
   .integration-panel .section-header>button{width:100%}
   .integration-actions button,.integration-actions .link{flex:1;min-width:125px;text-align:center}
 }
+
+/* Les deux calendriers Google du groupe, séparés visuellement. */
+#googleCalendarEvents{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:16px}
+.external-calendar-group{min-width:0;border:1px solid #49414a;border-radius:12px;padding:13px;background:#1a171c}
+.external-calendar-group h3{font-size:1rem;margin:3px 0 5px}
+.external-calendar-group>.external-item{margin:9px 0}
+@media(max-width:550px){#googleCalendarEvents{grid-template-columns:1fr}}

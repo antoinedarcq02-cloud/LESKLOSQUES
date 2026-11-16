@@ -60,15 +60,36 @@ document.querySelector('[data-tab="site"]').addEventListener('click',loadExterna
 
 function renderGoogleCalendar(items,links){
   const root=$('googleCalendarEvents');root.replaceChildren();
-  if(!items.length){root.append(itemRow('Aucun événement Google sur ce mois','Le calendrier Google ne contient aucun événement dans la période sélectionnée.'));return;}
-  for(const event of items.slice(0,80)){
-    const matches=state.items.filter(b=>b.event_date===event.date&&['option','confirme'].includes(b.status));
-    const extra=matches.length&&!event.own_event
-      ?' · Date également utilisée dans le Manager : à vérifier':'';
-    root.append(itemRow(event.date+' — '+event.title,
-      (event.location?event.location+' · ':'')+
-      (event.availability==='free'?'Disponible':'Occupé')+extra,
-      event.own_event?'Créé par Manager':null));
+  const sections=[
+    {kind:'concerts',title:'KLOSQUES PARTAGE',help:'Événements et concerts du groupe'},
+    {kind:'unavailable',title:'KLOSQUES PAS DISPO PARTAGE',help:'Indisponibilités du groupe (détails masqués)'}
+  ];
+  for(const section of sections){
+    const panel=document.createElement('section');
+    panel.className='external-calendar-group';
+    const heading=document.createElement('h3');
+    heading.textContent=section.title;
+    const subtitle=document.createElement('p');
+    subtitle.className='muted small';subtitle.textContent=section.help;
+    panel.append(heading,subtitle);
+    const list=items.filter(event=>event.calendar===section.kind).slice(0,80);
+    if(!list.length){
+      panel.append(itemRow('Aucun événement sur ce mois',
+        section.kind==='concerts'?'Aucun concert inscrit dans le calendrier partagé.':
+        'Aucune indisponibilité enregistrée dans le calendrier partagé.'));
+    }
+    for(const event of list){
+      const isUnavailable=section.kind==='unavailable';
+      const matches=isUnavailable&&state.items.some(b=>b.event_date===event.date&&
+        ['option','confirme'].includes(b.status));
+      const extra=matches?' · Une date de concert existe aussi dans Manager : à vérifier':'';
+      panel.append(itemRow(event.date+' — '+event.title,
+        (isUnavailable?'Agenda des indisponibilités':
+          ((event.location?event.location+' · ':'')+
+          (event.availability==='free'?'Libre':'Occupé')))+extra,
+        event.own_event?'Créé par Manager':null));
+    }
+    root.appendChild(panel);
   }
 }
 function renderGooglePublishing(links){
@@ -129,9 +150,9 @@ async function loadGoogleCalendar(){
       $('googlePublishPanel').hidden=true;
       return;
     }
-    status.textContent='Google Agenda synchronisé pour '+month+
-      (data.truncated?' · liste partielle, de nombreux événements existent':'')+
-      ' · seuls les événements ajoutés depuis Manager peuvent être modifiés ici.';
+    status.textContent='Agendas partagés Les Klosques chargés pour '+month+
+      (data.truncated?' · liste partielle : de nombreux événements existent':'')+
+      ' · seuls les concerts créés depuis Manager dans KLOSQUES PARTAGE sont modifiables ici.';
     renderGoogleCalendar(data.events||[],data.links||[]);
     renderGooglePublishing(data.links||[]);
   }catch(error){
@@ -150,7 +171,7 @@ $('googlePublishItems').addEventListener('click',async event=>{
   if(action==='publish'&&!booking)return;
   const confirmation=action==='remove'?
     'Retirer de Google Agenda cet événement créé par Manager ? Le concert restera dans Klosques Manager.':
-    'Synchroniser ce concert confirmé dans Google Agenda ? Il sera ajouté ou mis à jour en événement privé sur une journée entière.';
+    'Synchroniser ce concert confirmé dans KLOSQUES PARTAGE ? Il sera ajouté ou mis à jour en événement privé sur une journée entière.';
   if(!window.confirm(confirmation))return;
   target.disabled=true;
   try{
