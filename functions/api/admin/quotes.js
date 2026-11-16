@@ -66,8 +66,7 @@ function ensureFinalizable(data) {
     issuer_identifier:"son identifiant officiel (SIRET, RNA ou autre)",
     client_name:"le nom du client", client_address:"l'adresse du client",
     issue_date:"la date du devis", valid_until:"la date limite de validité",
-    event_date:"la date de la prestation", event_location:"le lieu de la prestation",
-    payment_terms:"les modalités de paiement"
+    event_date:"la date de la prestation", event_location:"le lieu de la prestation"
   };
   for (const [key,label] of Object.entries(required))
     if (!data[key]) throw new Error("Renseigne " + label + " avant de finaliser.");
