@@ -4,7 +4,7 @@ import {resolveKlosquesCalendars} from "./klosques-calendars.js";
 // Synchronisation non bloquante des demandes du formulaire public.
 // Seul KLOSQUES PARTAGE est modifié. Aucune donnée de contact client n'est
 // transférée vers Google. Les dossiers "nouveau" restent libres/transparent.
-const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ACTIVE=new Set(["nouveau","en_discussion","devis_envoye","option","confirme","termine"]);
 const LABELS={
   nouveau:"Demande à traiter",
