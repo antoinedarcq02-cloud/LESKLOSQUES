@@ -4,15 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111014">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="KLOSQUE MANAGER">
+<meta name="application-name" content="KLOSQUE MANAGER">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>Klosques Manager — Espace privé</title>
 <link rel="icon" href="/assets/favicon-klosques.png">
+<link rel="apple-touch-icon" sizes="192x192" href="/admin/icons/manager-192.png">
+<link rel="manifest" href="/admin/manifest.webmanifest">
 <link rel="stylesheet" href="/admin/admin.css">
 <script src="/admin/admin.js" defer></script>
 <script src="/admin/quote-builder.js" defer></script>
 <script src="/admin/invoice-builder.js" defer></script>
 <script src="/admin/reminders.js" defer></script>
 <script src="/admin/integrations-ui.js" defer></script>
+<script src="/admin/pwa-install.js" defer></script>
 </head>
 <body>
 <header class="topbar">
@@ -33,6 +40,10 @@
       <button class="primary full" id="loginBtn" type="submit">Se connecter</button>
     </form>
     <p class="muted small">Chaque musicien possède son propre compte. Si tu as oublié ton mot de passe, contacte la personne qui gère les comptes.</p>
+    <div class="install-manager-entry">
+      <button type="button" class="secondary" data-install-manager>📱 Installer KLOSQUE MANAGER</button>
+      <p class="muted small">Ajoute l'application sur ton écran d'accueil et ouvre directement le Manager.</p>
+    </div>
   </div>
 </section>
 <section id="setup" class="login-shell" hidden>
@@ -87,6 +98,10 @@
   <main class="content">
     <div class="heading"><div><p class="eyebrow">ESPACE PRIVÉ DES MUSICIENS</p><h1 id="pageTitle">Tableau de bord</h1></div></div>
     <section id="panel-home" class="page">
+      <div class="install-manager-entry install-manager-home">
+        <button type="button" class="secondary" data-install-manager>📱 Installer KLOSQUE MANAGER</button>
+        <p class="muted small">Accède au Manager directement depuis l'écran d'accueil du téléphone.</p>
+      </div>
       <div class="stats">
         <div class="stat"><span>Demandes à traiter</span><strong id="statRequests">0</strong></div>
         <div class="stat"><span>Concerts confirmés</span><strong id="statConcerts">0</strong></div>
@@ -576,6 +591,14 @@
   <div class="modal-actions">
     <button type="button" class="secondary" id="cancelPayInvoice">Annuler</button>
     <button type="button" class="primary" id="confirmPayInvoice">Confirmer</button>
+  </div>
+</dialog>
+<dialog id="installManagerHelp" aria-labelledby="installManagerTitle">
+  <div class="modal-top"><h2 id="installManagerTitle">Ajouter KLOSQUE MANAGER au téléphone</h2></div>
+  <p id="installManagerSteps">Sur Android : ouvre cette page dans Chrome, puis choisis « Ajouter à l'écran d'accueil » ou « Installer l'application » dans le menu ⋮.</p>
+  <p class="muted small">L'application ouvrira uniquement l'espace privé KLOSQUE MANAGER. La connexion restera obligatoire et une connexion Internet est nécessaire.</p>
+  <div class="modal-actions">
+    <button type="button" class="primary" id="closeInstallManagerHelp">J'ai compris</button>
   </div>
 </dialog>
 </body>
