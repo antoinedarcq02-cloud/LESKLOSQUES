@@ -12,7 +12,7 @@ export function integrationConfig(env,provider){
     id:String(env.GOOGLE_CLIENT_ID||""),secret:String(env.GOOGLE_CLIENT_SECRET||""),
     auth:"https://accounts.google.com/o/oauth2/v2/auth",
     token:"https://oauth2.googleapis.com/token",
-    scopes:"https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.events.freebusy"
+    scopes:"https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.events.freebusy https://www.googleapis.com/auth/calendar.calendarlist.readonly"
   };
   if(provider==="microsoft")return{
     id:String(env.MICROSOFT_CLIENT_ID||""),secret:String(env.MICROSOFT_CLIENT_SECRET||""),
