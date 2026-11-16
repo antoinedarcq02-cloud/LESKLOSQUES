@@ -66,8 +66,7 @@ export function validateIssuance(data){
     client_address:"l'adresse du client",
     event_date:"la date de la prestation",
     event_location:"le lieu de la prestation",
-    payment_due_date:"la date limite de règlement",
-    payment_terms:"les modalités de paiement"
+    payment_due_date:"la date limite de règlement"
   };
   for(const [key,label] of Object.entries(essential))
     if(!data[key])throw Error("Renseigne "+label+" avant l'émission.");
