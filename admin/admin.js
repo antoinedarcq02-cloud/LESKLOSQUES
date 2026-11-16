@@ -6,7 +6,7 @@ const STATUSES = {
   option:'En option',confirme:'Confirmé',termine:'Terminé',refuse:'Refusé'
 };
 const quoteKeys = ['name','email','phone','event_type','event_date','location','package','message','notes','status'];
-const state = { items:[], current:null, selectedDay:null, page:'home', logged:false };
+const state = { items:[], googleEvents:[], googleLinks:[], googleMonth:'', current:null, selectedDay:null, page:'home', logged:false };
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => (
   {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]
 ));
@@ -136,6 +136,9 @@ $('logoutBtn').addEventListener('click', async () => {
   try { await jsonCall('/api/admin/auth','POST',{action:'logout'}); }
   catch (error) { notify(error.message); return; }
   state.items = [];
+  state.googleEvents = [];
+  state.googleLinks = [];
+  state.googleMonth = '';
   state.role = null;
   state.mustChangePassword = false;
   $('loginPassword').value = '';
@@ -260,28 +263,95 @@ function render() {
   renderCalendar();
 }
 ['requestFilter','concertFilter','agendaMonth'].forEach(id => $(id).addEventListener('change',() => { if(id==='agendaMonth') state.selectedDay=null; render(); }));
+function previousCalendarDate(value) {
+  const date=new Date(value+'T12:00:00Z');
+  date.setUTCDate(date.getUTCDate()-1);
+  return date.toISOString().slice(0,10);
+}
+function googleEventOnDate(event,date) {
+  return event.date<=date && (event.end_date ? date<event.end_date : date===event.date);
+}
+function currentGoogleEvents(month) {
+  if(state.googleMonth!==month)return [];
+  // Les concerts publiés par Manager n'apparaissent pas deux fois.
+  const linked=new Set(state.googleLinks
+    .filter(link=>state.items.some(b=>b.id===link.booking_id))
+    .map(link=>link.event_id));
+  return state.googleEvents.filter(event=>!(
+    event.calendar==='concerts'&&event.own_event&&linked.has(event.id)
+  ));
+}
+function sharedCalendarCard(event) {
+  const unavailable=event.calendar==='unavailable';
+  const kind=unavailable?'google-unavailable':'google-concert';
+  const label=unavailable?'KLOSQUES PAS DISPO PARTAGE':'KLOSQUES PARTAGE';
+  const finalDay=event.end_date?previousCalendarDate(event.end_date):event.date;
+  const dateText=finalDay>event.date
+    ? dateLabel(event.date)+' au '+dateLabel(finalDay)
+    : dateLabel(event.date);
+  return '<article class="booking-card google-agenda-card '+kind+'">'+
+    '<div class="card-top"><span class="date">'+escapeHtml(dateText)+'</span>'+
+    '<span class="tag google-tag '+kind+'">'+escapeHtml(label)+'</span></div>'+
+    '<h3>'+escapeHtml(event.title)+'</h3>'+
+    (!unavailable&&event.location?'<p>📍 '+escapeHtml(event.location)+'</p>':'')+
+    '<p class="muted small">Événement du calendrier partagé Google · lecture seule</p>'+
+    '</article>';
+}
 function renderCalendar() {
-  const month = $('agendaMonth').value;
-  if (!/^\d{4}-\d{2}$/.test(month)) return;
-  const [year, mon] = month.split('-').map(Number);
-  const offset = (new Date(Date.UTC(year,mon-1,1)).getUTCDay()+6)%7;
-  const days = new Date(Date.UTC(year,mon,0)).getUTCDate();
-  const today = new Date().toLocaleDateString('en-CA');
-  let html = '<div class="cal-grid">';
-  for (const weekday of ['L','M','M','J','V','S','D']) html += '<span class="weekday">'+weekday+'</span>';
-  for (let i=0;i<offset;i++) html += '<div></div>';
-  for (let day=1;day<=days;day++) {
-    const date = month+'-'+String(day).padStart(2,'0');
-    const events = state.items.filter(x => x.event_date === date && ['option','confirme'].includes(x.status));
-    const classes = 'day'+(today===date?' today':'')+(events.length?' has-bookings':'');
-    const dots = events.slice(0,4).map(x => '<span class="dot '+(x.status==='confirme'?'confirmed':'pending')+'"></span>').join('');
-    html += '<button class="'+classes+'" data-day="'+date+'" type="button" title="'+escapeHtml(String(events.length)+' événement(s)')+'"><span>'+day+'</span><span class="dots">'+dots+'</span></button>';
+  const month=$('agendaMonth').value;
+  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))return;
+  const [year,mon]=month.split('-').map(Number);
+  const offset=(new Date(Date.UTC(year,mon-1,1)).getUTCDay()+6)%7;
+  const days=new Date(Date.UTC(year,mon,0)).getUTCDate();
+  const monthEnd=new Date(Date.UTC(year,mon,1)).toISOString().slice(0,10);
+  const today=new Date().toLocaleDateString('en-CA');
+  const googleEvents=currentGoogleEvents(month);
+  let html='<div class="cal-grid">';
+  for(const weekday of ['L','M','M','J','V','S','D'])
+    html+='<span class="weekday">'+weekday+'</span>';
+  for(let i=0;i<offset;i++)html+='<div></div>';
+  for(let day=1;day<=days;day++){
+    const date=month+'-'+String(day).padStart(2,'0');
+    const bookings=state.items.filter(x=>x.event_date===date&&
+      ['option','confirme'].includes(x.status));
+    const google=googleEvents.filter(event=>googleEventOnDate(event,date));
+    const hasEvents=bookings.length||google.length;
+    const classes='day'+(today===date?' today':'')+
+      (hasEvents?' has-bookings':'')+
+      (state.selectedDay===date?' selected':'');
+    const previews=[
+      ...bookings.map(b=>({title:b.name||b.location||'Concert',kind:'manager'})),
+      ...google.map(e=>({title:e.title,kind:e.calendar==='unavailable'?'google-unavailable':'google-concert'}))
+    ];
+    const dots=[
+      ...bookings.map(b=>'<span class="dot '+(b.status==='confirme'?'confirmed':'pending')+'"></span>'),
+      ...google.map(e=>'<span class="dot '+(e.calendar==='unavailable'?'google-unavailable':'google-concert')+'"></span>')
+    ].slice(0,5).join('');
+    const labels=previews.slice(0,2).map(p=>
+      '<span class="cal-day-entry '+p.kind+'" title="'+escapeHtml(p.title)+'">'+
+      escapeHtml(p.title)+'</span>'
+    ).join('');
+    const more=previews.length>2?'<span class="cal-day-more">+'+(previews.length-2)+'</span>':'';
+    html+='<button class="'+classes+'" data-day="'+date+'" type="button" title="'+
+      escapeHtml(previews.length?previews.map(p=>p.title).join(' · '):'Aucun événement')+'">'+
+      '<span class="cal-day-number">'+day+'</span>'+
+      '<span class="cal-day-entries">'+labels+more+'</span>'+
+      '<span class="dots">'+dots+'</span></button>';
   }
-  $('calendar').innerHTML = html+'</div>';
-  const monthItems = state.items.filter(x => x.event_date.startsWith(month) && ['option','confirme','termine'].includes(x.status))
-    .filter(x => !state.selectedDay || x.event_date === state.selectedDay)
-    .sort((a,b) => a.event_date.localeCompare(b.event_date));
-  fillList('agendaList', monthItems, 'Aucun concert sur cette période.');
+  $('calendar').innerHTML=html+'</div>';
+  const monthItems=state.items.filter(x=>x.event_date.startsWith(month)&&
+    ['option','confirme','termine'].includes(x.status))
+    .filter(x=>!state.selectedDay||x.event_date===state.selectedDay);
+  const monthGoogle=googleEvents.filter(event=>
+    event.date<monthEnd&&(!event.end_date||event.end_date>month+'-01'))
+    .filter(event=>!state.selectedDay||googleEventOnDate(event,state.selectedDay));
+  const combined=[
+    ...monthItems.map(item=>({date:item.event_date,html:itemCard(item),kind:0})),
+    ...monthGoogle.map(event=>({date:event.date,html:sharedCalendarCard(event),kind:1}))
+  ].sort((a,b)=>a.date.localeCompare(b.date)||a.kind-b.kind);
+  $('agendaList').innerHTML=combined.length
+    ?combined.map(x=>x.html).join('')
+    :'<p class="empty">Aucun événement sur cette période.</p>';
 }
 document.addEventListener('click', event => {
   const card = event.target.closest('[data-open]');
