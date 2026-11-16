@@ -3,7 +3,7 @@ import { createQuotePdf, encodePdfBase64 } from "../../../../_lib/quote-pdf.js";
 import { quoteMailReady, ensureQuoteEmailLog } from "../../../../_lib/quote-mail.js";
 import {microsoftMailReady,sendMicrosoftMail} from "../../../../_lib/microsoft-mail.js";
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL = /^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/;
 const REPLY_TO = "LesKlosques@hotmail.com";
 
 function safe(value){
@@ -62,6 +62,11 @@ export async function onRequestPost(context){
   }catch{return respond({error:"Confirmation invalide."},400);}
   if(body?.confirm_send!==true)
     return respond({error:"Confirme explicitement l'envoi avant de continuer."},400);
+  // Le destinataire est saisi ou confirmé par un membre depuis la boîte d'envoi.
+  if(typeof body.recipient!=="string" || body.recipient.length>254 ||
+     !EMAIL.test(body.recipient.trim()))
+    return respond({error:"Saisis une seule adresse e-mail valide pour le destinataire."},400);
+  const recipient=body.recipient.trim();
   if(!await quoteMailReady(context.env))
     return respond({error:"Envoi d'e-mails non configuré : un expéditeur vérifié et un service d'envoi sont nécessaires."},503);
   try{
@@ -71,23 +76,27 @@ export async function onRequestPost(context){
     ).bind(id).first();
     if(!quote)return respond({error:"Devis introuvable."},404);
     if(quote.status!=="finalise")return respond({error:"Finalise le devis avant de l'envoyer."},409);
-    // L'adresse vient UNIQUEMENT de la demande initiale enregistrée dans D1.
-    if(!quote.booking_id)return respond({error:"Associe d'abord ce devis à une demande client avec adresse e-mail."},409);
-    const booking=await DB.prepare(
+    // Un devis peut être indépendant : aucune demande client n'est requise.
+    // Si une demande était liée, elle ne sert qu'au suivi du statut.
+    const booking=quote.booking_id?await DB.prepare(
       "SELECT id,name,email,status FROM bookings WHERE id=?"
-    ).bind(quote.booking_id).first();
-    if(!booking)return respond({error:"La demande client associée n'existe plus."},409);
-    const recipient=String(booking.email||"").trim();
-    if(!EMAIL.test(recipient)||recipient.length>254)
-      return respond({error:"L'adresse e-mail renseignée dans la demande est invalide ou manquante."},409);
+    ).bind(quote.booking_id).first():null;
     await ensureQuoteEmailLog(DB);
     const previous=await DB.prepare(
-      "SELECT sent_at FROM quote_email_sends WHERE quote_id=? AND recipient=? ORDER BY id DESC LIMIT 1"
+      "SELECT sent_at FROM quote_email_sends WHERE quote_id=? AND lower(recipient)=lower(?) ORDER BY id DESC LIMIT 1"
     ).bind(id,recipient).first();
     if(previous?.sent_at){
       const sent=Date.parse(previous.sent_at.replace(" ","T")+"Z");
       if(Number.isFinite(sent)&&Date.now()-sent<120000)
-        return respond({error:"Ce devis vient d'être envoyé à ce client. Attends deux minutes avant un nouvel envoi."},429);
+        return respond({error:"Ce devis vient d'être envoyé à cette adresse. Attends deux minutes avant un nouvel envoi."},429);
+    }
+    const mostRecent=await DB.prepare(
+      "SELECT sent_at FROM quote_email_sends WHERE quote_id=? ORDER BY id DESC LIMIT 1"
+    ).bind(id).first();
+    if(mostRecent?.sent_at){
+      const sent=Date.parse(mostRecent.sent_at.replace(" ","T")+"Z");
+      if(Number.isFinite(sent)&&Date.now()-sent<15000)
+        return respond({error:"Un envoi vient d'être effectué pour ce devis. Patiente quelques secondes avant de le renvoyer."},429);
     }
     const data=JSON.parse(quote.data_json);
     const number=quoteNumber(quote);
@@ -133,13 +142,17 @@ export async function onRequestPost(context){
       ).bind(id,recipient,receipt.provider,receipt.id,user.email).run();
       recorded=true;
     }catch(error){console.warn("Envoi accepté, journalisation échouée",error?.message);}
-    try{
-      // Ne pas déclasser un concert confirmé, en option, terminé ou refusé.
-      await DB.prepare(
-        "UPDATE bookings SET status='devis_envoye',updated_at=datetime('now'),updated_by=? WHERE id=? AND status IN ('nouveau','en_discussion')"
-      ).bind(user.email,booking.id).run();
-      statusUpdated=true;
-    }catch(error){console.warn("Envoi accepté, statut non actualisé",error?.message);}
+    // N'indiquer « devis envoyé » dans la demande que si le destinataire
+    // est son client. Un test envoyé à un membre ne valide pas son envoi.
+    if(booking?.email?.trim().toLowerCase()===recipient.toLowerCase()){
+      try{
+        // Ne pas déclasser un concert confirmé, en option, terminé ou refusé.
+        await DB.prepare(
+          "UPDATE bookings SET status='devis_envoye',updated_at=datetime('now'),updated_by=? WHERE id=? AND status IN ('nouveau','en_discussion')"
+        ).bind(user.email,booking.id).run();
+        statusUpdated=true;
+      }catch(error){console.warn("Envoi accepté, statut non actualisé",error?.message);}
+    }
     return respond({
       sent:true,accepted:true,recipient,number,
       recorded,status_updated:statusUpdated,
