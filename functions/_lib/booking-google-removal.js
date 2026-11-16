@@ -70,9 +70,13 @@ export async function flushPendingGoogleRemovals(env,{bookingId=null,limit=20}={
       throw Error("Aucun droit d'écriture sur KLOSQUES PARTAGE.");
   }catch(error){
     console.warn("Nettoyage Google différé",error?.message);
-    return{processed:rows.length,removed:0,already_absent:0,pending:rows.length,failed:rows.length};
+    return{
+      processed:rows.length,removed:0,already_absent:0,
+      pending:rows.length,failed:rows.length,
+      reason:"Connexion ou autorisations Google Agenda à vérifier dans Site → Connexions."
+    };
   }
-  let removed=0,alreadyAbsent=0,failed=0;
+  let removed=0,alreadyAbsent=0,failed=0,reason="";
   for(const row of rows){
     if(!UUID.test(row.booking_id)||!row.event_id||
        (row.calendar_id&&row.calendar_id!==calendar.id)){
@@ -103,11 +107,17 @@ export async function flushPendingGoogleRemovals(env,{bookingId=null,limit=20}={
       removed++;
     }catch(error){
       failed++;
-      console.warn("Suppression Google à retenter",error?.message);
+      const message=String(error?.message||"");
+      reason=message.includes("Marqueur")
+        ?"L'événement Google n'est plus reconnu comme celui de la demande ; aucune suppression risquée n'a été effectuée."
+        :message.match(/(?:Lecture événement Google refusée|Suppression Google refusée) \((\d+)\)/)?.[1]==="403"
+        ?"Google refuse l'accès à cet événement (403). Vérifie le partage de KLOSQUES PARTAGE."
+        :"Google n'a pas confirmé la suppression. La tentative sera renouvelée à la prochaine consultation de l'Agenda.";
+      console.warn("Suppression Google à retenter",message);
     }
   }
   return{
     processed:rows.length,removed,already_absent:alreadyAbsent,
-    pending:failed,failed
+    pending:failed,failed,...(failed?{reason}:{})
   };
 }
