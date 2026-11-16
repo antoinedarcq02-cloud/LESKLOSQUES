@@ -102,6 +102,17 @@ function renderGooglePublishing(links){
     }
     row.appendChild(actions);root.appendChild(row);
   }
+  // Rendre aussi accessibles les anciens événements dont la fiche Manager a
+  // été effacée, afin de pouvoir les retirer de Google après confirmation.
+  for(const link of links.filter(l=>!state.items.some(b=>b.id===l.booking_id)).slice(0,20)){
+    const row=itemRow('Ancien concert de Klosques Manager',
+      'La fiche n’existe plus dans Manager, mais l’événement reste sur Google.','Synchronisé');
+    const remove=document.createElement('button');
+    remove.type='button';remove.className='secondary';
+    remove.textContent='Retirer de Google';
+    remove.dataset.googleAction='remove';remove.dataset.bookingId=link.booking_id;
+    row.appendChild(remove);root.appendChild(row);
+  }
 }
 async function loadGoogleCalendar(){
   if(!state.logged)return;
@@ -135,8 +146,8 @@ $('googlePublishItems').addEventListener('click',async event=>{
   const target=event.target.closest('[data-google-action]');
   if(!target||state.role!=='admin')return;
   const booking=state.items.find(x=>x.id===target.dataset.bookingId);
-  if(!booking)return;
   const action=target.dataset.googleAction;
+  if(action==='publish'&&!booking)return;
   const confirmation=action==='remove'?
     'Retirer de Google Agenda cet événement créé par Manager ? Le concert restera dans Klosques Manager.':
     'Synchroniser ce concert confirmé dans Google Agenda ? Il sera ajouté ou mis à jour en événement privé sur une journée entière.';
@@ -144,7 +155,7 @@ $('googlePublishItems').addEventListener('click',async event=>{
   target.disabled=true;
   try{
     await jsonCall('/api/admin/google-calendar/sync','POST',{
-      action,booking_id:booking.id,confirm:true
+      action,booking_id:target.dataset.bookingId,confirm:true
     });
     notify(action==='remove'?'Concert retiré de Google Agenda.':'Concert synchronisé avec Google Agenda.');
     await loadGoogleCalendar();
