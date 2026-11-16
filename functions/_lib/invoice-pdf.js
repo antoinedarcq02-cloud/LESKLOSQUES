@@ -1,4 +1,7 @@
 // PDF A4 des factures, brouillons identifiés et numéros sur chaque page.
+// La mise en page des nouveaux documents reprend les devis Happy Live 66.
+// Les anciennes factures gardent exactement leur rendu historique.
+import {createQuotePdf} from "./quote-pdf.js";
 function cp1252(value){
   const extra={"€":128,"’":146,"‘":145,"“":147,"”":148,"–":150,"—":151,"œ":156,"Œ":140,"…":133};
   let s="";
@@ -23,6 +26,7 @@ function dateLabel(value){return /^\d{4}-\d\d-\d\d$/.test(value||"")?value.slice
 function money(v){return (v/100).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";}
 export function createInvoicePdf(invoice){
   const q=invoice.data;if(!q||!Array.isArray(q.lines))throw new Error("Facture non valide.");
+  if(q.price_mode==="ttc")return createQuotePdf(invoice,{type:"invoice"});
   const sheets=[];let commands=[],y=795;
   function nextPage(){if(commands.length)sheets.push(commands.join("\n")+"\n");commands=[];y=795;}
   function fit(height){if(y-height<55)nextPage();}
