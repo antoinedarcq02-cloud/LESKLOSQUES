@@ -63,6 +63,7 @@ async function signedIn(account, showWelcome = false) {
   $('membersPanel').hidden = account.role !== 'admin';
   $('emailSettingsPanel').hidden = account.role !== 'admin';
   $('externalConnectionsPanel').hidden = account.role !== 'admin';
+  $('newGoogleEvent').hidden = account.role !== 'admin';
   document.querySelector('[data-tab="messagerie"]').hidden = account.role !== 'admin';
   $('cancelPasswordChange').hidden = state.mustChangePassword;
   $('passwordExplanation').textContent = state.mustChangePassword
@@ -139,6 +140,7 @@ $('logoutBtn').addEventListener('click', async () => {
   state.googleEvents = [];
   state.googleLinks = [];
   state.googleMonth = '';
+  $('newGoogleEvent').hidden = true;
   state.role = null;
   state.mustChangePassword = false;
   $('loginPassword').value = '';
