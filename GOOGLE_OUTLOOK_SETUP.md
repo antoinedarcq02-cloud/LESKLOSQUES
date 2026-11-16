@@ -28,6 +28,15 @@ URL d'administration : https://lesklosques.pages.dev/admin/
 
 **Dans Site → Connexions :** le responsable dispose des boutons **Ajouter à Google / Mettre à jour / Retirer de Google** pour les concerts confirmés, dans la rubrique de synchronisation. Chaque action est soumise à confirmation. Les événements créés par Klosques Manager ont un identifiant déterministe et un marquage qui évite les doublons et protège les autres événements Google. Aucune modification automatique lors d'un changement de statut d'un concert : actualiser/retirer explicitement sur Google si le dossier change.
 
+**Demandes clients automatiquement inscrites dans Google :**
+
+- Dès qu'une nouvelle demande est **enregistrée depuis le formulaire public**, elle apparaît dans **KLOSQUES PARTAGE** comme **« Les Klosques — Demande à traiter — [lieu] »**, sur la date demandée, en journée entière. Ce n'est **pas une confirmation de réservation**.
+- L'événement est **transparent (libre)** tant que le statut n'est pas « Confirmé » : les autres visiteurs peuvent continuer à demander la même date. Au statut « Confirmé », il devient **occupé**.
+- Lorsque le statut, le lieu ou la date d'une demande issue du site change dans Manager, l'événement Google correspondant est mis à jour sans doublon ; au statut « Refusé » ou à la suppression du dossier, seul l'événement marqué comme appartenant à cette demande est retiré.
+- L'événement contient **le statut, la date, le lieu et une référence interne**, jamais l'e-mail, le téléphone, le message ou les autres données du client. L'accès au dossier complet reste dans Manager. Les événements ne sont créés que dans **KLOSQUES PARTAGE**, jamais dans PAS DISPO ni dans un agenda personnel.
+- **La demande reste enregistrée même si Google Agenda est momentanément indisponible.** Dans ce cas, la synchronisation peut être retentée en modifiant/enregistrant le dossier plus tard. Cette fonction s'applique aux **nouvelles demandes et aux dossiers modifiés après déploiement** : les anciennes demandes n'ont pas de rattrapage automatique tant qu'elles ne sont pas réenregistrées.
+- Les concerts créés manuellement dans Manager ne sont pas touchés par ce déclencheur automatique, et les événements Google créés directement depuis Agenda restent indépendants.
+
 **Créer directement un événement Google depuis Agenda commun :**
 
 1. Se connecter avec **l'un des quatre comptes de musicien** de Klosques Manager (administrateur ou membre). Les visiteurs du site public n'y ont pas accès ; l'administrateur garde seul la configuration de la connexion OAuth.
@@ -74,7 +83,7 @@ Ce connecteur lit la boîte Hotmail, mais **n'active pas l'envoi de devis/factur
 - L'autorisation OAuth utilise un code de vérification PKCE S256, un état aléatoire à usage unique et un cookie CSRF HttpOnly/Secure/SameSite=Lax.
 - Le bouton **Déconnecter** supprime le jeton stocké côté Manager, pas les événements ou e-mails déjà présents chez Google/Microsoft.
 - Le responsable doit vérifier la connexion dans **Site → Connexions** puis le calendrier dans **Agenda**, et la boîte dans **Boîte mail**.
-- L'application n'exécute aucun traitement en arrière-plan : l'agenda et la boîte sont consultés à l'ouverture/actualisation ; les événements sont publiés uniquement après un clic confirmé.
+- Les créations manuelles d'événements depuis Agenda restent soumises à confirmation. **Exception : les nouvelles demandes enregistrées depuis le formulaire public sont synchronisées automatiquement** avec KLOSQUES PARTAGE après leur sauvegarde D1 ; l'envoi est non bloquant et ne retarde ni n'annule la demande. Les changements de dossier tentent aussi la mise à jour Google. Aucun visiteur public n'a accès aux API d'administration ou aux jetons OAuth.
 - Les identifiants OAuth appartiennent à la configuration **Production** de Cloudflare, et non à GitHub ou à ChatGPT. Ne partage jamais les secrets, mots de passe ou jetons dans une conversation.
 
 Références :

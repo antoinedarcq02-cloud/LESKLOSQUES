@@ -120,7 +120,7 @@
           <button type="button" class="secondary" id="refreshGoogleCalendar">Actualiser Google</button>
         </div>
       </div>
-      <p class="muted">Concerts du Manager et événements des agendas partagés <strong>KLOSQUES PARTAGE</strong> et <strong>KLOSQUES PAS DISPO PARTAGE</strong>, réunis dans le même calendrier.</p>
+      <p class="muted">Concerts du Manager, <strong>demandes clients à traiter</strong> et événements des agendas partagés <strong>KLOSQUES PARTAGE</strong> et <strong>KLOSQUES PAS DISPO PARTAGE</strong>, réunis dans le même calendrier. Les demandes à traiter sont ajoutées automatiquement à KLOSQUES PARTAGE quand Google est connecté.</p>
       <div class="agenda-legend" aria-label="Légende de l'agenda">
         <span><i class="legend-dot legend-manager"></i> Concerts Manager</span>
         <span><i class="legend-dot legend-shared"></i> KLOSQUES PARTAGE</span>
@@ -360,7 +360,7 @@
         <p class="muted small">Google : configurer GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET. Microsoft : configurer MICROSOFT_CLIENT_ID et MICROSOFT_CLIENT_SECRET dans Cloudflare. Pour Google, les calendriers KLOSQUES PARTAGE et KLOSQUES PAS DISPO PARTAGE doivent être visibles dans le compte connecté. Reconnecte Google pour accorder l'accès à la liste des calendriers. Une simple connexion ne modifie aucun événement ni message.</p>
         <div id="googlePublishPanel" hidden>
           <h3>Synchroniser les concerts confirmés avec KLOSQUES PARTAGE</h3>
-          <p class="muted small">Seuls les concerts confirmés sont publiés dans KLOSQUES PARTAGE, après ton accord. Le calendrier PAS DISPO n'est jamais modifié.</p>
+          <p class="muted small">Les demandes issues du site apparaissent automatiquement dans KLOSQUES PARTAGE comme « Demande à traiter », puis leur statut suit le dossier. Les dates non confirmées restent libres. Les concerts confirmés créés manuellement se synchronisent avec les boutons ci-dessous. Le calendrier PAS DISPO n'est jamais modifié.</p>
           <div id="googlePublishItems" class="integration-items"></div>
         </div>
       </section>

@@ -65,7 +65,10 @@ function renderGooglePublishing(links){
   const root=$('googlePublishItems');root.replaceChildren();
   const map=new Map(links.map(link=>[link.booking_id,link]));
   const candidates=state.items.filter(item=>
-    item.status==='confirme'||map.has(item.id)
+    item.status==='confirme'||(map.has(item.id)&&
+      // La publication des demandes à traiter est automatique et ne doit
+      // pas polluer les outils manuels réservés aux concerts.
+      !(item.source==='site'&&['nouveau','en_discussion','devis_envoye'].includes(item.status)))
   ).sort((a,b)=>a.event_date.localeCompare(b.event_date)).slice(0,50);
   if(!candidates.length){root.append(itemRow('Aucun concert confirmé','Confirme un concert dans le Manager pour pouvoir l’ajouter à Google.'));return;}
   for(const b of candidates){

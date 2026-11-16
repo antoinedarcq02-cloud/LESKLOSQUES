@@ -1,4 +1,5 @@
 import { authorize, respond, cleanText, validDate, statuses } from "../../../_lib/admin-auth.js";
+import { syncRequestToGoogle } from "../../../_lib/booking-google-sync.js";
 
 const EDITABLE = {
   name: 150, email: 254, phone: 50, event_type: 100, event_date: 10,
@@ -51,6 +52,14 @@ export async function onRequestPatch(context) {
     const result = await context.env.DB.prepare(statement).bind(...values, user.email, id).run();
     if (!result.meta?.changes) return respond({ error: "Dossier introuvable." }, 404);
     const booking = await context.env.DB.prepare("SELECT * FROM bookings WHERE id=?").bind(id).first();
+    if(booking?.source==="site"){
+      // Garder à jour le statut, le lieu et la date de la demande déjà créée
+      // sur Google ; un refus retire cette entrée, sans blocage du dossier D1.
+      const job=syncRequestToGoogle(context.env,booking).catch(error=>
+        console.warn("Suivi Google de la demande indisponible",error?.message||error));
+      if(typeof context.waitUntil==="function")context.waitUntil(job);
+      else await job;
+    }
     return respond({ booking });
   } catch (error) {
     console.warn("Erreur modification concert", error?.message);
@@ -74,6 +83,13 @@ export async function onRequestDelete(context) {
     ).bind(id).run();
     if (!result.meta?.changes)
       return respond({ error: "Demande introuvable ou suppression impossible pour une fiche concert manuelle." }, 404);
+    // Ne supprimer que l'événement Google marqué comme appartenant à cette
+    // demande. Une panne Google ne doit pas restaurer le dossier supprimé.
+    const job=syncRequestToGoogle(context.env,{id,source:"site",status:"refuse"},{remove:true})
+      .catch(error=>console.warn("Nettoyage Google de la demande indisponible",
+        error?.message||error));
+    if(typeof context.waitUntil==="function")context.waitUntil(job);
+    else await job;
     return respond({ ok: true, deleted: true });
   } catch (error) {
     console.warn("Erreur suppression demande client", error?.message || error);

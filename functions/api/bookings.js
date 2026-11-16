@@ -1,4 +1,5 @@
 import { getBusyDates } from "../_lib/google.js";
+import { syncRequestToGoogle } from "../_lib/booking-google-sync.js";
 import { rateLimit } from "../_lib/admin-auth.js";
 import { bookingEmailStatus, sendNewBookingEmails } from "../_lib/booking-email.js";
 
@@ -104,6 +105,15 @@ export async function onRequestPost({ request, env, waitUntil }) {
     // Ne confirmer au client qu'une demande réellement enregistrée.
     if (!inserted.success || Number(inserted.meta?.changes) !== 1)
       throw new Error("D1 : insertion non confirmée.");
+    // La demande est bien enregistrée : ajouter une entrée "à traiter" dans
+    // KLOSQUES PARTAGE. Un incident Google ne doit jamais annuler la demande.
+    // En attente, l'événement est transparent pour ne pas bloquer les devis.
+    const googleJob=syncRequestToGoogle(env,{
+      id:bookingId,source:"site",event_date:date,location,status:"nouveau"
+    }).catch(error=>console.warn("Demande enregistrée, synchronisation Google différée",
+      error?.message||error));
+    if(typeof waitUntil==="function")waitUntil(googleJob);
+    else await googleJob;
     const emailSettings=bookingEmailStatus(env);
     if (emailSettings.alerts_ready || emailSettings.receipt_ready) {
       const job=sendNewBookingEmails(env,bookingId,{
