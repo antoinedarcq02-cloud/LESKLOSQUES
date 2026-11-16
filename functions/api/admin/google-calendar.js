@@ -60,7 +60,8 @@ function conciseEvent(event,kind){
     calendar_name:isUnavailable?"KLOSQUES PAS DISPO PARTAGE":"KLOSQUES PARTAGE",
     all_day:!!event.start?.date,
     own_event:ownEvent&&!isUnavailable,
-    availability:event.transparency==="transparent"?"free":"busy"
+    availability:event.transparency==="transparent"?"free":"busy",
+    etag:String(event.etag||"").slice(0,200)
   };
 }
 export async function onRequestGet(context){
