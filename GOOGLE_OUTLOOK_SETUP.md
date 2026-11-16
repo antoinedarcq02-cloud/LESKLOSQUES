@@ -18,16 +18,19 @@ URL d'administration : https://lesklosques.pages.dev/admin/
 | --- | --- | --- |
 | `GOOGLE_CLIENT_ID` | texte | ID client OAuth du projet |
 | `GOOGLE_CLIENT_SECRET` | secret | secret client OAuth |
-| `GOOGLE_CALENDAR_ID` | texte optionnel | identifiant du calendrier **du groupe**, sinon `primary` |
+| `GOOGLE_KLOSQUES_CALENDAR_ID` | texte optionnel | ID de **KLOSQUES PARTAGE**, utile uniquement si plusieurs calendriers portent ce nom |
+| `GOOGLE_KLOSQUES_UNAVAILABLE_CALENDAR_ID` | texte optionnel | ID de **KLOSQUES PAS DISPO PARTAGE** en cas d'homonymes |
 
-5. Redéployer si nécessaire et, depuis le compte responsable, ouvrir **Site → Connexions → Connecter Google Agenda**.
+5. Redéployer si nécessaire et, depuis le compte responsable, ouvrir **Site → Connexions → Connecter Google Agenda**. Le compte Google choisi doit disposer dans sa liste de calendriers des deux agendas partagés suivants, avec leurs noms exacts : **KLOSQUES PARTAGE** et **KLOSQUES PAS DISPO PARTAGE**. Si le compte avait déjà été autorisé auparavant, **reconnecte-le** pour accorder la permission de lire la liste des calendriers (`calendar.calendarlist.readonly`).
 6. Se connecter au compte Google propriétaire du calendrier choisi et accepter les droits proposés : consultation/édition d'événements et disponibilité libre/occupé.
+
+**Dans Agenda :** seuls les événements de **KLOSQUES PARTAGE** (concerts) et les périodes de **KLOSQUES PAS DISPO PARTAGE** (indisponibilités) s'affichent, en deux sections séparées. Les détails des indisponibilités sont masqués pour ne montrer que « Indisponible ». Les agendas personnels n'apparaissent plus. S'il manque l'un des deux calendriers ou la permission de les lister, la lecture échoue au lieu de retomber sur l'agenda personnel. La vérification des disponibilités des nouvelles demandes porte sur **ces deux calendriers uniquement**.
 
 **Dans Agenda :** les événements Google du mois sont affichés en plus de ceux du Manager. Le responsable dispose de boutons **Ajouter à Google / Mettre à jour / Retirer de Google** pour les concerts confirmés. Chaque action est soumise à confirmation. Les événements créés par Klosques Manager ont un identifiant déterministe et un marquage qui évite les doublons et protège les autres événements Google. Aucune modification automatique lors d'un changement de statut d'un concert : actualiser/retirer explicitement sur Google si le dossier change.
 
 Les fiches concerts existantes n'ont qu'une date (pas une heure de début/fin fiable). Les concerts sont donc publiés **en journée entière**, en privé, sans contacts clients, invitations ni notes internes. Aucun événement externe n'est importé comme nouveau concert du Manager. L'agenda Google n'est pas effacé par une déconnexion.
 
-**Ancienne configuration :** si `GOOGLE_REFRESH_TOKEN` existe déjà dans les secrets, la lecture de disponibilité reste compatible. Un jeton qui n'a pas les autorisations d'édition doit être remplacé par la connexion OAuth depuis le Manager. Pour couper complètement l'ancien accès, supprimer cette variable dans Cloudflare.
+**Ancienne configuration :** si `GOOGLE_REFRESH_TOKEN` existe déjà dans les secrets, il peut encore être utilisé, mais **il doit avoir la permission de lire la liste des calendriers** pour que ce fonctionnement marche. Le plus simple est de reconnecter Google depuis Manager et de donner les nouvelles autorisations. Pour couper complètement l'ancien accès, supprimer `GOOGLE_REFRESH_TOKEN` de Cloudflare. L'ancien `GOOGLE_CALENDAR_ID` n'est plus utilisé pour sélectionner ces deux calendriers : la sélection se fait exclusivement d'après les noms partagés précités (et les IDs optionnels en cas de doublon).
 
 ## 2. Boîte mail LesKlosques@hotmail.com
 
