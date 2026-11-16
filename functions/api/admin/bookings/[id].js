@@ -52,15 +52,18 @@ export async function onRequestPatch(context) {
     const result = await context.env.DB.prepare(statement).bind(...values, user.email, id).run();
     if (!result.meta?.changes) return respond({ error: "Dossier introuvable." }, 404);
     const booking = await context.env.DB.prepare("SELECT * FROM bookings WHERE id=?").bind(id).first();
+    let googleWarning="";
     if(booking?.source==="site"){
-      // Garder à jour le statut, le lieu et la date de la demande déjà créée
-      // sur Google ; un refus retire cette entrée, sans blocage du dossier D1.
-      const job=syncRequestToGoogle(context.env,booking).catch(error=>
-        console.warn("Suivi Google de la demande indisponible",error?.message||error));
-      if(typeof context.waitUntil==="function")context.waitUntil(job);
-      else await job;
+      // Attendre Google pour que le changement de statut soit reflété avant
+      // la confirmation dans Manager, notamment pour un refus / retour en attente.
+      try{
+        await syncRequestToGoogle(context.env,booking);
+      }catch(error){
+        console.warn("Suivi Google de la demande indisponible",error?.message||error);
+        googleWarning="Le dossier est enregistré, mais Google Agenda n'a pas pu être actualisé. Vérifie la connexion puis réenregistre le dossier.";
+      }
     }
-    return respond({ booking });
+    return respond({ booking,...(googleWarning?{google_warning:googleWarning}:{}) });
   } catch (error) {
     console.warn("Erreur modification concert", error?.message);
     return respond({ error: "Enregistrement impossible." }, 503);
@@ -77,20 +80,35 @@ export async function onRequestDelete(context) {
   if (!/^[\da-f-]{36}$/.test(id || ""))
     return respond({ error: "Identifiant invalide." }, 400);
   try {
-    // Le filtre source=site évite toute suppression accidentelle de concerts créés manuellement.
-    const result = await context.env.DB.prepare(
+    // Ne pas perdre l'association Google : la fiche est encore en D1 pendant
+    // la suppression distante. Une panne Google conserve donc la demande et
+    // permet à l'utilisateur de réessayer sans étape supplémentaire.
+    const booking=await context.env.DB.prepare(
+      "SELECT id,source,status,event_date,location FROM bookings WHERE id=? AND source='site'"
+    ).bind(id).first();
+    if(!booking)
+      return respond({error:"Demande introuvable ou suppression impossible pour une fiche concert manuelle."},404);
+    let google;
+    try{
+      google=await syncRequestToGoogle(context.env,booking,{remove:true});
+    }catch(error){
+      console.warn("Suppression Google de la demande impossible",error?.message||error);
+      return respond({
+        error:"La demande a été conservée : impossible de supprimer son événement Google. Vérifie la connexion Google puis réessaie."
+      },503);
+    }
+    // N'effacer la fiche qu'après la suppression (ou l'absence vérifiée)
+    // de son événement Google. Le bouton n'a plus besoin d'être cliqué deux fois.
+    const result=await context.env.DB.prepare(
       "DELETE FROM bookings WHERE id=? AND source='site'"
     ).bind(id).run();
-    if (!result.meta?.changes)
-      return respond({ error: "Demande introuvable ou suppression impossible pour une fiche concert manuelle." }, 404);
-    // Ne supprimer que l'événement Google marqué comme appartenant à cette
-    // demande. Une panne Google ne doit pas restaurer le dossier supprimé.
-    const job=syncRequestToGoogle(context.env,{id,source:"site",status:"refuse"},{remove:true})
-      .catch(error=>console.warn("Nettoyage Google de la demande indisponible",
-        error?.message||error));
-    if(typeof context.waitUntil==="function")context.waitUntil(job);
-    else await job;
-    return respond({ ok: true, deleted: true });
+    if(!result.meta?.changes)
+      return respond({error:"La fiche a changé pendant la suppression. Actualise les demandes puis réessaie."},409);
+    await context.env.DB.prepare("DELETE FROM google_event_optouts WHERE booking_id=?").bind(id).run();
+    return respond({
+      ok:true,deleted:true,
+      google_status:google?.removed?"removed":google?.google_disconnected?"not_connected":"unchanged"
+    });
   } catch (error) {
     console.warn("Erreur suppression demande client", error?.message || error);
     return respond({ error: "Impossible de supprimer cette demande pour le moment." }, 503);
