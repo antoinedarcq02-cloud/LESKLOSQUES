@@ -36,6 +36,11 @@ export function parseInvoice(data){
     result[name]=cleanText(data[name],length);
   }
   result.client_type=data.client_type==="professionnel"?"professionnel":"particulier";
+  // Les nouvelles factures sont saisies en TTC ; les anciennes sans ce champ
+  // conservent leur interprétation historique en prix unitaires HT.
+  if(data.price_mode!==undefined&&data.price_mode!=="ttc"&&data.price_mode!=="ht")
+    throw Error("Mode de prix de la facture invalide.");
+  result.price_mode=data.price_mode||"ht";
   if(!VAT.includes(data.vat_mode))throw Error("Choisis le régime de TVA.");
   result.vat_mode=data.vat_mode;
   if(result.client_email&&!EMAIL.test(result.client_email))throw Error("Adresse e-mail invalide.");
@@ -70,7 +75,7 @@ export function validateIssuance(data){
   };
   for(const [key,label] of Object.entries(essential))
     if(!data[key])throw Error("Renseigne "+label+" avant l'émission.");
-  if(data.vat_mode==="non_precise")throw Error("Choisis le régime de TVA avant l'émission.");
+  if(data.vat_mode==="non_precise")throw Error("Choisis le régime de TVA ou l'exonération applicable avant d'émettre la facture : les mentions fiscales sont nécessaires.");
   if(data.payment_due_date<invoiceLocalDate())
     throw Error("La date limite de paiement ne peut pas être dans le passé.");
   if(!data.lines.length||data.lines.some(l=>!l.label||l.price_cents<=0))
