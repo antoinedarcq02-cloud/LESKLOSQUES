@@ -32,3 +32,6 @@ li{margin:7px 0}
 .legal-footer a{color:#f7eeee}
 @media(max-width:650px){.legal-header{align-items:flex-start;flex-direction:column}.legal-main{padding:38px 17px 55px}.legal-article{border-radius:12px}.legal-footer{align-items:flex-start;flex-direction:column}}
 @media print{body{background:#fff}.legal-header,.legal-footer,.legal-quicknav{display:none}.legal-main{padding:0}.legal-article{box-shadow:none;border:0;padding:0}}
+
+.skip-link{position:absolute;z-index:100;top:8px;left:12px;transform:translateY(-180%);padding:9px 12px;background:#fff;color:#4b1520;font-weight:800}
+.skip-link:focus{transform:translateY(0)}
