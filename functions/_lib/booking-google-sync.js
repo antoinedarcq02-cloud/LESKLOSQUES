@@ -38,6 +38,12 @@ export async function syncRequestToGoogle(env,booking,{remove=false}={}){
   const DB=env.DB;
   if(!DB)return{skipped:true};
   await ensureIntegrationTables(DB);
+  // Une suppression de dossier peut attendre Google : ne jamais recréer
+  // l'événement pendant qu'une suppression explicite est en file.
+  const pendingRemoval=await DB.prepare(
+    "SELECT booking_id FROM google_pending_removals WHERE booking_id=?"
+  ).bind(booking.id).first();
+  if(pendingRemoval)return{skipped:true,pending_removal:true};
   // Ne jamais republier une demande retirée volontairement de Google.
   // Une suppression explicite doit néanmoins pouvoir nettoyer un éventuel
   // événement restant, même si une exclusion a été enregistrée auparavant.
