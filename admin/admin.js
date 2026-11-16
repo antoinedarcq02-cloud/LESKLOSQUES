@@ -73,6 +73,7 @@ async function signedIn(account, showWelcome = false) {
   if (showWelcome) await welcomeMusician(account.display_name || account.username);
   showScreen('workspace');
   await refresh();
+  await loadReminders();
   await loadSiteContent();
   if (state.role === 'admin') {
     await loadMembers();
