@@ -25,14 +25,20 @@ async function loadExternalConnections(){
         google.configured?'Prêt à être connecté':'Identifiants OAuth à configurer dans Cloudflare',
         google.connected?'Connecté':'Non connecté'),
       itemRow('Boîte Hotmail',microsoft.connected?
-        ('Compte autorisé : '+(microsoft.label||'Outlook')):
-        microsoft.configured?'Prête à être connectée':'Identifiants Microsoft à configurer dans Cloudflare',
-        microsoft.connected?'Connectée':'Non connectée')
+        ('Compte : '+(microsoft.label||'Outlook')+
+          (microsoft.sending_enabled?' · Lecture et envoi des e-mails autorisés':
+          ' · Lecture seule : clique sur « Autoriser l’envoi Hotmail »')):
+        microsoft.configured?'À connecter pour envoyer les devis, factures et alertes':
+          'Identifiants Microsoft à configurer dans Cloudflare',
+        microsoft.connected?(microsoft.sending_enabled?'Envoi autorisé':'Lecture seule'):'Non connectée')
     );
     $('connectGoogle').hidden=!google.configured;
     $('disconnectGoogle').hidden=!google.connected||google.legacy;
     $('newGoogleEvent').disabled=!google.connected;
     $('connectOutlook').hidden=!microsoft.configured;
+    $('connectOutlook').textContent=microsoft.connected?
+      (microsoft.sending_enabled?'Réautoriser Hotmail':'Autoriser l’envoi Hotmail'):
+      'Connecter Hotmail pour les e-mails';
     $('disconnectOutlook').hidden=!microsoft.connected;
   }catch(error){
     root.textContent='État des connexions indisponible : '+error.message;
@@ -384,12 +390,13 @@ document.querySelector('[data-tab="messagerie"]').addEventListener('click',loadO
 function handleConnectionReturn(){
   const url=new URL(window.location.href);
   const status=url.searchParams.get('connexion')||'';
-  if(!/^(google|microsoft)-(ok|erreur|expire|refuse|configuration|mauvais-compte)$/.test(status))return;
+  if(!/^(google|microsoft)-(ok|erreur|expire|refuse|configuration|mauvais-compte|permissions)$/.test(status))return;
   url.searchParams.delete('connexion');
   window.history.replaceState(null,'',url.pathname+url.search+url.hash);
   setPage('site');
   const provider=status.startsWith('google')?'Google Agenda':'Boîte Hotmail';
   notify(status.endsWith('-ok')?provider+' connecté avec succès.':
     status.endsWith('mauvais-compte')?'Compte Microsoft incorrect : autorise uniquement LesKlosques@hotmail.com.':
+    status.endsWith('permissions')?'Autorisation Mail.Send manquante : reconnecte Hotmail et accepte le droit d’envoyer des e-mails.':
     'Connexion '+provider+' non terminée. Vérifie le compte, les autorisations et la configuration.');
 }

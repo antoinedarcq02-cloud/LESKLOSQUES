@@ -1,3 +1,4 @@
+import {microsoftMailReady,sendMicrosoftMail} from "./microsoft-mail.js";
 // Emails transactionnels des nouvelles demandes (indépendants de leur enregistrement).
 // L'expéditeur doit appartenir à un domaine vérifié dans Resend.
 // Aucun secret, ni donnée client, n'est exposé dans les réponses publiques.
@@ -28,6 +29,21 @@ export function bookingEmailStatus(env){
     receipt_enabled,
     alerts_ready:provider_ready&&alerts_enabled&&recipients.length>0,
     receipt_ready:provider_ready&&receipt_enabled
+  };
+}
+export async function bookingMailStatus(env){
+  const resend=bookingEmailStatus(env);
+  const microsoft_ready=await microsoftMailReady(env);
+  // L'utilisateur demande des alertes sur la boîte Hotmail : elles seront
+  // actives dès le consentement Mail.Send, sauf désactivation explicite.
+  const alerts_enabled=env?.BOOKING_ALERTS_ENABLED==="true"||
+    (microsoft_ready&&env?.BOOKING_ALERTS_ENABLED!=="false");
+  return{
+    ...resend,microsoft_ready,alerts_enabled,
+    alerts_ready:alerts_enabled&&resend.notification_to.length>0&&
+      (microsoft_ready||resend.provider_ready),
+    // Les accusés de réception aux clients ne sont pas activés par défaut.
+    receipt_ready:resend.receipt_ready
   };
 }
 export async function sendResendEmail(env,{to,subject,html,text,replyTo=GROUP_MAILBOX}){
@@ -62,7 +78,7 @@ export async function ensureBookingEmailLog(DB){
   )`).run();
 }
 export async function sendNewBookingEmails(env,bookingId,booking){
-  const status=bookingEmailStatus(env);
+  const status=await bookingMailStatus(env);
   if(!status.alerts_ready&&!status.receipt_ready)return;
   await ensureBookingEmailLog(env.DB);
   const client=booking.name||"Organisateur";
@@ -104,7 +120,9 @@ export async function sendNewBookingEmails(env,bookingId,booking){
   await Promise.all(jobs.map(async job=>{
     let receipt=null;
     try{
-      receipt=await sendResendEmail(env,job.message);
+      receipt=job.category==="alerte_equipe"&&status.microsoft_ready
+        ?await sendMicrosoftMail(env,job.message)
+        :await sendResendEmail(env,job.message);
     }catch(error){
       console.warn("Notification nouvelle demande non acceptée",job.category,error?.message);
     }

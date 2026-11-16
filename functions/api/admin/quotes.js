@@ -111,7 +111,7 @@ export async function onRequestGet(context) {
       const quote=cleanRow(row),sent=lastSent.get(row.id);
       return { ...quote, sent_at:sent?.sent_at || null, sent_to:sent?.recipient || null };
     });
-    return respond({ quotes, issuer, email_ready:quoteMailReady(context.env) });
+    return respond({ quotes, issuer, email_ready:await quoteMailReady(context.env) });
   } catch (error) {
     console.warn("Erreur chargement devis", error?.message);
     return respond({ error:"Impossible d'accéder aux devis dans la base D1." }, 503);

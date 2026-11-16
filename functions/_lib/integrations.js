@@ -4,7 +4,7 @@ const encoder=new TextEncoder();
 const decoder=new TextDecoder();
 const hex64=/^[A-Za-z0-9_-]{20,100}$/;
 const PROVIDERS=new Set(["google","microsoft"]);
-const MAIL_SCOPE="offline_access Mail.Read User.Read";
+const MAIL_SCOPE="offline_access Mail.Read Mail.Send User.Read";
 export const EXPECTED_OUTLOOK="LesKlosques@hotmail.com";
 
 export function integrationConfig(env,provider){
@@ -68,7 +68,10 @@ export async function ensureIntegrationTables(DB){
     DB.prepare("CREATE TABLE IF NOT EXISTS google_concert_links (booking_id TEXT PRIMARY KEY, calendar_id TEXT NOT NULL, event_id TEXT NOT NULL, synced_at TEXT NOT NULL DEFAULT (datetime('now')))"),
     DB.prepare("CREATE TABLE IF NOT EXISTS google_event_optouts (booking_id TEXT PRIMARY KEY, created_at TEXT NOT NULL DEFAULT (datetime('now')))"),
     // File de suppression durable : un incident Google ne doit plus bloquer D1.
-    DB.prepare("CREATE TABLE IF NOT EXISTS google_pending_removals (booking_id TEXT PRIMARY KEY,calendar_id TEXT NOT NULL DEFAULT '',event_id TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT (datetime('now')))")
+    DB.prepare("CREATE TABLE IF NOT EXISTS google_pending_removals (booking_id TEXT PRIMARY KEY,calendar_id TEXT NOT NULL DEFAULT '',event_id TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT (datetime('now')))"),
+    // Les anciens accès Microsoft en lecture seule restent valables pour lire,
+    // mais n'activent jamais les envois sans un NOUVEAU consentement Mail.Send.
+    DB.prepare("CREATE TABLE IF NOT EXISTS microsoft_mail_authorizations (provider TEXT PRIMARY KEY CHECK(provider='microsoft'), account_label TEXT NOT NULL,authorized_at TEXT NOT NULL DEFAULT (datetime('now')))")
   ]);
 }
 export async function getConnected(DB,provider){

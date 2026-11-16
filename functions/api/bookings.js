@@ -1,6 +1,6 @@
 import { getBusyDates } from "../_lib/google.js";
 import { rateLimit } from "../_lib/admin-auth.js";
-import { bookingEmailStatus, sendNewBookingEmails } from "../_lib/booking-email.js";
+import { sendNewBookingEmails } from "../_lib/booking-email.js";
 
 // Les demandes sont TOUJOURS enregistrées dans D1 avant les notifications.
 // Un problème de messagerie ne bloque jamais le formulaire.
@@ -107,16 +107,14 @@ export async function onRequestPost({ request, env, waitUntil }) {
     // La demande reste dans Manager, sans événement Google à ce stade.
     // Le passage à "En discussion" déclenchera sa première publication
     // automatiquement depuis la mise à jour du dossier côté Manager.
-    const emailSettings=bookingEmailStatus(env);
-    if (emailSettings.alerts_ready || emailSettings.receipt_ready) {
-      const job=sendNewBookingEmails(env,bookingId,{
-        name,email,phone,location,date,package:pkg,eventType,message
-      }).catch(error=>console.warn("Notifications non envoyées",error?.message));
-      // Cloudflare poursuit l'envoi après la réponse ; une erreur d'email
-      // ne remet jamais en cause une demande déjà sauvegardée.
-      if (typeof waitUntil === "function") waitUntil(job);
-      else await job;
-    }
+    // Les alertes sur Hotmail peuvent être prêtes même sans clé Resend.
+    // La demande reste enregistrée quoi qu'il arrive côté messagerie.
+    const job=sendNewBookingEmails(env,bookingId,{
+      name,email,phone,location,date,package:pkg,eventType,message
+    }).catch(error=>console.warn("Notifications non envoyées",error?.message));
+    // Cloudflare poursuit l'envoi après la réponse publique.
+    if(typeof waitUntil==="function")waitUntil(job);
+    else await job;
     return Response.json({ ok: true, saved: true }, {
       status: 201, headers: { "Cache-Control": "no-store" }
     });

@@ -1,6 +1,7 @@
 import { authorize, respond } from "../../../../_lib/admin-auth.js";
 import { createQuotePdf, encodePdfBase64 } from "../../../../_lib/quote-pdf.js";
 import { quoteMailReady, ensureQuoteEmailLog } from "../../../../_lib/quote-mail.js";
+import {microsoftMailReady,sendMicrosoftMail} from "../../../../_lib/microsoft-mail.js";
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const REPLY_TO = "LesKlosques@hotmail.com";
@@ -14,6 +15,9 @@ function quoteNumber(row){
   return "DEV-"+String(row.created_at).slice(0,4)+"-"+String(row.id).padStart(5,"0");
 }
 async function deliver(env,message){
+  // Hotmail connecté : envoyer depuis LesKlosques@hotmail.com et enregistrer
+  // une copie du message dans les éléments envoyés.
+  if(await microsoftMailReady(env))return sendMicrosoftMail(env,message);
   if(!(env.RESEND_API_KEY && env.RESEND_FROM_EMAIL) && env.EMAIL && env.QUOTE_FROM_EMAIL){
     const result=await env.EMAIL.send({
       from:{name:"Les Klosques",email:env.QUOTE_FROM_EMAIL},to:message.to,
@@ -58,7 +62,7 @@ export async function onRequestPost(context){
   }catch{return respond({error:"Confirmation invalide."},400);}
   if(body?.confirm_send!==true)
     return respond({error:"Confirme explicitement l'envoi avant de continuer."},400);
-  if(!quoteMailReady(context.env))
+  if(!await quoteMailReady(context.env))
     return respond({error:"Envoi d'e-mails non configuré : un expéditeur vérifié et un service d'envoi sont nécessaires."},503);
   try{
     const DB=context.env.DB;

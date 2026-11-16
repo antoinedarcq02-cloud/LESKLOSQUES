@@ -53,30 +53,34 @@ Les fiches concerts existantes n'ont qu'une date (pas une heure de début/fin fi
 
 **Ancienne configuration :** si `GOOGLE_REFRESH_TOKEN` existe déjà dans les secrets, il peut encore être utilisé, mais **il doit avoir la permission de lire la liste des calendriers** pour que ce fonctionnement marche. Le plus simple est de reconnecter Google depuis Manager et de donner les nouvelles autorisations. Pour couper complètement l'ancien accès, supprimer `GOOGLE_REFRESH_TOKEN` de Cloudflare. L'ancien `GOOGLE_CALENDAR_ID` n'est plus utilisé pour sélectionner ces deux calendriers : la sélection se fait exclusivement d'après les noms partagés précités (et les IDs optionnels en cas de doublon).
 
-## 2. Boîte mail LesKlosques@hotmail.com
+## 2. Boîte mail LesKlosques@hotmail.com : recevoir et envoyer
 
-**Préparer Microsoft Entra**
+**Préparer Microsoft Entra pour le compte personnel Hotmail du groupe**
 
-1. Dans https://entra.microsoft.com/ → **App registrations** / Inscriptions d'applications, créer une nouvelle application acceptant **les comptes Microsoft personnels** (ou personnels et comptes d'organisation).
-2. Type de redirection : **Web**, URI exacte :
-   `https://lesklosques.pages.dev/api/admin/connect/microsoft/callback`
-3. Ajouter les permissions Microsoft Graph **déléguées** `Mail.Read` et `User.Read`. L'application demande également `offline_access` lors de la connexion pour pouvoir lire de nouveaux messages ultérieurement.
-4. Créer un secret client et enregistrer dans Cloudflare Pages Production :
+1. Dans https://entra.microsoft.com/ → **App registrations**, créer ou sélectionner une application qui accepte **les comptes Microsoft personnels**.
+2. Type de redirection : **Web**, URI exacte : `https://lesklosques.pages.dev/api/admin/connect/microsoft/callback`.
+3. Ajouter les permissions **déléguées** Microsoft Graph `User.Read`, `Mail.Read`, `Mail.Send` et `offline_access` ; `Mail.Send` permet l'expédition depuis le compte autorisé, y compris depuis un compte Microsoft personnel.
+4. Dans **Cloudflare Pages → lesklosques → Production → Variables et secrets**, renseigner `MICROSOFT_CLIENT_ID` (texte) et `MICROSOFT_CLIENT_SECRET` (secret chiffré). Facultatif : `OUTLOOK_EXPECTED_EMAIL=LesKlosques@hotmail.com`.
+5. Après le déploiement, ouvrir **Manager → Site → Connexions → Connecter Hotmail / Autoriser l'envoi Hotmail** avec le compte responsable. Se connecter **uniquement** à `LesKlosques@hotmail.com`, puis accepter la permission d'envoi `Mail.Send` et les autres permissions affichées.
+6. **Même si Hotmail était déjà connecté pour lire la boîte**, il faut le **réautoriser** : l'ancien jeton n'avait pas la permission `Mail.Send`. Le Manager ne considère pas la messagerie prête à envoyer tant que cette nouvelle autorisation n'a pas été enregistrée.
+7. Ouvrir **Site → Messagerie et notifications → Envoyer un e-mail de test**, puis vérifier la boîte de réception, les indésirables et les éléments envoyés de Hotmail. Le test n'envoie jamais de devis ni de facture.
 
-| Variable | Type | Valeur |
-| --- | --- | --- |
-| `MICROSOFT_CLIENT_ID` | texte | Application (client) ID Microsoft |
-| `MICROSOFT_CLIENT_SECRET` | secret | secret client Microsoft (la **valeur**, pas l'ID du secret) |
-| `OUTLOOK_EXPECTED_EMAIL` | texte facultatif | `LesKlosques@hotmail.com` par défaut |
+**Fonctionnement**
 
-5. Ouvrir Manager avec le compte responsable → **Site → Connexions → Connecter Hotmail**, s'identifier avec le compte **LesKlosques@hotmail.com** et accepter les droits de lecture.
-6. Utiliser l'onglet **Boîte mail** pour voir les **20 derniers messages** de la boîte de réception. Cliquer **Actualiser la boîte** pour recharger les données, ou **Ouvrir dans Outlook** pour répondre dans Microsoft.
+- **Nouvelles demandes :** après leur enregistrement dans la base D1 par le formulaire du site, une notification contenant les renseignements de la demande est envoyée automatiquement à `LesKlosques@hotmail.com` depuis ce même compte Hotmail. Aucune réservation n'est confirmée par cet e-mail. Le dossier demeure sauvegardé si Microsoft Graph est indisponible.
+- **Devis :** un devis **finalisé** et lié à une demande contenant l'adresse e-mail du client peut être envoyé manuellement, après confirmation, avec son PDF en pièce jointe.
+- **Factures :** une facture **émise** peut être envoyée manuellement, après confirmation, avec son PDF en pièce jointe. Les e-mails figurent dans les éléments envoyés du compte Hotmail.
+- **Lecture de la boîte :** l'onglet **Boîte mail** permet toujours au responsable de consulter les 20 derniers messages sans les marquer comme lus.
+- **Expéditeur alternatif :** la configuration Resend existante reste utilisable si Hotmail n'est pas autorisé à envoyer. Il n'est plus nécessaire d'acheter ou de vérifier un domaine d'envoi Resend pour utiliser les fonctions Hotmail.
+- **Alertes du groupe :** elles sont actives par défaut dès que Hotmail est autorisé à envoyer ; pour les désactiver explicitement, utiliser `BOOKING_ALERTS_ENABLED=false`. L'adresse de destination est `BOOKING_NOTIFICATION_TO`, par défaut `LesKlosques@hotmail.com` (1 à 4 adresses).
+- **Accusé de réception automatique au client :** reste **désactivé par défaut**. La configuration existante Resend avec `BOOKING_RECEIPT_ENABLED=true` demeure nécessaire pour cette option ; ce n'est pas un envoi de devis ni une confirmation de réservation.
 
-**Confidentialité :** seuls les comptes de Klosques Manager de rôle administrateur ont accès à la boîte Hotmail. Les contenus ne sont pas copiés dans D1. Le code ne supprime, ne marque comme lu, ne répond et n'envoie aucun message. Aucun accès `Mail.Send` ou `Mail.ReadWrite` n'est demandé.
+**Confidentialité et garanties :** aucun mot de passe ni jeton OAuth n'est enregistré dans GitHub ou dans le navigateur. Les jetons restent chiffrés dans D1. Les envois de documents sont réservés aux musiciens connectés et nécessitent une confirmation explicite ; l'accès à la boîte reçue, aux autorisations OAuth et aux tests de messagerie reste réservé au responsable. Microsoft Graph confirme une **acceptation** du message (HTTP 202), pas sa livraison certaine ; consulter les éléments envoyés et les éventuels retours d'erreur.
 
-### Distinction importante : boîte reçue ≠ envoi des devis et factures
-
-Ce connecteur lit la boîte Hotmail, mais **n'active pas l'envoi de devis/factures depuis Hotmail**. La fonction d'envoi de documents existante reste basée sur Resend, nécessite un domaine d'expédition vérifié et l'accord manuel dans le Manager : voir [EMAIL_SETUP.md](EMAIL_SETUP.md). L'adresse Hotmail reste le Reply-To.
+Références :
+- https://learn.microsoft.com/fr-fr/graph/api/user-sendmail?view=graph-rest-1.0
+- https://learn.microsoft.com/fr-fr/graph/permissions-reference
+- https://learn.microsoft.com/fr-fr/entra/identity-platform/v2-oauth2-auth-code-flow
 
 ## 3. Sécurité, contrôle et diagnostic
 

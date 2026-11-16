@@ -35,7 +35,7 @@ export async function onRequestGet(context){
     });
     const test_reset_candidate_id=user.user?.role==='admin'
       ?await eligibleInitialTestId(DB):null;
-    return respond({invoices,issuer,mail_ready:quoteMailReady(context.env),test_reset_candidate_id});
+    return respond({invoices,issuer,mail_ready:await quoteMailReady(context.env),test_reset_candidate_id});
   }catch(error){
     console.warn("Erreur liste factures",error?.message);
     return respond({error:"Factures temporairement indisponibles."},503);

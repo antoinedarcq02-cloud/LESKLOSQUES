@@ -1,7 +1,9 @@
-// Disponible uniquement après activation d'un expéditeur vérifié.
+import {microsoftMailReady} from "./microsoft-mail.js";
+// Disponible après connexion Hotmail avec Mail.Send, ou expéditeur vérifié.
 // Resend: RESEND_API_KEY + RESEND_FROM_EMAIL ; ou Cloudflare Email: EMAIL + QUOTE_FROM_EMAIL.
-export function quoteMailReady(env){
-  return Boolean((env.EMAIL && env.QUOTE_FROM_EMAIL) ||
+export async function quoteMailReady(env){
+  return Boolean(await microsoftMailReady(env) ||
+    (env.EMAIL && env.QUOTE_FROM_EMAIL) ||
     (env.RESEND_API_KEY && env.RESEND_FROM_EMAIL));
 }
 export async function ensureQuoteEmailLog(DB){

@@ -1,5 +1,6 @@
 import { authorize, respond } from "../../_lib/admin-auth.js";
-import { GROUP_MAILBOX, bookingEmailStatus, sendResendEmail } from "../../_lib/booking-email.js";
+import { GROUP_MAILBOX, bookingMailStatus, sendResendEmail } from "../../_lib/booking-email.js";
+import {sendMicrosoftMail} from "../../_lib/microsoft-mail.js";
 
 // Paramétrage exclusivement dans les secrets Cloudflare ; aucune clé exposée.
 // Le test est expédié uniquement vers l'adresse d'alerte configurée.
@@ -23,13 +24,13 @@ export async function onRequestGet(context){
   if(user.error)return user.error;
   try{
     await ensureTestTable(context.env.DB);
-    const status=bookingEmailStatus(context.env);
+    const status=await bookingMailStatus(context.env);
     const test=await context.env.DB.prepare(
       "SELECT last_accepted_at FROM admin_email_test WHERE slot=1"
     ).first();
     return respond({
       ...status,
-      documents_ready:Boolean(
+      documents_ready:Boolean(status.microsoft_ready||
         (context.env.RESEND_API_KEY && context.env.RESEND_FROM_EMAIL) ||
         (context.env.EMAIL && context.env.QUOTE_FROM_EMAIL)
       ),
@@ -51,9 +52,9 @@ export async function onRequestPost(context){
   }catch{return respond({error:"Confirmation invalide."},400);}
   if(payload?.action!=="test_email"||payload?.confirmed!==true)
     return respond({error:"Confirme l'envoi de l'e-mail de test."},400);
-  const status=bookingEmailStatus(context.env);
-  if(!status.provider_ready)
-    return respond({error:"Resend n'est pas configuré. Ajoute d'abord RESEND_API_KEY et RESEND_FROM_EMAIL dans Cloudflare."},503);
+  const status=await bookingMailStatus(context.env);
+  if(!status.microsoft_ready&&!status.provider_ready)
+    return respond({error:"Connecte et réautorise Hotmail pour Mail.Send dans Site → Connexions, ou configure Resend."},503);
   const recipient=status.notification_to[0];
   if(!recipient)return respond({error:"Adresse BOOKING_NOTIFICATION_TO incorrecte."},400);
   try{
@@ -65,7 +66,8 @@ export async function onRequestPost(context){
       WHERE admin_email_test.last_attempt_at<=datetime('now','-2 minutes')`).run();
     if(!throttle.meta?.changes)
       return respond({error:"Un test a déjà été demandé récemment. Réessaie dans deux minutes."},429);
-    const receipt=await sendResendEmail(context.env,{
+    const send=status.microsoft_ready?sendMicrosoftMail:sendResendEmail;
+    const receipt=await send(context.env,{
       to:recipient,subject:"Test de messagerie — Klosques Manager",replyTo:GROUP_MAILBOX,
       text:"Test demandé par "+user.email+
         " depuis Klosques Manager. Aucun devis ni aucune facture n'a été transmis.",
@@ -78,9 +80,10 @@ export async function onRequestPost(context){
         last_message_id=? WHERE slot=1`).bind(receipt.id).run();
     }catch(error){console.warn("Historique test email non enregistré",error?.message);}
     return respond({ok:true,accepted:true,recipient,
-      message:"Le service Resend a accepté l'e-mail de test. Vérifie la boîte de réception et les courriers indésirables."});
+      message:(receipt.provider==="microsoft"?"Outlook / Microsoft Graph":"Resend")+
+        " a accepté l'e-mail de test. Vérifie sa réception, les indésirables et les éléments envoyés."});
   }catch(error){
     console.warn("Test de messagerie refusé",error?.message);
-    return respond({error:"L'envoi de test a échoué. Vérifie le domaine d'envoi et les variables Cloudflare."},502);
+    return respond({error:"L'envoi de test a échoué. Si tu utilises Hotmail, reconnecte-le dans Site → Connexions et accepte l'autorisation Mail.Send ; sinon vérifie la configuration Resend."},502);
   }
 }
