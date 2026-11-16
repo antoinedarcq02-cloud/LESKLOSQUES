@@ -58,40 +58,6 @@ $('disconnectGoogle').addEventListener('click',()=>disconnectService('google'));
 $('disconnectOutlook').addEventListener('click',()=>disconnectService('microsoft'));
 document.querySelector('[data-tab="site"]').addEventListener('click',loadExternalConnections);
 
-function renderGoogleCalendar(items,links){
-  const root=$('googleCalendarEvents');root.replaceChildren();
-  const sections=[
-    {kind:'concerts',title:'KLOSQUES PARTAGE',help:'Événements et concerts du groupe'},
-    {kind:'unavailable',title:'KLOSQUES PAS DISPO PARTAGE',help:'Indisponibilités du groupe (détails masqués)'}
-  ];
-  for(const section of sections){
-    const panel=document.createElement('section');
-    panel.className='external-calendar-group';
-    const heading=document.createElement('h3');
-    heading.textContent=section.title;
-    const subtitle=document.createElement('p');
-    subtitle.className='muted small';subtitle.textContent=section.help;
-    panel.append(heading,subtitle);
-    const list=items.filter(event=>event.calendar===section.kind).slice(0,80);
-    if(!list.length){
-      panel.append(itemRow('Aucun événement sur ce mois',
-        section.kind==='concerts'?'Aucun concert inscrit dans le calendrier partagé.':
-        'Aucune indisponibilité enregistrée dans le calendrier partagé.'));
-    }
-    for(const event of list){
-      const isUnavailable=section.kind==='unavailable';
-      const matches=isUnavailable&&state.items.some(b=>b.event_date===event.date&&
-        ['option','confirme'].includes(b.status));
-      const extra=matches?' · Une date de concert existe aussi dans Manager : à vérifier':'';
-      panel.append(itemRow(event.date+' — '+event.title,
-        (isUnavailable?'Agenda des indisponibilités':
-          ((event.location?event.location+' · ':'')+
-          (event.availability==='free'?'Libre':'Occupé')))+extra,
-        event.own_event?'Créé par Manager':null));
-    }
-    root.appendChild(panel);
-  }
-}
 function renderGooglePublishing(links){
   const panel=$('googlePublishPanel');panel.hidden=state.role!=='admin';
   if(panel.hidden)return;
@@ -135,34 +101,49 @@ function renderGooglePublishing(links){
     row.appendChild(remove);root.appendChild(row);
   }
 }
+let googleCalendarRequestSerial=0;
 async function loadGoogleCalendar(){
   if(!state.logged)return;
-  const status=$('googleCalendarStatus'),root=$('googleCalendarEvents');
+  const serial=++googleCalendarRequestSerial;
+  const status=$('googleCalendarStatus');
   const month=$('agendaMonth').value;
   if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))return;
-  status.textContent='Lecture de Google Agenda…';
+  status.textContent='Lecture des deux agendas partagés Google…';
   $('refreshGoogleCalendar').disabled=true;
   try{
     const data=await callApi('/api/admin/google-calendar?month='+encodeURIComponent(month));
+    // Empêcher le retour d'une ancienne requête d'écraser un nouveau mois.
+    if(serial!==googleCalendarRequestSerial||!state.logged||month!==$('agendaMonth').value)return;
     if(!data.connected){
+      state.googleEvents=[];state.googleLinks=[];state.googleMonth=month;
+      renderCalendar();
       status.textContent='Google Agenda non connecté : le responsable peut le relier dans Site → Connexions.';
-      root.replaceChildren();
       $('googlePublishPanel').hidden=true;
       return;
     }
-    status.textContent='Agendas partagés Les Klosques chargés pour '+month+
-      (data.truncated?' · liste partielle : de nombreux événements existent':'')+
-      ' · seuls les concerts créés depuis Manager dans KLOSQUES PARTAGE sont modifiables ici.';
-    renderGoogleCalendar(data.events||[],data.links||[]);
-    renderGooglePublishing(data.links||[]);
+    state.googleEvents=Array.isArray(data.events)?data.events:[];
+    state.googleLinks=Array.isArray(data.links)?data.links:[];
+    state.googleMonth=month;
+    renderCalendar();
+    status.textContent='Les deux agendas partagés sont intégrés au calendrier commun'+
+      (data.truncated?' · Certains événements Google ne sont pas encore chargés.':'.');
+    if(state.role==='admin')renderGooglePublishing(state.googleLinks);
   }catch(error){
+    if(serial!==googleCalendarRequestSerial||!state.logged||month!==$('agendaMonth').value)return;
+    state.googleEvents=[];state.googleLinks=[];state.googleMonth=month;
+    renderCalendar();
     status.textContent='Lecture Google indisponible : '+error.message;
-    root.replaceChildren();$('googlePublishPanel').hidden=true;
-  }finally{$('refreshGoogleCalendar').disabled=false;}
+    $('googlePublishPanel').hidden=true;
+  }finally{
+    if(serial===googleCalendarRequestSerial)$('refreshGoogleCalendar').disabled=false;
+  }
 }
 $('refreshGoogleCalendar').addEventListener('click',loadGoogleCalendar);
 $('agendaMonth').addEventListener('change',loadGoogleCalendar);
 document.querySelector('[data-tab="agenda"]').addEventListener('click',loadGoogleCalendar);
+document.querySelector('[data-tab="site"]').addEventListener('click',()=>{
+  if(state.logged&&state.role==='admin')loadGoogleCalendar();
+});
 $('googlePublishItems').addEventListener('click',async event=>{
   const target=event.target.closest('[data-google-action]');
   if(!target||state.role!=='admin')return;
