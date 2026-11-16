@@ -15,7 +15,7 @@
   });
   window.addEventListener('appinstalled',()=>{
     pendingInstall=null;
-    dialog.close();
+    if(dialog.open)dialog.close();
     update();
   });
   window.matchMedia('(display-mode: standalone)').addEventListener?.('change',update);
