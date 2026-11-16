@@ -94,7 +94,10 @@ export async function sendNewBookingEmails(env,bookingId,booking){
   const jobs=[];
   if(status.alerts_ready)for(const to of status.notification_to)jobs.push({
     category:"alerte_equipe",to,
-    message:{to,subject,replyTo:booking.email,text:
+    // Alerte envoyée depuis Hotmail vers la boîte du groupe :
+    // conserver la réception, sans remplir les éléments envoyés.
+    // Les devis et factures gardent leur copie envoyée.
+    message:{to,subject,replyTo:booking.email,saveToSentItems:false,text:
       "Une nouvelle demande a été enregistrée dans Klosques Manager.\n\n"+
       groupText+"\n\nConsulter : https://lesklosques.pages.dev/admin/",
     html:"<h2>Nouvelle demande Les Klosques</h2>"+groupHtml+

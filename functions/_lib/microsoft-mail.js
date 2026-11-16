@@ -22,12 +22,13 @@ export async function microsoftMailReady(env){
     approval.account_label?.toLowerCase()===allowed;
 }
 
-export async function sendMicrosoftMail(env,{to,subject,html,text,replyTo,attachment,filename}){
+export async function sendMicrosoftMail(env,{to,subject,html,text,replyTo,attachment,filename,saveToSentItems=true}){
   if(!await microsoftMailReady(env))
     throw Error("Hotmail doit être connecté et réautorisé pour Mail.Send dans Site → Connexions.");
   if(!validEmail(to)||typeof subject!=="string"||!subject.trim()||subject.length>250)
     throw Error("Adresse e-mail ou objet invalide.");
   if(replyTo&&!validEmail(replyTo))throw Error("Adresse de réponse invalide.");
+  if(typeof saveToSentItems!=="boolean")throw Error("Option de copie d'envoi invalide.");
   if(typeof html!=="string"||html.length>30000||
      typeof text!=="string"||text.length>30000)
     throw Error("Contenu du message invalide.");
@@ -57,7 +58,7 @@ export async function sendMicrosoftMail(env,{to,subject,html,text,replyTo,attach
   const response=await fetch("https://graph.microsoft.com/v1.0/me/sendMail",{
     method:"POST",
     headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},
-    body:JSON.stringify({message,saveToSentItems:true})
+    body:JSON.stringify({message,saveToSentItems})
   });
   // Graph renvoie HTTP 202 sans ID. Il s'agit d'une acceptation,
   // pas d'une preuve de réception finale par le destinataire.
