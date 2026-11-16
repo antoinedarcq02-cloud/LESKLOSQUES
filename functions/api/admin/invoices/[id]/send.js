@@ -2,6 +2,7 @@ import { authorize, respond } from "../../../../_lib/admin-auth.js";
 import { ensureInvoiceTables, publicInvoice, validInvoiceId } from "../../../../_lib/invoice-core.js";
 import { createInvoicePdf, encodePdfBase64 } from "../../../../_lib/invoice-pdf.js";
 import { quoteMailReady } from "../../../../_lib/quote-mail.js";
+import {microsoftMailReady,sendMicrosoftMail} from "../../../../_lib/microsoft-mail.js";
 
 const EMAIL=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const REPLY_TO="LesKlosques@hotmail.com";
@@ -11,6 +12,7 @@ function safe(s){
   }[c]));
 }
 async function deliver(env,mail){
+  if(await microsoftMailReady(env))return sendMicrosoftMail(env,mail);
   if(!(env.RESEND_API_KEY && env.RESEND_FROM_EMAIL) && env.EMAIL && env.QUOTE_FROM_EMAIL){
     const result=await env.EMAIL.send({
       from:{name:"Les Klosques",email:env.QUOTE_FROM_EMAIL},
@@ -53,7 +55,7 @@ export async function onRequestPost(context){
     body=JSON.parse(raw);
   }catch{return respond({error:"Confirmation invalide."},400);}
   if(body?.confirm_send!==true)return respond({error:"Confirmation explicite requise avant l'envoi."},400);
-  if(!quoteMailReady(context.env))
+  if(!await quoteMailReady(context.env))
     return respond({error:"Envoi non configuré : il faut une adresse d'expédition vérifiée et un service d'e-mail."},503);
   const DB=context.env.DB;
   try{
