@@ -41,8 +41,10 @@ async function disconnectService(provider){
   const name=provider==='google'?'Google Agenda':'Hotmail';
   if(!window.confirm('Déconnecter '+name+' ? Les événements Google et les messages existants ne seront pas supprimés.'))return;
   try{
-    await jsonCall('/api/admin/integrations','POST',{action:'disconnect',provider,confirm:true});
-    notify(name+' déconnecté de Klosques Manager.');
+    const outcome=await jsonCall('/api/admin/integrations','POST',{action:'disconnect',provider,confirm:true});
+    notify(outcome.legacy_remains
+      ?'La connexion OAuth a été retirée, mais GOOGLE_REFRESH_TOKEN est encore actif dans Cloudflare.'
+      :name+' déconnecté de Klosques Manager.');
     await loadExternalConnections();
     if(provider==='google')await loadGoogleCalendar();
     if(provider==='microsoft'){
