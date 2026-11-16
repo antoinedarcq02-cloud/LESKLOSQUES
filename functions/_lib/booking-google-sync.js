@@ -38,11 +38,17 @@ export async function syncRequestToGoogle(env,booking,{remove=false}={}){
   const DB=env.DB;
   if(!DB)return{skipped:true};
   await ensureIntegrationTables(DB);
-  // Une suppression manuelle ne doit pas provoquer une republication ultérieure.
-  const optout=await DB.prepare("SELECT booking_id FROM google_event_optouts WHERE booking_id=?").bind(booking.id).first();
-  if(optout)return{skipped:true,manually_removed:true};
-  const connection=await getConnected(DB,"google");
-  if(!connection&&!env.GOOGLE_REFRESH_TOKEN)return{skipped:true};
+  // Ne jamais republier une demande retirée volontairement de Google.
+  // Une suppression explicite doit néanmoins pouvoir nettoyer un éventuel
+  // événement restant, même si une exclusion a été enregistrée auparavant.
+  const optout=await DB.prepare("SELECT booking_id FROM google_event_optouts WHERE booking_id=?")
+    .bind(booking.id).first();
+  if(optout&&!remove)return{skipped:true,manually_removed:true};
+  // Lire l'association AVANT la connexion ou la suppression de la fiche :
+  // elle prouve qu'un événement Google a été lié à cette demande.
+  const linked=await DB.prepare(
+    "SELECT calendar_id,event_id FROM google_concert_links WHERE booking_id=?"
+  ).bind(booking.id).first();
   // Vérifier l'état courant : le dossier peut changer pendant le job.
   const latest=await DB.prepare(
     "SELECT id,source,event_date,location,status FROM bookings WHERE id=?"
@@ -50,19 +56,21 @@ export async function syncRequestToGoogle(env,booking,{remove=false}={}){
   if(latest&&latest.source!=="site")return{skipped:true};
   const active=latest||booking;
   // Une demande en attente de traitement ne doit figurer sur aucun agenda.
-  // Supprimer aussi l'ancienne entrée Google si elle avait été publiée avant
-  // cette règle, sans toucher à la fiche client stockée dans D1.
   const removeEvent=remove||!latest||active.status==="nouveau"||active.status==="refuse";
   if(!removeEvent&&(!ACTIVE.has(active.status)||
       !/^\d{4}-\d{2}-\d{2}$/.test(active.event_date||"")))return{skipped:true};
+  const connection=await getConnected(DB,"google");
+  if(!connection&&!env.GOOGLE_REFRESH_TOKEN){
+    // Ne pas annoncer une suppression réussie si un événement lié existe.
+    if(removeEvent&&linked)
+      throw Error("Google Agenda n'est pas connecté : l'événement associé ne peut pas être supprimé.");
+    return{skipped:true,google_disconnected:true};
+  }
   const token=await providerAccessToken(env,"google");
   const calendars=await resolveKlosquesCalendars(env,token);
   const calendar=calendars.concerts;
   if(!["owner","writer","writerWithoutPrivateAccess"].includes(calendar.accessRole))
     throw Error("Droits d'écriture manquants sur KLOSQUES PARTAGE.");
-  const linked=await DB.prepare(
-    "SELECT calendar_id,event_id FROM google_concert_links WHERE booking_id=?"
-  ).bind(booking.id).first();
   if(linked&&linked.calendar_id!==calendar.id)
     throw Error("Le dossier est lié à un autre calendrier. Aucune migration automatique.");
   const id=linked?.event_id||eventId(booking.id);
