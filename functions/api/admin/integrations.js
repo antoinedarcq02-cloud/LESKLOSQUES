@@ -1,4 +1,5 @@
 import {authorize,respond} from "../../_lib/admin-auth.js";
+import {microsoftMailReady} from "../../_lib/microsoft-mail.js";
 import {
   ensureIntegrationTables,getConnected,integrationConfig
 } from "../../_lib/integrations.js";
@@ -19,6 +20,7 @@ export async function onRequestGet(context){
     ]);
     const g=integrationConfig(context.env,"google");
     const m=integrationConfig(context.env,"microsoft");
+    const sending=await microsoftMailReady(context.env);
     return respond({
       google:{
         configured:!!(g.id&&g.secret),
@@ -29,7 +31,8 @@ export async function onRequestGet(context){
       microsoft:{
         configured:!!(m.id&&m.secret),
         connected:!!microsoft,
-        label:microsoft?.account_label||null
+        label:microsoft?.account_label||null,
+        sending_enabled:sending
       }
     });
   }catch(error){
@@ -49,6 +52,8 @@ export async function onRequestPost(context){
   try{
     await ensureIntegrationTables(context.env.DB);
     await context.env.DB.prepare("DELETE FROM connected_services WHERE provider=?").bind(payload.provider).run();
+    if(payload.provider==="microsoft")
+      await context.env.DB.prepare("DELETE FROM microsoft_mail_authorizations WHERE provider='microsoft'").run();
     // Un éventuel ancien jeton Google stocké comme secret Cloudflare reste actif.
     const legacy_remains=payload.provider==="google"&&!!context.env.GOOGLE_REFRESH_TOKEN;
     // Les concerts ajoutés dans Google et les messages Outlook ne sont pas supprimés.
