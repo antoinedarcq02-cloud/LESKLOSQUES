@@ -59,7 +59,7 @@ function numberValue(value){
   if(!Number.isFinite(n)||n<=0)return null;
   return n;
 }
-function amounts(data){
+function amounts(data,invoiceTtc=false){
   const rows=[];
   let htSum=0,previousTax=0;
   const direct=data.vat_mode==="ttc_sans_ventilation";
@@ -82,6 +82,18 @@ function amounts(data){
     });
     previousTax=cumulativeTax;
   }
+  if(invoiceTtc){
+    // Pour les nouvelles factures, les prix saisis sont déjà TTC. On calcule
+    // la ventilation HT/TVA depuis le montant final, sans ajouter de taxe
+    // une deuxième fois. Les anciennes factures restent traitées en HT.
+    const finalTTC=htSum;
+    const netHT=taxable?Math.round(finalTTC/(1+rate/100)):finalTTC;
+    for(const row of rows){
+      row.unitDisplayed=row.unitHT;
+      row.amountDisplayed=row.ht;
+    }
+    return{rows,ht:netHT,tax:finalTTC-netHT,ttc:finalTTC,taxable,rate,direct:false};
+  }
   return{rows,ht:htSum,tax:previousTax,ttc:htSum+previousTax,taxable,rate,direct};
 }
 function makePdf(objects){
@@ -100,10 +112,11 @@ function makePdf(objects){
   for(const part of parts){result.set(part,pos);pos+=part.length;}
   return result;
 }
-export function createQuotePdf(quote){
+export function createQuotePdf(quote,options={}){
   const q=quote?.data;
-  if(!q||!Array.isArray(q.lines))throw Error("Devis non valide.");
-  const totals=amounts(q);
+  const invoice=options.type==="invoice";
+  if(!q||!Array.isArray(q.lines))throw Error(invoice?"Facture non valide.":"Devis non valide.");
+  const totals=amounts(q,invoice&&q.price_mode==="ttc");
   const pages=[];let ops=[];
   function stroke(x1,y1,x2,y2,color="0.73 0.73 0.73",width=.55){
     ops.push(color+" RG "+width+" w "+x1+" "+y1+" m "+x2+" "+y2+" l S");
@@ -132,6 +145,7 @@ export function createQuotePdf(quote){
     text(s,Math.max(left+4,left+(right-left-approx)/2),y,size,bold,color);
   }
   // En-tete : quatre curseurs de console et nom de l'emetteur.
+  const documentLabel=invoice?"FACTURE":"DEVIS";
   const brand=/happy\s*live\s*66/i.test(q.issuer_name||"")?"Happy Live 66":"Les Klosques";
   function drawLogo(){
     const faderY=[770,760,775,750];
@@ -142,7 +156,9 @@ export function createQuotePdf(quote){
       rect(x-5,faderY[i]-4,10,8,"0.44 0.46 0.45",.5);
     }
     text(brand,184,755,17,true,"0.42 0.42 0.42",true);
-    text("DEVIS",475,720,14,false,"0.84 0.84 0.84");
+    text(documentLabel,invoice?455:475,720,14,false,"0.84 0.84 0.84");
+    if(invoice&&quote.status!=="emise")
+      text("BROUILLON - NON EMIS",55,716,10,true,"0.67 0.12 0.16");
   }
   function drawFirstHeader(){
     drawLogo();
@@ -154,12 +170,15 @@ export function createQuotePdf(quote){
     if(q.issuer_contact)y=para(q.issuer_contact,56,y,245,8,11);
     if(q.issuer_legal)y=para(q.issuer_legal,56,y,245,8,11);
     text("DATE : "+dateLabel(q.issue_date),355,665,8.5,true);
-    text("N° DEVIS : "+String(quote.number||""),355,650,8.5,true);
-    text("VALABLE JUSQU'AU : "+dateLabel(q.valid_until),355,635,8);
+    text("N° "+documentLabel+" : "+String(quote.number||"NON ATTRIBUE"),355,650,8.5,true);
+    text(invoice?"ECHEANCE : "+dateLabel(q.payment_due_date):
+      "VALABLE JUSQU'AU : "+dateLabel(q.valid_until),355,635,8);
     text("A : "+String(q.client_name||"Client a preciser"),355,568,8.8,true);
     let cy=554;
     cy=para(q.client_address||"",355,cy,190,8.3,11);
     if(q.client_email)cy=para(q.client_email,355,cy-3,190,8.3,11);
+    if(invoice&&q.client_identifier)
+      cy=para("SIREN / SIRET : "+q.client_identifier,355,cy-3,190,8.3,11);
     // Les coordonnees longues repoussent le tableau plutot que de le recouvrir.
     const eventY=Math.min(488,y-25,cy-30);
     text("PRESTATION : "+dateLabel(q.event_date)+(q.event_time?" a "+q.event_time:""),56,eventY,8.4,true);
@@ -183,7 +202,7 @@ export function createQuotePdf(quote){
   function continuation(){
     pageEnd();
     text(brand,55,782,12,true,"0.43 0.43 0.43");
-    text("DEVIS "+String(quote.number||"")+" (suite)",350,782,9,true,"0.52 0.52 0.52");
+    text(documentLabel+" "+String(quote.number||"")+" (suite)",350,782,9,true,"0.52 0.52 0.52");
     stroke(55,770,548,770);
     return tableHead(744);
   }
@@ -194,7 +213,7 @@ export function createQuotePdf(quote){
     // sur la suivante, sans masquer les informations du devis.
     pageEnd();
     text(brand,55,782,12,true,"0.43 0.43 0.43");
-    text("DEVIS "+String(quote.number||"")+" (suite)",350,782,9,true);
+    text(documentLabel+" "+String(quote.number||"")+" (suite)",350,782,9,true);
     stroke(55,770,548,770);
     y=tableHead(744);
   }else y=tableHead(tableTop);
@@ -244,7 +263,7 @@ export function createQuotePdf(quote){
   if(footerY-35-footRows.length*11<78){
     pageEnd();
     text(brand,55,780,12,true,"0.43 0.43 0.43");
-    text("DEVIS "+String(quote.number||"")+" - mentions",345,780,9,true);
+    text(documentLabel+" "+String(quote.number||"")+" - mentions",345,780,9,true);
     stroke(55,770,548,770);
     footerY=705;
   }
@@ -258,13 +277,23 @@ export function createQuotePdf(quote){
   if(q.conditions)footerY=para("Conditions particulieres : "+q.conditions,56,footerY-6,490,8.1,11);
   if(q.vat_mode==="franchise")
     footerY=para("TVA non applicable, art. 293 B du CGI",56,footerY-5,490,8.1,11);
+  if(invoice){
+    footerY=para("Date limite de paiement : "+dateLabel(q.payment_due_date),56,footerY-6,490,8.1,11);
+    if(q.client_type==="professionnel"){
+      footerY=para("Penalites de retard : "+String(q.late_penalties||"A preciser"),56,footerY-7,490,8.1,11);
+      footerY=para("Indemnite forfaitaire de recouvrement : 40 euros (si applicable).",
+        56,footerY-4,490,8.1,11);
+    }
+  }
   footerY-=20;
   if(footerY<90){
     pageEnd();
     footerY=730;
   }
-  text("Bon pour accord - date et signature du client :",56,footerY,8.3);
-  stroke(56,footerY-55,265,footerY-55,"0.75 0.75 0.75");
+  if(!invoice){
+    text("Bon pour accord - date et signature du client :",56,footerY,8.3);
+    stroke(56,footerY-55,265,footerY-55,"0.75 0.75 0.75");
+  }
   pageEnd();
   const objs=[null,"<< /Type /Catalog /Pages 2 0 R >>","",
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",

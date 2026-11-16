@@ -209,7 +209,7 @@
       <div class="section-header">
         <div>
           <h2>Factures Les Klosques</h2>
-          <p class="muted small">Factures détaillées, numérotées à l'émission, sauvegardées, imprimables. Aucune transmission automatique.</p>
+          <p class="muted small">Crée une facture sans demande préalable ou depuis un devis, puis envoie son PDF à l'adresse fournie par le client ou un musicien. Aucun envoi automatique.</p>
         </div>
         <button type="button" class="primary" id="newInvoice">+ Nouvelle facture</button>
       </div>
@@ -233,6 +233,7 @@
           <label>Demande client (facultative)
             <select id="invoiceBooking"><option value="">Facture indépendante / sans demande</option></select>
           </label>
+          <p class="muted small">Une facture indépendante ne nécessite pas de demande sur le site : renseigne directement le client.</p>
           <label>Devis d'origine (facultatif)
             <select id="invoiceQuote"><option value="">Aucun devis associé</option></select>
           </label>
@@ -256,26 +257,30 @@
           <p class="muted small">Indique les véritables informations légales de la structure émettrice, pas seulement le nom du groupe.</p>
           <label>Nom / raison sociale *<input name="issuer_name" maxlength="160"></label>
           <label>Adresse complète de la structure *<textarea name="issuer_address" rows="2" maxlength="350"></textarea></label>
-          <div class="field-row">
-            <label>Identifiant officiel (SIRET / RNA selon le cas) *<input name="issuer_identifier" maxlength="90"></label>
-            <label>N° de TVA intracommunautaire (si applicable)<input name="issuer_tax_number" maxlength="70"></label>
-          </div>
+          <label>Identifiant officiel (SIRET / RNA selon le cas) *<input name="issuer_identifier" maxlength="90"></label>
           <label>Contact de la structure<input name="issuer_contact" maxlength="180"></label>
           <label>Autres mentions légales (statut, registre…) <textarea name="issuer_legal" rows="2" maxlength="250"></textarea></label>
           <h3>3. Prestations et prix séparés</h3>
-          <p class="muted small">Inscris une ligne par poste : Les Klosques, équipe technique, DJ, déplacements, etc. Prix unitaires HT.</p>
-          <div class="quote-lines-header" aria-hidden="true"><span>Prestation</span><span>Qté</span><span>Prix unitaire HT</span><span></span></div>
+          <p id="invoicePricingInfo" class="muted small">Saisis les prix TTC convenus pour le concert, les déplacements ou les prestations techniques.</p>
+          <div class="quote-lines-header" aria-hidden="true"><span>Prestation</span><span>Qté</span><span id="invoicePriceTypeText">Prix unitaire TTC</span><span></span></div>
           <div id="invoiceLines"></div>
           <button type="button" class="secondary" id="addInvoiceLine">+ Ajouter une prestation</button>
-          <label>TVA applicable
-            <select name="vat_mode">
-              <option value="non_precise">À préciser (brouillon uniquement)</option>
-              <option value="franchise">TVA non applicable — franchise en base (si éligible)</option>
-              <option value="20">TVA 20 %</option><option value="10">TVA 10 %</option>
-              <option value="5.5">TVA 5,5 %</option><option value="0">TVA 0 % (régime à justifier)</option>
-            </select>
-          </label>
-          <p id="invoiceTotals" class="quote-total">Total HT : 0,00 € · TVA et TTC : à préciser</p>
+          <p id="invoiceTotals" class="quote-total">Total TTC : 0,00 €</p>
+          <details id="invoiceTaxDetails">
+            <summary><strong>Mentions fiscales à vérifier avant émission</strong></summary>
+            <p class="muted small">Une facture peut nécessiter le taux de TVA ou la mention d'exonération et le numéro de TVA de la structure. Cette rubrique reste obligatoire à vérifier avant d'émettre une facture.</p>
+            <label>Régime de TVA de la structure pour cette facture
+              <select name="vat_mode">
+                <option value="non_precise">À vérifier avant l'émission</option>
+                <option value="franchise">TVA non applicable — franchise en base (si éligible)</option>
+                <option value="20">TVA 20 %</option><option value="10">TVA 10 %</option>
+                <option value="5.5">TVA 5,5 %</option><option value="0">TVA 0 % (régime à justifier)</option>
+              </select>
+            </label>
+            <label>N° de TVA intracommunautaire (si requis)
+              <input name="issuer_tax_number" maxlength="70">
+            </label>
+          </details>
           <h3>4. Échéance et mentions légales</h3>
           <div class="field-row">
             <label>Date d'émission (fixée lors de la finalisation)<input name="issue_date" type="date" disabled></label>
@@ -546,8 +551,12 @@
 </dialog>
 <dialog id="sendInvoiceDialog" aria-labelledby="sendInvoiceTitle">
   <div class="modal-top"><h2 id="sendInvoiceTitle">Confirmer l'envoi de la facture</h2></div>
-  <p>Veux-tu vraiment envoyer cette facture et son PDF au client ?</p>
-  <p id="invoiceSendDestination" class="delete-request-details"></p>
+  <p>Vérifie le destinataire avant de confirmer l'envoi du PDF.</p>
+  <label for="invoiceSendEmail">Adresse e-mail du destinataire *
+    <input id="invoiceSendEmail" type="email" maxlength="254" autocomplete="off" placeholder="client@exemple.fr" required>
+  </label>
+  <p id="invoiceSendDestination" class="delete-request-details" aria-live="polite"></p>
+  <p class="muted small">Tu peux saisir l'adresse fournie par le client ou un membre du groupe, même sans demande enregistrée. Le destinataire sera conservé dans l'historique.</p>
   <p id="invoiceSendWarning" class="quote-lock-note" hidden>L'envoi par e-mail n'est pas encore configuré. Connecte et autorise Hotmail à envoyer, ou configure Resend.</p>
   <p id="invoiceSendPreviously" class="muted small" hidden>Cette facture a déjà été envoyée. Vérifie avant de la renvoyer.</p>
   <p id="invoiceSendFeedback" class="muted small"></p>
