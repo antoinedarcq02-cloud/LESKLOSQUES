@@ -106,6 +106,20 @@ function renderGooglePublishing(links){
   }
 }
 let googleCalendarRequestSerial=0;
+let pendingGoogleCleanupRunning=false;
+function cleanupOldWaitingRequests(){
+  if(pendingGoogleCleanupRunning||!state.logged)return;
+  pendingGoogleCleanupRunning=true;
+  // Nettoyage des seuls anciens événements "nouveau" associés à une
+  // demande du site. L'affichage de l'agenda n'attend pas cette opération.
+  jsonCall('/api/admin/google-calendar','POST',{
+    action:'cleanup_waiting_requests',confirm:true
+  }).then(result=>{
+    if(result.failed)notify('Certaines anciennes demandes en attente restent sur Google. Actualise l’agenda pour réessayer.');
+  }).catch(error=>{
+    console.warn('Nettoyage des anciennes demandes Google indisponible',error.message);
+  }).finally(()=>{pendingGoogleCleanupRunning=false;});
+}
 async function loadGoogleCalendar(){
   if(!state.logged)return;
   const serial=++googleCalendarRequestSerial;
@@ -133,6 +147,9 @@ async function loadGoogleCalendar(){
     renderCalendar();
     status.textContent='Les deux agendas partagés sont intégrés au calendrier commun'+
       (data.truncated?' · Certains événements Google ne sont pas encore chargés.':'.');
+    // Les nouvelles demandes restent uniquement dans "Demandes clients".
+    // Enregistrer "En discussion" les rend ensuite visibles dans Google.
+    cleanupOldWaitingRequests();
     if(state.role==='admin')renderGooglePublishing(state.googleLinks);
   }catch(error){
     if(serial!==googleCalendarRequestSerial||!state.logged||month!==$('agendaMonth').value)return;
