@@ -88,7 +88,7 @@ function updateInvoiceTotal(){
   try{
     const t=invoiceAmounts(collectInvoice());
     $('invoiceTotals').textContent=t.direct
-      ?'Total TTC : '+invoiceMoney(t.ttc)+(t.pending?' · Ventilation fiscale à vérifier avant émission':'')
+      ?'Total TTC : '+invoiceMoney(t.ttc)
       :t.pending?'Total HT : '+invoiceMoney(t.ht)+' · TVA et TTC : à préciser'
       :'Total HT : '+invoiceMoney(t.ht)+' · TVA : '+invoiceMoney(t.vat)+' · Total TTC : '+invoiceMoney(t.ttc);
   }catch{$('invoiceTotals').textContent='Vérifie les tarifs et quantités.';}
@@ -239,7 +239,7 @@ function renderInvoices(){
       '<span class="tag '+category+'">'+safe(label)+'</span></div>'+
       '<h3>'+safe(inv.data.client_name||'Client à préciser')+'</h3>'+
       '<p>'+safe(inv.data.event_date?dateLabel(inv.data.event_date):'Date à préciser')+'</p>'+
-      '<p>'+safe(t.pending?'Montant TTC à préciser':'Total TTC : '+invoiceMoney(t.ttc))+'</p>'+
+      '<p>'+safe(t.pending&&!t.direct?'Montant TTC à préciser':'Total TTC : '+invoiceMoney(t.ttc))+'</p>'+
       (inv.sent_at?'<p class="small quote-email-sent">E-mail envoyé le '+safe(inv.sent_at)+'</p>':'')+
       '<p class="small">Ouvrir la facture →</p></button>';
   }).join(''):showArchived
