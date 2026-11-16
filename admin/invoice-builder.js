@@ -11,6 +11,15 @@ const invoiceFields=[
   'description','conditions','late_penalties','vat_mode'
 ];
 const invoiceMoney=cents=>(cents/100).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
+// Les nouvelles factures prennent directement le tarif TTC. Les anciennes
+// sans price_mode conservent leurs tarifs HT et leur calcul historiques.
+const invoicePriceMode=()=>invoiceState.current?.data?.price_mode||(
+  invoiceState.current?'ht':'ttc'
+);
+const invoiceEmailValid=value=>{
+  const mail=String(value||'').trim();
+  return mail.length<=254&&/^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/.test(mail);
+};
 // Suivi : émise en attente d'envoi, envoyée en attente de paiement, puis payée.
 function invoiceStatusLabel(invoice){
   if(!invoice||invoice.status!=='emise')return 'Brouillon';
@@ -36,7 +45,7 @@ function newInvoiceLine(label='',qty=1,priceCents=0){
   quantity.value=String(qty);
   const price=document.createElement('input');
   price.className='quote-line-price';price.type='number';price.min='0';price.max='1000000';
-  price.step='0.01';price.setAttribute('aria-label','Prix unitaire HT en euros');
+  price.step='0.01';price.setAttribute('aria-label',invoicePriceMode()==='ttc'?'Prix unitaire TTC en euros':'Prix unitaire HT en euros');
   price.value=priceCents?(priceCents/100).toFixed(2):'';
   const remove=document.createElement('button');
   remove.type='button';remove.className='small-button quote-line-remove';remove.textContent='✕';
@@ -52,6 +61,7 @@ function collectInvoice(){
   // Le formulaire n'exige plus de moyen de paiement. Les anciennes factures
   // émises conservent leur contenu et les brouillons historiques leurs mentions.
   data.payment_terms=invoiceState.current?.data?.payment_terms||'';
+  data.price_mode=invoicePriceMode();
   data.lines=Array.from($('invoiceLines').children).map(row=>{
     const label=row.querySelector('.quote-line-label').value.trim();
     const quantity=row.querySelector('.quote-line-qty').value;
@@ -65,17 +75,20 @@ function collectInvoice(){
   return data;
 }
 function invoiceAmounts(data){
-  const ht=(data.lines||[]).reduce((s,line)=>s+Math.round(line.qty*line.price_cents),0);
+  const total=(data.lines||[]).reduce((s,line)=>s+Math.round(line.qty*line.price_cents),0);
   const pending=data.vat_mode==='non_precise';
   const percent=pending||data.vat_mode==='franchise'?0:Number(data.vat_mode);
-  const vat=Math.round(ht*percent/100);
-  return{ht,vat,ttc:ht+vat,pending};
+  const direct=data.price_mode==='ttc';
+  const ht=direct&&!pending?Math.round(total/(1+percent/100)):total;
+  const vat=direct?(pending?0:total-ht):Math.round(ht*percent/100);
+  return{ht,vat,ttc:direct?total:ht+vat,pending,direct};
 }
 function updateInvoiceTotal(){
   try{
     const t=invoiceAmounts(collectInvoice());
-    $('invoiceTotals').textContent=t.pending
-      ?'Total HT : '+invoiceMoney(t.ht)+' · TVA et TTC : à préciser'
+    $('invoiceTotals').textContent=t.direct
+      ?'Total TTC : '+invoiceMoney(t.ttc)+(t.pending?' · Ventilation fiscale à vérifier avant émission':'')
+      :t.pending?'Total HT : '+invoiceMoney(t.ht)+' · TVA et TTC : à préciser'
       :'Total HT : '+invoiceMoney(t.ht)+' · TVA : '+invoiceMoney(t.vat)+' · Total TTC : '+invoiceMoney(t.ttc);
   }catch{$('invoiceTotals').textContent='Vérifie les tarifs et quantités.';}
 }
@@ -118,7 +131,9 @@ function populateInvoiceFromQuote(){
     'vat_mode','conditions'
   ];
   for(const key of fields)
-    if(quote.data[key])invoiceForm.elements.namedItem(key).value=quote.data[key];
+    if(quote.data[key] && !(key==='vat_mode'&&quote.data[key]==='ttc_sans_ventilation'))
+      invoiceForm.elements.namedItem(key).value=quote.data[key];
+  $('invoiceTaxDetails').open=false;
   updateInvoiceTotal();
 }
 function importInvoiceQuoteLines(){
@@ -129,7 +144,15 @@ function importInvoiceQuoteLines(){
     $('invoiceLines').querySelector('.quote-line-price')?.value)
     if(!window.confirm('Remplacer les lignes de cette facture par celles du devis ?'))return;
   $('invoiceLines').replaceChildren();
-  for(const row of quote.data.lines)newInvoiceLine(row.label,row.qty,row.price_cents);
+  const vat=quote.data.vat_mode;
+  const rate=vat==='franchise'||vat==='non_precise'||vat==='ttc_sans_ventilation'?0:Number(vat);
+  const quoteAlreadyTTC=vat==='ttc_sans_ventilation';
+  const invoiceWantsTTC=invoicePriceMode()==='ttc';
+  for(const row of quote.data.lines){
+    const price=invoiceWantsTTC&&!quoteAlreadyTTC?
+      Math.round(row.price_cents*(1+rate/100)):row.price_cents;
+    newInvoiceLine(row.label,row.qty,price);
+  }
   updateInvoiceTotal();
   notify('Prestations reprises du devis. Vérifie les prix avant d’émettre la facture.');
 }
@@ -168,6 +191,12 @@ function fillInvoice(invoice=null){
     const field=invoiceForm.elements.namedItem(key);
     field.value=data[key]||(key==='vat_mode'?'non_precise':key==='client_type'?'particulier':'');
   }
+  const ttc=invoicePriceMode()==='ttc';
+  $('invoicePriceTypeText').textContent=ttc?'Prix unitaire TTC':'Prix unitaire HT';
+  $('invoicePricingInfo').textContent=ttc
+    ?'Saisis les prix TTC convenus. Vérifie ensuite les mentions fiscales avant d’émettre la facture.'
+    :'Ancienne facture : les prix de ce document sont exprimés hors taxes.';
+  $('invoiceTaxDetails').open=false;
   if(!invoice){
     for(const key of ['issuer_name','issuer_address','issuer_identifier','issuer_tax_number','issuer_contact','issuer_legal'])
       invoiceForm.elements.namedItem(key).value=invoiceState.issuer[key]||'';
@@ -249,8 +278,14 @@ async function saveInvoice(issue=false){
   let data;
   try{data=collectInvoice();}
   catch(error){notify(error.message);return;}
+  if(issue&&data.vat_mode==='non_precise'){
+    $('invoiceTaxDetails').open=true;
+    notify('Avant d’émettre une facture, vérifie son régime de TVA ou la mention d’exonération dans la rubrique fiscale.');
+    $('invoiceTaxDetails').scrollIntoView({block:'center',behavior:'smooth'});
+    return;
+  }
   if(issue&&!window.confirm(
-    'Émettre définitivement cette facture ? Un numéro unique sera attribué. Elle ne pourra ensuite plus être modifiée ni supprimée. Vérifie les informations légales, les prix et la TVA.'
+    'Émettre définitivement cette facture ? Un numéro unique sera attribué. Elle ne pourra ensuite plus être modifiée ni supprimée. Vérifie les informations légales, les prix et la situation TVA.'
   ))return;
   const save=$('saveInvoice'),final=$('issueInvoice');
   save.disabled=true;final.disabled=true;
@@ -427,30 +462,38 @@ $('confirmPayInvoice').addEventListener('click',async()=>{
 });
 let pendingInvoiceSend=null;
 const invoiceSendDialog=$('sendInvoiceDialog');
+function updateInvoiceSendRecipient(){
+  const recipient=$('invoiceSendEmail').value.trim();
+  $('invoiceSendDestination').textContent=recipient
+    ?'Facture PDF destinée à : '+recipient
+    :'Saisis une adresse e-mail pour envoyer la facture.';
+  $('confirmSendInvoice').disabled=!invoiceState.mailReady||!invoiceEmailValid(recipient);
+}
+$('invoiceSendEmail').addEventListener('input',updateInvoiceSendRecipient);
 $('sendInvoice').addEventListener('click',()=>{
   const invoice=invoiceState.current;
   if(!invoice||invoice.status!=='emise')return;
   const linked=state.items.find(item=>item.id===invoice.booking_id);
-  const recipient=linked?linked.email:invoice.data.client_email;
-  if(!recipient){notify('Renseigne une adresse e-mail client dans le dossier avant l’envoi.');return;}
   pendingInvoiceSend=invoice.id;
-  $('invoiceSendDestination').textContent=
-    (linked?.name||invoice.data.client_name||'Client')+' — '+recipient+' · '+invoice.number;
+  $('invoiceSendEmail').value=invoice.data.client_email||linked?.email||'';
   $('invoiceSendWarning').hidden=invoiceState.mailReady;
   $('invoiceSendPreviously').hidden=!invoice.sent_at;
   $('invoiceSendFeedback').textContent='';
-  $('confirmSendInvoice').disabled=!invoiceState.mailReady;
+  updateInvoiceSendRecipient();
   invoiceSendDialog.showModal();
 });
 $('cancelSendInvoice').addEventListener('click',()=>invoiceSendDialog.close());
 invoiceSendDialog.addEventListener('close',()=>{pendingInvoiceSend=null;});
 $('confirmSendInvoice').addEventListener('click',async()=>{
   const id=pendingInvoiceSend;if(!id||!invoiceState.mailReady)return;
+  const recipient=$('invoiceSendEmail').value.trim();
+  if(!invoiceEmailValid(recipient)){updateInvoiceSendRecipient();return;}
   const btn=$('confirmSendInvoice');btn.disabled=true;
-  $('invoiceSendFeedback').textContent='Envoi en cours…';
+  $('invoiceSendEmail').disabled=true;
+  $('invoiceSendFeedback').textContent='Envoi du PDF à '+recipient+'…';
   try{
     const response=await jsonCall('/api/admin/invoices/'+encodeURIComponent(id)+'/send',
-      'POST',{confirm_send:true});
+      'POST',{confirm_send:true,recipient});
     pendingInvoiceSend=null;invoiceSendDialog.close();
     await loadInvoices();await refresh();
     const updated=invoiceState.invoices.find(i=>i.id===id);
@@ -460,6 +503,6 @@ $('confirmSendInvoice').addEventListener('click',async()=>{
       : 'Le service a accepté la facture PDF pour '+response.recipient+
         ', mais l’historique n’a pas pu être sauvegardé. Vérifie avant de renvoyer.');
   }catch(error){$('invoiceSendFeedback').textContent='Envoi non effectué : '+error.message;}
-  finally{btn.disabled=false;}
+  finally{$('invoiceSendEmail').disabled=false;updateInvoiceSendRecipient();}
 });
 document.querySelector('[data-tab="factures"]').addEventListener('click',loadInvoices);
