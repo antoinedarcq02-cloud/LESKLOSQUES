@@ -4,6 +4,7 @@
 // PDF et envoi sous contrôle, aucun envoi lors de la sauvegarde.
 const invoiceState={invoices:[],issuer:{},quotes:[],mailReady:false,current:null,testResetCandidateId:null};
 const invoiceForm=$('invoiceForm');
+const invoiceIssuerFields=['issuer_name','issuer_address','issuer_identifier','issuer_contact','issuer_legal','issuer_tax_number'];
 const invoiceFields=[
   'issuer_name','issuer_address','issuer_identifier','issuer_tax_number','issuer_contact','issuer_legal',
   'client_name','client_email','client_address','client_type','client_identifier',
@@ -266,6 +267,23 @@ $('invoiceVisibility').addEventListener('change',()=>{
   renderInvoices();
 });
 $('newInvoice').addEventListener('click',()=>fillInvoice());
+$('saveInvoiceProfile').addEventListener('click',async()=>{
+  const button=$('saveInvoiceProfile');
+  if(invoiceState.current?.status==='emise')return;
+  const data=Object.fromEntries(invoiceIssuerFields.map(key=>[
+    key,invoiceForm.elements.namedItem(key).value.trim()
+  ]));
+  button.disabled=true;
+  try{
+    // Profil émetteur partagé avec les devis, stocké dans Cloudflare D1.
+    // Mémorise aussi le n° de TVA éventuel de la rubrique fiscale.
+    const result=await jsonCall('/api/admin/quotes','POST',{action:'profile',data});
+    invoiceState.issuer=result.issuer;
+    if(typeof officialQuoteState!=='undefined')officialQuoteState.issuer=result.issuer;
+    notify('Coordonnées mémorisées pour les prochains devis et factures.');
+  }catch(error){notify('Coordonnées non mémorisées : '+error.message);}
+  finally{button.disabled=false;}
+});
 $('closeInvoice').addEventListener('click',()=>{$('invoiceEditorPanel').hidden=true;invoiceState.current=null;});
 $('addInvoiceLine').addEventListener('click',()=>newInvoiceLine());
 $('invoiceBooking').addEventListener('change',populateInvoiceFromBooking);

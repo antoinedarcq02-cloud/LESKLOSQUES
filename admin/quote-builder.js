@@ -324,11 +324,15 @@ $('confirmSendQuote').addEventListener('click',async()=>{
 $('saveQuoteProfile').addEventListener('click',async () => {
   const button = $('saveQuoteProfile');
   const data = Object.fromEntries(officialIssuerFields.map(key=>[key,officialQuoteForm.elements.namedItem(key).value]));
+  // Le profil partagé peut mémoriser un n° de TVA saisi dans les factures ;
+  // le formulaire devis ne propose pas ce champ et ne doit pas l'effacer.
+  data.issuer_tax_number=officialQuoteState.issuer?.issuer_tax_number||'';
   button.disabled = true;
   try {
     const result = await jsonCall('/api/admin/quotes','POST',{action:'profile',data});
     officialQuoteState.issuer = result.issuer;
-    notify('Coordonnées de la structure mémorisées pour les prochains devis.');
+    if(typeof invoiceState!=='undefined')invoiceState.issuer=result.issuer;
+    notify('Coordonnées de la structure mémorisées pour les prochains devis et factures.');
   } catch(error) { notify(error.message); }
   finally { button.disabled = false; }
 });
