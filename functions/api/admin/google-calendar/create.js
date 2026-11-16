@@ -16,8 +16,10 @@ function addDay(date){
 export async function onRequestPost(context){
   const user=await authorize(context,true);
   if(user.error)return user.error;
-  if(user.user?.role!=="admin")
-    return respond({error:"Seul le responsable peut créer un événement Google depuis Manager."},403);
+  // Les quatre musiciens authentifiés disposent des mêmes droits de création.
+  // L'authentification et la protection same-origin restent obligatoires.
+  if(!["admin","member"].includes(user.user?.role))
+    return respond({error:"Création Google réservée aux comptes des musiciens."},403);
   let body;
   try{
     const raw=await context.request.text();
