@@ -264,3 +264,17 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
   .cal-grid .dots{gap:2px}
   .google-agenda-card .google-tag{font-size:.66rem}
 }
+
+/* Création directe d'événements dans les deux agendas partagés Google. */
+.google-event-dialog{width:min(95vw,630px)}
+.google-event-all-day{display:flex;align-items:center;gap:10px;margin:16px 0 10px;cursor:pointer}
+.google-event-all-day input[type="checkbox"]{width:19px;height:19px;padding:0;margin:0;flex-shrink:0}
+.google-event-dialog #googleEventTimes{margin:4px 0 10px}
+.google-event-dialog #googleEventFeedback:not(:empty){border-left:3px solid #eb8794;padding:8px 12px;background:#2b2026}
+.google-event-dialog .modal-actions button{min-width:130px}
+@media(max-width:650px){
+  .agenda-controls #newGoogleEvent{flex:1}
+  .agenda-controls #refreshGoogleCalendar{flex:1}
+  .google-event-dialog .modal-actions{flex-direction:column}
+  .google-event-dialog .modal-actions button{width:100%}
+}
