@@ -1,0 +1,29 @@
+{
+  "id": "/admin/",
+  "name": "KLOSQUE MANAGER",
+  "short_name": "KLOSQUE",
+  "description": "Espace privé des quatre musiciens des Klosques : demandes, devis, factures et agenda.",
+  "lang": "fr",
+  "start_url": "/admin/",
+  "scope": "/admin/",
+  "display": "standalone",
+  "display_override": [
+    "standalone"
+  ],
+  "background_color": "#111014",
+  "theme_color": "#111014",
+  "icons": [
+    {
+      "src": "/admin/icons/manager-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/admin/icons/manager-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
