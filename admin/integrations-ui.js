@@ -25,14 +25,20 @@ async function loadExternalConnections(){
         google.configured?'Prêt à être connecté':'Identifiants OAuth à configurer dans Cloudflare',
         google.connected?'Connecté':'Non connecté'),
       itemRow('Boîte Hotmail',microsoft.connected?
-        ('Compte autorisé : '+(microsoft.label||'Outlook')):
-        microsoft.configured?'Prête à être connectée':'Identifiants Microsoft à configurer dans Cloudflare',
-        microsoft.connected?'Connectée':'Non connectée')
+        ('Compte : '+(microsoft.label||'Outlook')+
+          (microsoft.sending_enabled?' · Lecture et envoi des e-mails autorisés':
+          ' · Lecture seule : clique sur « Autoriser l’envoi Hotmail »')):
+        microsoft.configured?'À connecter pour envoyer les devis, factures et alertes':
+          'Identifiants Microsoft à configurer dans Cloudflare',
+        microsoft.connected?(microsoft.sending_enabled?'Envoi autorisé':'Lecture seule'):'Non connectée')
     );
     $('connectGoogle').hidden=!google.configured;
     $('disconnectGoogle').hidden=!google.connected||google.legacy;
     $('newGoogleEvent').disabled=!google.connected;
     $('connectOutlook').hidden=!microsoft.configured;
+    $('connectOutlook').textContent=microsoft.connected?
+      (microsoft.sending_enabled?'Réautoriser Hotmail':'Autoriser l’envoi Hotmail'):
+      'Connecter Hotmail pour les e-mails';
     $('disconnectOutlook').hidden=!microsoft.connected;
   }catch(error){
     root.textContent='État des connexions indisponible : '+error.message;
