@@ -25,7 +25,7 @@ export async function onRequestGet(context){
   const state=url.searchParams.get("state")||"";
   const csrf=cookieValue(context.request,"klosques_oauth_"+provider);
   if(!validOauthState(state)||!constantEquals(state,csrf))
-    return finish(origin,provider,"erreur");
+    return finish(origin,provider,provider==="microsoft"?"session":"erreur");
   try{
     const DB=context.env.DB;
     await ensureIntegrationTables(DB);
@@ -54,8 +54,21 @@ export async function onRequestGet(context){
       body:params.toString()
     });
     const tokens=await response.json().catch(()=>({}));
-    if(!response.ok||!tokens.refresh_token||!tokens.access_token)
+    if(!response.ok||!tokens.refresh_token||!tokens.access_token){
+      // Les identifiants et les détails OAuth restent confidentiels.
+      // Seuls le type d'erreur et les codes Microsoft sont journalisés.
+      const errorType=typeof tokens.error==="string"?tokens.error.slice(0,60):"inconnu";
+      const errorCodes=Array.isArray(tokens.error_codes)?tokens.error_codes
+        .filter(n=>Number.isInteger(n)).slice(0,5):[];
+      console.warn("Échange de jeton OAuth refusé",provider,response.status,errorType,errorCodes.join(","));
+      if(provider==="microsoft"){
+        const badSecret=errorType==="invalid_client"||
+          errorCodes.some(n=>[70002,7000215,7000222].includes(n));
+        return finish(origin,provider,badSecret?"identifiants":
+          !tokens.refresh_token&&!!tokens.access_token?"renouvellement":"jeton");
+      }
       return finish(origin,provider,"erreur");
+    }
     // La permission Mail.Send est obligatoire pour autoriser les envois
     // depuis le compte du groupe. Un jeton déjà connecté en lecture seule
     // ne donne jamais le droit d'envoyer des messages.
@@ -69,7 +82,10 @@ export async function onRequestGet(context){
           headers:{Authorization:"Bearer "+tokens.access_token}
         }
       );
-      if(!profileResponse.ok)return finish(origin,provider,"erreur");
+      if(!profileResponse.ok){
+        console.warn("Lecture du profil Microsoft refusée",profileResponse.status);
+        return finish(origin,provider,"profil");
+      }
       const profile=await profileResponse.json().catch(()=>({}));
       const allowed=String(context.env.OUTLOOK_EXPECTED_EMAIL||EXPECTED_OUTLOOK).trim().toLowerCase();
       const identities=[profile.mail,profile.userPrincipalName]
