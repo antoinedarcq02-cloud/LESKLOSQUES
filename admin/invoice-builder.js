@@ -170,7 +170,17 @@ function lockInvoiceEditor(){
     invoice.id!==invoiceState.testResetCandidateId;
   $('saveInvoice').hidden=issued;
   $('issueInvoice').hidden=issued;
-  $('printInvoice').disabled=!invoice;
+  // Liens natifs plutôt qu'une fenêtre JavaScript : ouverture plus fiable
+  // sur Android/iPhone et séparation de l'aperçu et du téléchargement.
+  const preview=$('previewInvoice'),download=$('printInvoice');
+  preview.hidden=download.hidden=!invoice;
+  if(invoice){
+    const pdfUrl='/api/admin/invoices/'+encodeURIComponent(invoice.id)+'/pdf';
+    preview.href=pdfUrl;
+    download.href=pdfUrl+'?download=1';
+  }else{
+    preview.removeAttribute('href');download.removeAttribute('href');
+  }
   $('sendInvoice').hidden=!issued;
   $('markInvoicePaid').hidden=!issued;
   $('markInvoicePaid').textContent=invoice?.paid?'Marquer comme non réglée':'Marquer comme payée';
@@ -307,11 +317,7 @@ async function saveInvoice(issue=false){
 }
 $('saveInvoice').addEventListener('click',()=>saveInvoice(false));
 $('issueInvoice').addEventListener('click',()=>saveInvoice(true));
-$('printInvoice').addEventListener('click',()=>{
-  const invoice=invoiceState.current;
-  if(!invoice)return;
-  window.open('/api/admin/invoices/'+encodeURIComponent(invoice.id)+'/pdf','_blank','noopener');
-});
+// L'aperçu et le téléchargement sont des liens directs gérés par le navigateur.
 // Une facture émise ne doit pas être effacée. L'archivage est réversible et
 // conserve sa numérotation, son PDF et son historique de paiement et d'e-mails.
 let pendingInvoiceArchive=null;

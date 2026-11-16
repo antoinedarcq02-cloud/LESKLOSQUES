@@ -278,3 +278,7 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
   .google-event-dialog .modal-actions{flex-direction:column}
   .google-event-dialog .modal-actions button{width:100%}
 }
+
+/* Factures : liens directs pour l'aperçu PDF et le téléchargement sur mobile. */
+.invoice-pdf-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;min-height:44px}
+.invoice-pdf-link:hover,.invoice-pdf-link:focus-visible{color:#fff;border-color:#ca7883}

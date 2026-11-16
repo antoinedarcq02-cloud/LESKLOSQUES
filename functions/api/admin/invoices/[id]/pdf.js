@@ -13,10 +13,12 @@ export async function onRequestGet(context){
     const invoice=publicInvoice(row);
     const pdf=createInvoicePdf(invoice);
     const file=(invoice.number||"BROUILLON-"+id.slice(0,8))+".pdf";
+    // Aperçu directement dans le lecteur du navigateur ; téléchargement explicite.
+    const download=new URL(context.request.url).searchParams.get("download")==="1";
     return new Response(pdf,{
       headers:{
         "Content-Type":"application/pdf",
-        "Content-Disposition":'attachment; filename="'+file+'"',
+        "Content-Disposition":(download?"attachment":"inline")+'; filename="'+file+'"',
         "Cache-Control":"no-store",
         "X-Content-Type-Options":"nosniff"
       }

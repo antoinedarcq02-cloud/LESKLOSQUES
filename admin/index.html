@@ -291,8 +291,10 @@
           <label>Conditions particulières<textarea name="conditions" rows="3" maxlength="1400"></textarea></label>
           <label>Pénalités de retard (à préciser pour les clients professionnels)<textarea name="late_penalties" rows="2" maxlength="250" placeholder="Taux ou modalités applicables aux professionnels"></textarea></label>
           <p class="muted small">La finalisation verrouille les montants, les coordonnées et les mentions. En cas d'erreur après émission, une rectification ou un avoir sera nécessaire.</p>
+          <p class="muted small">Pour visualiser le PDF, enregistre d'abord le brouillon. Après une modification, enregistre à nouveau pour actualiser l'aperçu.</p>
           <div class="modal-actions official-quote-actions">
-            <button type="button" class="secondary" id="printInvoice" disabled>Télécharger le PDF</button>
+            <a class="secondary invoice-pdf-link" id="previewInvoice" target="_blank" rel="noopener" hidden>Visualiser le PDF</a>
+            <a class="secondary invoice-pdf-link" id="printInvoice" download hidden>Télécharger le PDF</a>
             <button type="button" class="secondary" id="saveInvoice">Enregistrer le brouillon</button>
             <button type="button" class="primary" id="issueInvoice">Émettre la facture</button>
           </div>
