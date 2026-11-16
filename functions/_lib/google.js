@@ -1,20 +1,9 @@
+import {providerAccessToken} from "./integrations.js";
+
+// Reutilise la connexion établie depuis Manager et, à défaut, l'ancien
+// GOOGLE_REFRESH_TOKEN déjà présent dans les secrets Cloudflare.
 export async function getGoogleAccessToken(env) {
-  if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET || !env.GOOGLE_REFRESH_TOKEN) {
-    throw new Error("Google Agenda n'est pas encore configuré.");
-  }
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: env.GOOGLE_CLIENT_ID,
-      client_secret: env.GOOGLE_CLIENT_SECRET,
-      refresh_token: env.GOOGLE_REFRESH_TOKEN,
-      grant_type: "refresh_token"
-    })
-  });
-  const data = await response.json();
-  if (!response.ok || !data.access_token) throw new Error("Impossible d'accéder à Google Agenda.");
-  return data.access_token;
+  return providerAccessToken(env,"google");
 }
 
 export function monthBounds(month) {
