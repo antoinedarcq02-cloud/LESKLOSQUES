@@ -28,6 +28,15 @@ URL d'administration : https://lesklosques.pages.dev/admin/
 
 **Dans Site → Connexions :** le responsable dispose des boutons **Ajouter à Google / Mettre à jour / Retirer de Google** pour les concerts confirmés, dans la rubrique de synchronisation. Chaque action est soumise à confirmation. Les événements créés par Klosques Manager ont un identifiant déterministe et un marquage qui évite les doublons et protège les autres événements Google. Aucune modification automatique lors d'un changement de statut d'un concert : actualiser/retirer explicitement sur Google si le dossier change.
 
+**Créer directement un événement Google depuis Agenda commun :**
+
+1. Se connecter au Manager avec le compte **responsable** (les autres musiciens consultent l'agenda mais ne peuvent pas écrire sur Google).
+2. Ouvrir **Agenda → + Événement Google**.
+3. Choisir **KLOSQUES PARTAGE** (répétitions/concerts) ou **KLOSQUES PAS DISPO PARTAGE** (indisponibilités).
+4. Renseigner le titre, les dates inclusives et, si souhaité, décocher *Toute la journée* pour préciser les heures en fuseau `Europe/Paris`. Le lieu et les notes sont facultatifs.
+5. Confirmer explicitement l'enregistrement. L'événement est créé **directement sur le calendrier Google partagé choisi**, sans fiche concert locale et sans notification ni invitation automatique. L'agenda commun est actualisé et affiche le même événement.
+6. Les droits d'**écriture** sur le calendrier choisi sont nécessaires. En cas d'échec réseau, réessayer **dans le même formulaire** : son identifiant unique permet d'éviter les doublons. Pour modifier/supprimer un événement manuel après création, utiliser Google Agenda ; les outils Manager **Ajouter / Mettre à jour / Retirer de Google** restent réservés aux concerts confirmés issus des fiches Manager.
+
 Les fiches concerts existantes n'ont qu'une date (pas une heure de début/fin fiable). Les concerts sont donc publiés **en journée entière**, en privé, sans contacts clients, invitations ni notes internes. Aucun événement externe n'est importé comme nouveau concert du Manager. L'agenda Google n'est pas effacé par une déconnexion.
 
 **Ancienne configuration :** si `GOOGLE_REFRESH_TOKEN` existe déjà dans les secrets, il peut encore être utilisé, mais **il doit avoir la permission de lire la liste des calendriers** pour que ce fonctionnement marche. Le plus simple est de reconnecter Google depuis Manager et de donner les nouvelles autorisations. Pour couper complètement l'ancien accès, supprimer `GOOGLE_REFRESH_TOKEN` de Cloudflare. L'ancien `GOOGLE_CALENDAR_ID` n'est plus utilisé pour sélectionner ces deux calendriers : la sélection se fait exclusivement d'après les noms partagés précités (et les IDs optionnels en cas de doublon).

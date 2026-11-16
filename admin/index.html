@@ -116,6 +116,7 @@
         <h2>Agenda commun</h2>
         <div class="agenda-controls">
           <input id="agendaMonth" aria-label="Mois affiché" type="month">
+          <button type="button" class="primary" id="newGoogleEvent" hidden>+ Événement Google</button>
           <button type="button" class="secondary" id="refreshGoogleCalendar">Actualiser Google</button>
         </div>
       </div>
@@ -440,6 +441,48 @@
       <button type="button" id="deleteRequest" class="danger" hidden>Supprimer la demande</button>
       <button type="button" id="printDraft" class="secondary">Proposition PDF (brouillon)</button>
       <button type="submit" id="saveBooking" class="primary">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="googleEventDialog" class="google-event-dialog" aria-labelledby="googleEventTitle" aria-describedby="googleEventHelp">
+  <form id="googleEventForm">
+    <div class="modal-top">
+      <h2 id="googleEventTitle">Nouvel événement Google</h2>
+      <button type="button" id="closeGoogleEvent" class="small-button" aria-label="Fermer">✕</button>
+    </div>
+    <p id="googleEventHelp" class="muted small">Cet événement sera enregistré directement dans le calendrier Google partagé choisi. Il apparaîtra ensuite dans l'agenda commun sans créer de fiche concert.</p>
+    <label>Agenda partagé
+      <select name="calendar" required>
+        <option value="concerts">KLOSQUES PARTAGE</option>
+        <option value="unavailable">KLOSQUES PAS DISPO PARTAGE</option>
+      </select>
+    </label>
+    <label>Nom de l'événement
+      <input name="title" type="text" maxlength="150" required placeholder="Ex. Répétition, concert, indisponibilité…">
+    </label>
+    <div class="field-row">
+      <label>Du <input name="start_date" type="date" required></label>
+      <label>Au (inclus) <input name="end_date" type="date" required></label>
+    </div>
+    <label class="google-event-all-day">
+      <input name="all_day" type="checkbox" checked>
+      Toute la journée
+    </label>
+    <div id="googleEventTimes" class="field-row" hidden>
+      <label>Heure de début <input name="start_time" type="time" disabled></label>
+      <label>Heure de fin <input name="end_time" type="time" disabled></label>
+    </div>
+    <label>Lieu (facultatif)
+      <input name="location" type="text" maxlength="180" placeholder="Ex. Salle de répétition">
+    </label>
+    <label>Notes Google (facultatif)
+      <textarea name="description" rows="3" maxlength="1000"></textarea>
+    </label>
+    <p class="muted small">Les horaires sont en heure française (Europe/Paris). Seul le responsable peut créer des événements. Aucune invitation ni notification externe n'est envoyée par le Manager.</p>
+    <p id="googleEventFeedback" class="muted small" role="status" aria-live="polite"></p>
+    <div class="modal-actions">
+      <button type="button" class="secondary" id="cancelGoogleEvent">Annuler</button>
+      <button type="submit" class="primary" id="saveGoogleEvent">Enregistrer dans Google Agenda</button>
     </div>
   </form>
 </dialog>

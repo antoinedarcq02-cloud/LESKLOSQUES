@@ -31,6 +31,7 @@ async function loadExternalConnections(){
     );
     $('connectGoogle').hidden=!google.configured;
     $('disconnectGoogle').hidden=!google.connected||google.legacy;
+    $('newGoogleEvent').disabled=!google.connected;
     $('connectOutlook').hidden=!microsoft.configured;
     $('disconnectOutlook').hidden=!microsoft.connected;
   }catch(error){
@@ -163,6 +164,104 @@ $('googlePublishItems').addEventListener('click',async event=>{
     await loadGoogleCalendar();
   }catch(error){notify(error.message);}
   finally{target.disabled=false;}
+});
+
+// Ajouter un événement directement dans un calendrier partagé, sans créer
+// de fiche concert. Même UUID si une requête doit être retentée après une coupure.
+const googleEventDialog=$('googleEventDialog');
+const googleEventForm=$('googleEventForm');
+let googleEventNonce=null;
+const googleEventField=name=>googleEventForm.elements.namedItem(name);
+function updateGoogleEventTimeFields(){
+  const allDay=googleEventField('all_day').checked;
+  $('googleEventTimes').hidden=allDay;
+  for(const name of ['start_time','end_time']){
+    const input=googleEventField(name);
+    input.disabled=allDay;
+    input.required=!allDay;
+  }
+}
+$('newGoogleEvent').addEventListener('click',()=>{
+  if(!state.logged||state.role!=='admin')return;
+  googleEventForm.reset();
+  googleEventNonce=crypto.randomUUID();
+  const month=$('agendaMonth').value;
+  const dateParts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{
+    timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit'
+  }).formatToParts(new Date()).map(part=>[part.type,part.value]));
+  const today=dateParts.year+'-'+dateParts.month+'-'+dateParts.day;
+  const chosen=state.selectedDay||
+    (today.startsWith(month)?today:month+'-01');
+  googleEventField('start_date').value=chosen;
+  googleEventField('end_date').value=chosen;
+  $('googleEventFeedback').textContent='';
+  updateGoogleEventTimeFields();
+  googleEventDialog.showModal();
+});
+googleEventField('all_day').addEventListener('change',updateGoogleEventTimeFields);
+googleEventField('start_date').addEventListener('change',()=>{
+  const first=googleEventField('start_date').value;
+  const last=googleEventField('end_date');
+  if(first&&(!last.value||last.value<first))last.value=first;
+});
+function closeGoogleEventDialog(){
+  if(!$('saveGoogleEvent').disabled)googleEventDialog.close();
+}
+$('closeGoogleEvent').addEventListener('click',closeGoogleEventDialog);
+googleEventDialog.addEventListener('cancel',event=>{
+  if($('saveGoogleEvent').disabled)event.preventDefault();
+});
+$('cancelGoogleEvent').addEventListener('click',closeGoogleEventDialog);
+googleEventForm.addEventListener('submit',async event=>{
+  event.preventDefault();
+  if(!state.logged||state.role!=='admin'||!googleEventNonce)return;
+  const start=googleEventField('start_date').value;
+  const end=googleEventField('end_date').value;
+  const allDay=googleEventField('all_day').checked;
+  const startTime=googleEventField('start_time').value;
+  const endTime=googleEventField('end_time').value;
+  const feedback=$('googleEventFeedback');
+  if(end<start||(!allDay&&(start+'T'+startTime>=end+'T'+endTime))){
+    feedback.textContent='Vérifie les dates et les heures : la fin doit suivre le début.';
+    return;
+  }
+  const payload={
+    calendar:googleEventField('calendar').value,
+    title:googleEventField('title').value.trim(),
+    start_date:start,end_date:end,all_day:allDay,
+    start_time:allDay?'':startTime,end_time:allDay?'':endTime,
+    location:googleEventField('location').value.trim(),
+    description:googleEventField('description').value.trim(),
+    request_id:googleEventNonce,
+    confirm:true
+  };
+  const calendarName=payload.calendar==='concerts'
+    ?'KLOSQUES PARTAGE':'KLOSQUES PAS DISPO PARTAGE';
+  const period=payload.start_date===payload.end_date
+    ?dateLabel(payload.start_date)
+    :dateLabel(payload.start_date)+' au '+dateLabel(payload.end_date);
+  const times=allDay?' (toute la journée)':' de '+startTime+' à '+endTime;
+  if(!window.confirm('Créer « '+payload.title+' » dans '+calendarName+
+    ' le '+period+times+' ?'+String.fromCharCode(10,10)+'L’événement sera réellement enregistré dans Google Agenda.'))return;
+  const save=$('saveGoogleEvent');
+  save.disabled=true;
+  feedback.textContent='Création de l’événement sur Google Agenda…';
+  try{
+    await jsonCall('/api/admin/google-calendar/create','POST',payload);
+    // Après un succès réseau (ou une confirmation idempotente), nouveau nonce.
+    googleEventNonce=null;
+    googleEventDialog.close();
+    $('agendaMonth').value=start.slice(0,7);
+    state.selectedDay=start;
+    renderCalendar();
+    await loadGoogleCalendar();
+    notify('Événement enregistré dans '+calendarName+'.');
+  }catch(error){
+    feedback.textContent=error.message+
+      ' Si la connexion a été coupée, réessaie sans fermer ce formulaire pour éviter un doublon.';
+  }finally{
+    save.disabled=false;
+  }
 });
 
 async function loadOutlookMailbox(){
