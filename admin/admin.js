@@ -83,7 +83,8 @@ async function initialize() {
   $('agendaMonth').value = new Date().getFullYear() + '-' + String(new Date().getMonth()+1).padStart(2,'0');
   try {
     const session = await callApi('/api/admin/auth');
-    if (session.authenticated) await signedIn(session);
+    // Afficher la page de bienvenue même si la session est toujours active.
+    if (session.authenticated) await signedIn(session, true);
     else showScreen(session.needsSetup ? 'setup' : 'login');
   } catch (error) { showScreen('login'); notify(error.message); }
 }
