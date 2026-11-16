@@ -6,7 +6,7 @@ const officialQuoteState = {quotes:[],issuer:{},current:null,mailReady:false};
 const officialQuoteFields = [
   'issuer_name','issuer_address','issuer_identifier','issuer_contact','issuer_legal',
   'client_name','client_address','client_email','event_date','event_time','event_location',
-  'issue_date','valid_until','payment_terms','description','conditions'
+  'issue_date','valid_until','description','conditions'
 ];
 const officialIssuerFields = ['issuer_name','issuer_address','issuer_identifier','issuer_contact','issuer_legal'];
 const directQuotePricing = () => !officialQuoteState.current ||
@@ -49,6 +49,9 @@ function collectOfficialQuote() {
   // Les nouveaux devis n'imposent aucun régime fiscal : prix saisis TTC.
   data.vat_mode = officialQuoteState.current?.data?.vat_mode || 'ttc_sans_ventilation';
   data.issuer_tax_number = officialQuoteState.current?.data?.issuer_tax_number || '';
+  // Preserver les devis historiques, mais les nouveaux n'imposent aucun mode
+  // de paiement et les anciens devis finalises restent intacts.
+  data.payment_terms = officialQuoteState.current?.data?.payment_terms || '';
   data.lines = Array.from($('quoteLines').children).map(row => {
     const label = row.querySelector('.quote-line-label').value.trim();
     const qty = Number(row.querySelector('.quote-line-qty').value);
@@ -320,7 +323,7 @@ async function saveOfficialQuote(finalize = false) {
   let data;
   try { data = collectOfficialQuote(); }
   catch(error) { notify(error.message);return; }
-  if (finalize && !window.confirm('Finaliser et verrouiller ce devis ? Vérifie les coordonnées légales, la TVA, les prix et les conditions avant de continuer.')) return;
+  if (finalize && !window.confirm('Finaliser et verrouiller ce devis ? Vérifie les coordonnées légales, les prix et les conditions avant de continuer.')) return;
   const saveButton = $('saveOfficialQuote');
   const finalButton = $('finalizeOfficialQuote');
   saveButton.disabled = true; finalButton.disabled = true;
@@ -433,10 +436,12 @@ function quoteDocumentHtml(quote) {
     '<tr class="grand"><td class="label">TOTAL TTC</td><td class="price">'+
     safe(taxable?officialMoney(totals.ttc):'À préciser')+'</td></tr></tbody></table>'+
     (data.vat_mode==='franchise'?'<p class="vat-note">TVA non applicable, art. 293 B du CGI</p>':'')+
-    '<section class="payment"><p>Ordre du règlement : '+safe(data.issuer_name)+'</p>'+
-    '<p>Modalités de paiement : '+htmlLine(data.payment_terms)+'</p>'+
-    (data.conditions?'<p>Conditions particulières : '+htmlLine(data.conditions)+'</p>':'')+
-    '</section><div class="agreement">Bon pour accord - date et signature du client :'+
+    (data.payment_terms||data.conditions?'<section class="payment">'+
+      (data.payment_terms?'<p>Ordre du règlement : '+safe(data.issuer_name)+
+        '</p><p>Modalités de paiement : '+htmlLine(data.payment_terms)+'</p>':'')+
+      (data.conditions?'<p>Conditions particulières : '+htmlLine(data.conditions)+'</p>':'')+
+    '</section>':'')+
+    '<div class="agreement">Bon pour accord - date et signature du client :'+
     '<div class="signature-line"></div></div>'+
     '<div class="actions"><button onclick="window.print()">Imprimer / Enregistrer en PDF</button></div>'+
     '</main></body></html>';
