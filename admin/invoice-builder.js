@@ -8,7 +8,7 @@ const invoiceFields=[
   'issuer_name','issuer_address','issuer_identifier','issuer_tax_number','issuer_contact','issuer_legal',
   'client_name','client_email','client_address','client_type','client_identifier',
   'event_date','event_time','event_location','issue_date','payment_due_date',
-  'payment_terms','description','conditions','late_penalties','vat_mode'
+  'description','conditions','late_penalties','vat_mode'
 ];
 const invoiceMoney=cents=>(cents/100).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
 // Suivi : émise en attente d'envoi, envoyée en attente de paiement, puis payée.
@@ -49,6 +49,9 @@ function newInvoiceLine(label='',qty=1,priceCents=0){
 function collectInvoice(){
   const data={};
   for(const field of invoiceFields)data[field]=invoiceForm.elements.namedItem(field).value.trim();
+  // Le formulaire n'exige plus de moyen de paiement. Les anciennes factures
+  // émises conservent leur contenu et les brouillons historiques leurs mentions.
+  data.payment_terms=invoiceState.current?.data?.payment_terms||'';
   data.lines=Array.from($('invoiceLines').children).map(row=>{
     const label=row.querySelector('.quote-line-label').value.trim();
     const quantity=row.querySelector('.quote-line-qty').value;
@@ -112,7 +115,7 @@ function populateInvoiceFromQuote(){
     'client_name','client_email','client_address','event_date','event_time',
     'event_location','description','issuer_name','issuer_address',
     'issuer_identifier','issuer_tax_number','issuer_contact','issuer_legal',
-    'vat_mode','payment_terms','conditions'
+    'vat_mode','conditions'
   ];
   for(const key of fields)
     if(quote.data[key])invoiceForm.elements.namedItem(key).value=quote.data[key];
