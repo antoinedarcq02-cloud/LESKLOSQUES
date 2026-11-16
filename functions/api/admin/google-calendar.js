@@ -15,6 +15,32 @@ function dateParis(value){
   const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));
   return p.year+"-"+p.month+"-"+p.day;
 }
+function nextDay(date){
+  const d=new Date(date+"T12:00:00Z");
+  d.setUTCDate(d.getUTCDate()+1);
+  return d.toISOString().slice(0,10);
+}
+// Google fournit une fin exclusive pour les événements sur la journée.
+// Pour les horaires, convertir la fin à l'heure locale Paris et inclure
+// le dernier jour sauf si la fin est exactement à minuit.
+function endExclusive(event,start){
+  const end=event.end;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(end?.date||""))
+    return end.date>start?end.date:nextDay(start);
+  if(end?.dateTime){
+    const date=dateParis(end.dateTime);
+    const time=new Date(end.dateTime);
+    if(date&&!Number.isNaN(time.getTime())){
+      const fields=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{
+        timeZone:"Europe/Paris",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"
+      }).formatToParts(time).map(p=>[p.type,p.value]));
+      const midnight=fields.hour==="00"&&fields.minute==="00"&&fields.second==="00";
+      const exclusive=midnight?date:nextDay(date);
+      if(exclusive>start)return exclusive;
+    }
+  }
+  return nextDay(start);
+}
 function conciseEvent(event,kind){
   const start=event.start?.date||dateParis(event.start?.dateTime);
   if(!/^\d{4}-\d{2}-\d{2}$/.test(start))return null;
@@ -24,10 +50,12 @@ function conciseEvent(event,kind){
   return {
     id:String(event.id||"").slice(0,200),
     date:start,
-    // Les indisponibilités sont visibles sans divulguer les motifs personnels.
-    title:isUnavailable?"Indisponible":
-      isPrivate&&!ownEvent?"Événement privé":String(event.summary||"Événement Klosques").slice(0,150),
-    location:isUnavailable||isPrivate&&!ownEvent?"":String(event.location||"").slice(0,180),
+    end_date:endExclusive(event,start),
+    // Le groupe souhaite voir le libellé original des deux agendas partagés.
+    // Si Google masque un événement privé, respecter le libellé qu'il renvoie.
+    title:String(event.summary||(isPrivate?"Événement privé":"Sans titre")).slice(0,150),
+    // Le titre suffit dans le calendrier des indisponibilités.
+    location:isUnavailable?"":String(event.location||"").slice(0,180),
     calendar:kind,
     calendar_name:isUnavailable?"KLOSQUES PAS DISPO PARTAGE":"KLOSQUES PARTAGE",
     all_day:!!event.start?.date,
