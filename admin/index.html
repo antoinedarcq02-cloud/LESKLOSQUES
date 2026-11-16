@@ -141,7 +141,7 @@
       <div class="section-header">
         <div>
           <h2>Devis à remplir et à imprimer</h2>
-          <p class="muted small">Crée un devis depuis une demande client ou à partir de zéro. Enregistre-le, puis imprime-le en PDF. Aucun envoi automatique.</p>
+          <p class="muted small">Crée un devis depuis une demande client ou sans demande préalable. Après finalisation, envoie le PDF à l’adresse e-mail fournie par le client ou par un membre du groupe. Aucun envoi automatique.</p>
         </div>
         <button type="button" class="primary" id="newQuote">+ Nouveau devis</button>
       </div>
@@ -158,9 +158,10 @@
           <label>Dossier client existant (facultatif)
             <select id="quoteBooking"><option value="">Devis indépendant / sans demande</option></select>
           </label>
+          <p class="muted small">Pas besoin d’une demande du site : tu peux créer un devis pour un contact transmis par un musicien.</p>
           <div class="field-row">
             <label>Nom du client / organisateur *<input name="client_name" maxlength="160" required></label>
-            <label>E-mail du client<input name="client_email" type="email" maxlength="254"></label>
+            <label>E-mail du client (facultatif pour le brouillon)<input name="client_email" type="email" maxlength="254" placeholder="client@exemple.fr"></label>
           </div>
           <label>Adresse complète du client *<textarea name="client_address" rows="2" maxlength="350" placeholder="Rue, code postal, ville"></textarea></label>
           <div class="field-row">
@@ -509,8 +510,11 @@
 <dialog id="sendQuoteDialog" aria-labelledby="sendQuoteTitle" aria-describedby="sendQuoteInfo">
   <div class="modal-top"><h2 id="sendQuoteTitle">Confirmer l'envoi du devis</h2></div>
   <p id="sendQuoteInfo">Es-tu sûr de vouloir envoyer ce devis au client ?</p>
-  <p id="sendQuoteDestination" class="delete-request-details"></p>
-  <p class="muted small">Le devis finalisé sera envoyé en PDF à l'adresse e-mail indiquée par le client dans sa demande. Le message ne partira qu'après ta confirmation.</p>
+  <label for="sendQuoteEmail">Adresse e-mail du destinataire *
+    <input id="sendQuoteEmail" type="email" maxlength="254" autocomplete="off" placeholder="client@exemple.fr" required>
+  </label>
+  <p id="sendQuoteDestination" class="delete-request-details" aria-live="polite"></p>
+  <p class="muted small">Saisis l’adresse communiquée par le client ou par un membre du groupe, même sans demande client enregistrée. Vérifie-la avant de confirmer : le PDF finalisé restera inchangé et le destinataire sera conservé dans l’historique.</p>
   <p class="quote-lock-note" id="sendQuoteUnavailable" hidden>L'envoi direct n'est pas encore activé : connecte et autorise l'envoi Hotmail dans Site → Connexions, ou configure Resend dans Cloudflare.</p>
   <p class="muted small" id="sendQuotePreviously" hidden>Ce devis a déjà fait l'objet d'un envoi. Confirme uniquement si tu souhaites le renvoyer.</p>
   <div class="modal-actions">

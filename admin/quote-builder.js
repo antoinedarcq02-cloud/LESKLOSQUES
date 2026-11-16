@@ -227,24 +227,32 @@ $('confirmDeleteQuote').addEventListener('click', async () => {
     button.disabled = false;
   }
 });
-// Envoi volontaire : choix du devis finalisé, destinataire repris de la demande
-// client, confirmation explicite, puis API Cloudflare. Aucun envoi automatique.
+// Envoi volontaire : devis finalisé, adresse préremplie mais modifiable
+// par le musicien (même sans demande client), puis confirmation explicite.
 let pendingSendQuote = null;
 const sendQuoteDialog = $('sendQuoteDialog');
+const quoteRecipientValid = value => {
+  const email=String(value||'').trim();
+  return email.length<=254 && /^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/.test(email);
+};
+function updateQuoteSendRecipient(){
+  const recipient=$('sendQuoteEmail').value.trim();
+  $('sendQuoteDestination').textContent=recipient
+    ? 'Destinataire du devis PDF : '+recipient
+    : 'Renseigne une adresse e-mail pour envoyer le devis PDF.';
+  $('confirmSendQuote').disabled=!officialQuoteState.mailReady||!quoteRecipientValid(recipient);
+}
+$('sendQuoteEmail').addEventListener('input',updateQuoteSendRecipient);
 $('sendOfficialQuote').addEventListener('click',()=>{
   const quote=officialQuoteState.current;
   if(!quote || quote.status!=='finalise')return;
   const request=state.items.find(item=>item.id===quote.booking_id);
-  if(!request || !request.email){
-    notify('Ce devis doit être lié à une demande client contenant une adresse e-mail pour être envoyé.');
-    return;
-  }
   pendingSendQuote=quote.id;
-  $('sendQuoteInfo').textContent='Es-tu vraiment sûr de vouloir envoyer le devis '+quote.number+' par e-mail ?';
-  $('sendQuoteDestination').textContent='Destinataire : '+request.name+' — '+request.email;
+  $('sendQuoteInfo').textContent='Vérifie le destinataire avant d’envoyer le devis '+quote.number+' par e-mail.';
+  $('sendQuoteEmail').value=quote.data?.client_email||request?.email||'';
   $('sendQuoteUnavailable').hidden=officialQuoteState.mailReady;
   $('sendQuotePreviously').hidden=!quote.sent_at;
-  $('confirmSendQuote').disabled=!officialQuoteState.mailReady;
+  updateQuoteSendRecipient();
   sendQuoteDialog.showModal();
 });
 $('cancelSendQuote').addEventListener('click',()=>{
@@ -255,11 +263,18 @@ sendQuoteDialog.addEventListener('close',()=>{pendingSendQuote=null;});
 $('confirmSendQuote').addEventListener('click',async()=>{
   const id=pendingSendQuote;
   if(!Number.isSafeInteger(id)||id<1 || !officialQuoteState.mailReady)return;
+  const recipient=$('sendQuoteEmail').value.trim();
+  if(!quoteRecipientValid(recipient)){
+    notify('Renseigne une seule adresse e-mail valide pour le destinataire.');
+    updateQuoteSendRecipient();
+    return;
+  }
   const button=$('confirmSendQuote');
   button.disabled=true;
-  $('sendQuoteInfo').textContent='Envoi en cours vers le service de messagerie…';
+  $('sendQuoteEmail').disabled=true;
+  $('sendQuoteInfo').textContent='Envoi du devis PDF vers '+recipient+'…';
   try{
-    const result=await jsonCall('/api/admin/quotes/'+encodeURIComponent(id)+'/send','POST',{confirm_send:true});
+    const result=await jsonCall('/api/admin/quotes/'+encodeURIComponent(id)+'/send','POST',{confirm_send:true,recipient});
     pendingSendQuote=null;
     sendQuoteDialog.close();
     await loadOfficialQuotes();
@@ -272,7 +287,10 @@ $('confirmSendQuote').addEventListener('click',async()=>{
         ', mais l’historique n’a pas pu être enregistré. Vérifie avant de renvoyer.');
   }catch(error){
     $('sendQuoteInfo').textContent='Envoi non effectué : '+error.message;
-  }finally{button.disabled=false;}
+  }finally{
+    $('sendQuoteEmail').disabled=false;
+    updateQuoteSendRecipient();
+  }
 });
 $('saveQuoteProfile').addEventListener('click',async () => {
   const button = $('saveQuoteProfile');
