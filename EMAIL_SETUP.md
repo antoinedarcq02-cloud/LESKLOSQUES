@@ -40,6 +40,8 @@ Les anciennes variables `EMAIL` et `QUOTE_FROM_EMAIL` du système de devis peuve
 
 Les e-mails automatiques **ne confirment jamais une réservation ni un devis**. L'envoi d'un devis finalisé ou d'une facture émise reste manuel et soumis à confirmation explicite dans Manager. Ne pas utiliser une facture de test existante pour vérifier cette configuration.
 
+**Devis sans demande client :** dans **Devis → + Nouveau devis**, conserver « Devis indépendant / sans demande », saisir les informations nécessaires, enregistrer et finaliser le PDF. Cliquer sur **Envoyer le devis par e-mail** puis vérifier ou saisir l'adresse fournie par le client ou un musicien. L'adresse peut être différente de celle du document ; le PDF finalisé n'est pas modifié, et chaque destinataire est enregistré dans l'historique. Une demande associée n'est marquée « devis envoyé » que si le destinataire est bien son adresse enregistrée. Aucun envoi n'est automatique.
+
 ## 4. Dépannage
 
 - **Resend non configuré :** vérifier `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, Production et le redéploiement.
