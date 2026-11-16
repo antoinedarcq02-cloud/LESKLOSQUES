@@ -237,7 +237,7 @@ export function createQuotePdf(quote){
   // Mentions supplementaires : conserve les modalites et les conditions
   // legales saisies dans le Manager, sans copier de signature existante.
   let footerY=Math.min(213,y-27);
-  const more=String(q.payment_terms||"")+"\n"+
+  const more=(q.payment_terms?String(q.payment_terms)+"\n":"")+
     String(q.conditions||"")+"\n"+
     (q.vat_mode==="franchise"?"TVA non applicable, art. 293 B du CGI":"");
   const footRows=wrap(more,104);
@@ -248,9 +248,13 @@ export function createQuotePdf(quote){
     stroke(55,770,548,770);
     footerY=705;
   }
-  text("Ordre du reglement : "+String(q.issuer_name||"Structure emettrice"),56,footerY,8.7);
-  footerY-=18;
-  footerY=para("Modalites de paiement : "+String(q.payment_terms||"A preciser"),56,footerY,490,8.1,11);
+  // Les anciens devis conservent leurs mentions ; les nouveaux ne montrent
+  // plus de rubrique de paiement ni de texte "A preciser" artificiel.
+  if(q.payment_terms){
+    text("Ordre du reglement : "+String(q.issuer_name||"Structure emettrice"),56,footerY,8.7);
+    footerY-=18;
+    footerY=para("Modalites de paiement : "+String(q.payment_terms),56,footerY,490,8.1,11);
+  }
   if(q.conditions)footerY=para("Conditions particulieres : "+q.conditions,56,footerY-6,490,8.1,11);
   if(q.vat_mode==="franchise")
     footerY=para("TVA non applicable, art. 293 B du CGI",56,footerY-5,490,8.1,11);
