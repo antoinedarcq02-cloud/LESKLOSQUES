@@ -70,9 +70,14 @@ export function createInvoicePdf(invoice){
     field(q.vat_mode==="franchise"?"TVA non applicable (art. 293 B CGI)":"TVA "+q.vat_mode+" %",money(tax));
     write("TOTAL TTC : "+money(sum+tax),13,true,"0.65 0.09 0.19",46);
   }
-  section("MODALITÉS DE PAIEMENT");
-  field("Échéance",dateLabel(q.payment_due_date));
-  lines(q.payment_terms||"À préciser",10,false,90,46);
+  // Les factures émises précédemment conservent leurs mentions d'origine.
+  // Pour les nouvelles, l'échéance est déjà indiquée en tête de document :
+  // aucun mode de paiement n'est ajouté ou présumé.
+  if(q.payment_terms){
+    section("MODALITÉS DE PAIEMENT");
+    field("Échéance",dateLabel(q.payment_due_date));
+    lines(q.payment_terms,10,false,90,46);
+  }
   if(q.conditions){section("CONDITIONS PARTICULIÈRES");lines(q.conditions,10,false,90,46);}
   if(q.client_type==="professionnel"){
     section("RETARD DE PAIEMENT - PROFESSIONNELS");
