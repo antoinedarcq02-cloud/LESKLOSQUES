@@ -189,7 +189,6 @@
             <label>Date du devis *<input name="issue_date" type="date"></label>
             <label>Valable jusqu'au *<input name="valid_until" type="date"></label>
           </div>
-          <label>Modalités de paiement *<textarea name="payment_terms" rows="2" maxlength="600" placeholder="Ex. acompte, échéance, mode de règlement…"></textarea></label>
           <label>Précisions sur la prestation<textarea name="description" rows="3" maxlength="900" placeholder="Horaires, durée, matériel, installation…"></textarea></label>
           <label>Conditions particulières<textarea name="conditions" rows="3" maxlength="1400" placeholder="Annulation, frais éventuels, obligations de l'organisateur…"></textarea></label>
           <p class="muted small">Un brouillon peut être enregistré avec des champs incomplets. La finalisation demande les mentions principales et verrouille ensuite le document.</p>
@@ -277,12 +276,11 @@
             </select>
           </label>
           <p id="invoiceTotals" class="quote-total">Total HT : 0,00 € · TVA et TTC : à préciser</p>
-          <h3>4. Paiement et mentions</h3>
+          <h3>4. Échéance et mentions légales</h3>
           <div class="field-row">
             <label>Date d'émission (fixée lors de la finalisation)<input name="issue_date" type="date" disabled></label>
             <label>Date limite de paiement *<input name="payment_due_date" type="date"></label>
           </div>
-          <label>Modalités de paiement *<textarea name="payment_terms" rows="3" maxlength="600" placeholder="Exemple : virement bancaire, IBAN de la structure, délai, acompte à déduire…"></textarea></label>
           <label>Précisions de la prestation<textarea name="description" rows="3" maxlength="900"></textarea></label>
           <label>Conditions particulières<textarea name="conditions" rows="3" maxlength="1400"></textarea></label>
           <label>Pénalités de retard (à préciser pour les clients professionnels)<textarea name="late_penalties" rows="2" maxlength="250" placeholder="Taux ou modalités applicables aux professionnels"></textarea></label>
