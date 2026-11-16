@@ -3,16 +3,21 @@ Dernière mise à jour : 16 novembre 2026
 
 Ces informations ne sont pas connues avec certitude dans le dépôt. Ne pas publier de données inventées.
 
-Situation confirmée : Les Klosques est un groupe de quatre musiciens, sans association ni société propre au groupe. Le site est sous la responsabilité des quatre membres. Aucune information relative à leurs relations professionnelles avec une association tierce n'est nécessaire à la présentation de l'éditeur. Ne pas inventer de numéro RNA/SIREN/SIRET au nom du groupe.
+Situation confirmée par l'utilisateur : Les Klosques est un groupe de quatre musiciens, sans association ni société propre au groupe. Darcq Antoine assume la responsabilité du site et de la publication, et sert de contact pour les données personnelles. Contact public : LesKlosques@hotmail.com. Pas d'adresse postale ni de numéro de téléphone à afficher à la demande de l'utilisateur. Ne pas inventer de numéro RNA/SIREN/SIRET au nom du groupe.
 
-1. Renseigner le nom et le prénom des quatre membres responsables de l'édition du site.
-2. Adresse postale de l'éditeur à communiquer selon le cadre juridique applicable.
-3. Nom du directeur ou de la directrice de publication.
-4. Téléphone de contact, si requis.
-5. Renseigner les quatre membres présentés comme responsables conjoints des données du site et formaliser leurs rôles effectifs, notamment au titre de l'article 26 du RGPD.
-6. Durée de conservation des demandes sans suite et procédure réelle de purge (aucune purge automatique en place).
-7. Vérifier les contrats de sous-traitance, transferts hors EEE et conditions des lecteurs intégrés YouTube/Facebook et des éventuels traceurs/cookies.
-8. Vérifier, séparément du site public, les obligations de la personne ou structure qui contractualise et facture effectivement les prestations. Ne pas confondre le responsable du site et l'émetteur d'un devis ou d'une facture.
+Informations réglées :
+- Responsable du site : Darcq Antoine.
+- Directeur de la publication : Darcq Antoine.
+- Contact e-mail du site et des données : LesKlosques@hotmail.com.
+- Le site n'affiche ni numéro de téléphone ni adresse postale de l'éditeur, conformément à la demande des membres.
+- Conservation choisie pour les demandes de devis sans suite : 11 mois maximum après le dernier échange avec le demandeur.
+
+Points de conformité et d'exploitation restant à traiter :
+1. Vérifier la qualification juridique du site et les mentions obligatoires : pour un site professionnel français, une adresse de domiciliation et un téléphone peuvent être exigés même si leur publication est refusée à ce stade. Source : https://entreprendre.service-public.gouv.fr/vosdroits/F37351
+2. Mettre en place un contrôle et une suppression effective des demandes sans suite dans KLOSQUE MANAGER au plus tard 11 mois après le dernier échange. Il n'existe pas de purge automatique actuellement. Ne pas supprimer automatiquement les dossiers liés à des devis, factures, concerts ou obligations de conservation sans établir les règles de gestion.
+3. Vérifier et, si nécessaire, nettoyer les informations des demandes dans les e-mails de notifications, les journaux et les éventuels services externes après expiration du délai.
+4. Vérifier les contrats de sous-traitance, transferts hors EEE et conditions des lecteurs intégrés YouTube/Facebook et des éventuels traceurs/cookies.
+5. Vérifier séparément les obligations de la personne ou structure qui contractualise et facture les prestations. Ne pas confondre le responsable du site avec l'émetteur d'un devis ou d'une facture.
 
 Éléments vérifiés dans le code :
 - Adresse de contact du groupe : LesKlosques@hotmail.com.
