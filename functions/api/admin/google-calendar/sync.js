@@ -1,5 +1,6 @@
 import {authorize,respond,validDate} from "../../../_lib/admin-auth.js";
 import {ensureIntegrationTables,providerAccessToken} from "../../../_lib/integrations.js";
+import {resolveKlosquesCalendars} from "../../../_lib/klosques-calendars.js";
 
 const UUID=/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i;
 const calendarEndpoint=(cal,id="")=>"https://www.googleapis.com/calendar/v3/calendars/"+
@@ -34,11 +35,17 @@ export async function onRequestPost(context){
   try{
     const DB=context.env.DB;
     await ensureIntegrationTables(DB);
-    const cal=String(context.env.GOOGLE_CALENDAR_ID||"primary");
+    // Écrire UNIQUEMENT dans KLOSQUES PARTAGE, jamais dans l'agenda
+    // personnel ni dans le calendrier des indisponibilités.
+    const token=await providerAccessToken(context.env,"google");
+    const calendars=await resolveKlosquesCalendars(context.env,token);
+    const cal=calendars.concerts.id;
+    if(!["owner","writer","writerWithoutPrivateAccess"].includes(calendars.concerts.accessRole))
+      return respond({error:"Le compte Google ne peut pas modifier KLOSQUES PARTAGE. Vérifie le partage du calendrier."},403);
     const linked=await DB.prepare("SELECT calendar_id,event_id FROM google_concert_links WHERE booking_id=?")
       .bind(id).first();
     if(linked&&linked.calendar_id!==cal)
-      return respond({error:"Ce concert a été synchronisé avec un autre calendrier. Reconfigure l'ancien calendrier avant toute modification."},409);
+      return respond({error:"Ce concert est associé à un ancien calendrier différent de KLOSQUES PARTAGE. Il n'a pas été déplacé automatiquement."},409);
     if(payload.action==="remove"&&!linked)
       return respond({error:"Ce concert n'est pas associé à un événement publié par Manager."},404);
     const booking=payload.action==="publish"?
@@ -47,7 +54,6 @@ export async function onRequestPost(context){
       return respond({error:"Seuls les concerts confirmés et datés peuvent être ajoutés dans Google Agenda."},409);
     // IDs déterministes valides en base32hex, sans doublon en cas de réponse réseau perdue.
     const eventId=linked?.event_id||"klo"+id.replace(/-/g,"").toLowerCase();
-    const token=await providerAccessToken(context.env,"google");
     const url=calendarEndpoint(cal,eventId);
     const current=await eventRequest(url,token);
     if(!current.ok&&current.status!==404)
