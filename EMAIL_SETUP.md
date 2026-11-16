@@ -1,8 +1,10 @@
 # Configuration e-mail — Les Klosques
 
-Cette fonctionnalité **n'envoie rien tant que les secrets Cloudflare et les options d'activation ne sont pas configurés**. Les demandes clients continuent à être enregistrées dans D1 même si la messagerie est indisponible.
+**Méthode recommandée : connecter LesKlosques@hotmail.com depuis KLOSQUE MANAGER** avec les permissions Microsoft Graph `Mail.Read` et `Mail.Send`. Les devis et factures sont alors envoyés manuellement depuis cette adresse, avec leurs PDF, et les alertes des nouvelles demandes du site arrivent automatiquement dans la boîte du groupe. Voir [GOOGLE_OUTLOOK_SETUP.md](GOOGLE_OUTLOOK_SETUP.md#2-boîte-mail-lesklosqueshotmailcom--recevoir-et-envoyer).
 
-## 1. Préparer un expéditeur Resend
+**Resend reste facultatif**, utile si le groupe possède un domaine d'envoi vérifié ou souhaite garder une autre méthode d'envoi. Les demandes clients continuent à être enregistrées dans D1 même si la messagerie est indisponible. Les accusés de réception automatiques aux clients restent désactivés sans configuration spécifique Resend.
+
+## 1. Option alternative : préparer un expéditeur Resend
 
 1. Ouvrir https://resend.com/domains et ajouter **un domaine que Les Klosques possède** (par exemple `lesklosques.fr` si acquis). Il est impossible de vérifier `hotmail.com` ou le sous-domaine mutualisé `pages.dev` pour se faire passer pour son propriétaire.
 2. Ajouter les enregistrements DNS demandés par Resend (SPF, DKIM, etc.) auprès de l'hébergeur DNS, puis attendre le statut « Verified » de l'envoi.
@@ -11,7 +13,7 @@ Cette fonctionnalité **n'envoie rien tant que les secrets Cloudflare et les opt
 
 Le client peut répondre aux e-mails vers `LesKlosques@hotmail.com` (Reply-To). Cette adresse reste également la destination par défaut des alertes du groupe.
 
-## 2. Variables dans Cloudflare Pages
+## 2. Variables Resend facultatives dans Cloudflare Pages
 
 Aller dans **Cloudflare → Workers & Pages → lesklosques → Settings → Variables and Secrets → Production**.
 
@@ -31,9 +33,9 @@ Les anciennes variables `EMAIL` et `QUOTE_FROM_EMAIL` du système de devis peuve
 
 1. Après redéploiement, se connecter avec le **compte responsable** sur https://lesklosques.pages.dev/admin/.
 2. Ouvrir **Site → Messagerie et notifications** : la présence des variables et l'activation des alertes s'affichent, mais cela ne garantit pas encore la vérification DNS.
-3. Cliquer **Envoyer un e-mail de test** ; le test est adressé uniquement à la première adresse de `BOOKING_NOTIFICATION_TO` (Hotmail par défaut). Maximum un essai toutes les deux minutes.
-4. Contrôler la boîte de réception et le dossier indésirables. « Accepté par Resend » ne prouve pas la livraison effective.
-5. Activer ensuite `BOOKING_ALERTS_ENABLED=true`, puis, après confirmation du bon fonctionnement, `BOOKING_RECEIPT_ENABLED=true`. Redéployer après modifications.
+3. Cliquer **Envoyer un e-mail de test** ; le test utilise **Hotmail si connecté et autorisé à envoyer**, sinon Resend s'il est configuré. Il est adressé à la première adresse de `BOOKING_NOTIFICATION_TO` (Hotmail par défaut). Maximum un essai toutes les deux minutes.
+4. Contrôler la boîte de réception, les indésirables et les éléments envoyés. « Accepté par Microsoft Graph / Resend » ne prouve pas la livraison effective.
+5. Pour **Hotmail**, les alertes sont activées automatiquement après la connexion avec `Mail.Send` (pour les désactiver : `BOOKING_ALERTS_ENABLED=false`). Pour **Resend**, activer `BOOKING_ALERTS_ENABLED=true`. Ne régler `BOOKING_RECEIPT_ENABLED=true` que si un accusé de réception client est souhaité et Resend configuré.
 6. Les prochaines demandes reçues sur le formulaire public seront toujours enregistrées dans D1. Si activées, les alertes internes et l'accusé de réception partent **après** cet enregistrement. Un échec e-mail n'efface jamais le dossier.
 
 Les e-mails automatiques **ne confirment jamais une réservation ni un devis**. L'envoi d'un devis finalisé ou d'une facture émise reste manuel et soumis à confirmation explicite dans Manager. Ne pas utiliser une facture de test existante pour vérifier cette configuration.
