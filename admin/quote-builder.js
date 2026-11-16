@@ -413,8 +413,8 @@ function quoteDocumentHtml(quote) {
     '<p>'+htmlLine(data.issuer_address)+'</p>'+
     (data.issuer_identifier?'<p>Identifiant : '+safe(data.issuer_identifier)+'</p>':'')+
     (data.issuer_tax_number?'<p>TVA : '+safe(data.issuer_tax_number)+'</p>':'')+
-    (data.issuer_contact?'<p>'+htmlLine(data.issuer_contact)+'</p>':'')+
     (data.issuer_legal?'<p>'+htmlLine(data.issuer_legal)+'</p>':'')+
+    (data.issuer_contact?'<p>'+htmlLine(data.issuer_contact)+'</p>':'')+
     '</div><div><div class="metadata"><p><strong>DATE :</strong> '+safe(dateLabel(data.issue_date))+'</p>'+
     '<p><strong>N° DEVIS :</strong> '+safe(quote.number)+'</p>'+
     '<p><strong>VALABLE JUSQU’AU :</strong> '+safe(dateLabel(data.valid_until))+'</p></div>'+

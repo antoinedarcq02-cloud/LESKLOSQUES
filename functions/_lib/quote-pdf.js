@@ -167,8 +167,10 @@ export function createQuotePdf(quote,options={}){
     y=para(q.issuer_address||"",56,y-2,245,8,11);
     if(q.issuer_identifier)y=para("Identifiant : "+q.issuer_identifier,56,y-2,245,8,11);
     if(q.issuer_tax_number)y=para("N° TVA : "+q.issuer_tax_number,56,y,245,8,11);
-    if(q.issuer_contact)y=para(q.issuer_contact,56,y,245,8,11);
+    // Code APE / autres mentions legales avant le contact, aussi bien sur
+    // les devis que sur les nouvelles factures utilisant ce meme modele A4.
     if(q.issuer_legal)y=para(q.issuer_legal,56,y,245,8,11);
+    if(q.issuer_contact)y=para(q.issuer_contact,56,y,245,8,11);
     text("DATE : "+dateLabel(q.issue_date),355,665,8.5,true);
     text("N° "+documentLabel+" : "+String(quote.number||"NON ATTRIBUE"),355,650,8.5,true);
     text(invoice?"ECHEANCE : "+dateLabel(q.payment_due_date):

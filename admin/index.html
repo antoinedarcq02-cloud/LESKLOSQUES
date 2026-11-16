@@ -174,8 +174,8 @@
           <label>Nom / raison sociale *<input name="issuer_name" maxlength="160" placeholder="Nom juridique de l'association, société ou entreprise"></label>
           <label>Adresse complète de la structure *<textarea name="issuer_address" rows="2" maxlength="350"></textarea></label>
           <label>Identifiant officiel (SIRET, RNA selon la structure) *<input name="issuer_identifier" maxlength="90"></label>
-          <label>Contact professionnel (email / téléphone)<input name="issuer_contact" maxlength="180"></label>
-          <label>Autres mentions légales (statut, immatriculation… selon votre situation)<textarea name="issuer_legal" rows="2" maxlength="250"></textarea></label>
+          <label>Code APE et autres mentions légales (si applicables)<textarea name="issuer_legal" rows="2" maxlength="250" placeholder="Ex. Code APE : 9001Z"></textarea></label>
+          <label>E-mail / téléphone de contact (affiché sous le code APE)<input name="issuer_contact" maxlength="180" placeholder="Ex. LesKlosques@hotmail.com"></label>
           <button type="button" id="saveQuoteProfile" class="secondary">Mémoriser ces coordonnées pour les prochains devis</button>
           <h3>3. Prestations et prix</h3>
           <p class="muted small" id="quotePricingInfo">Saisis directement les prix TTC proposés au client. Ajoute une ligne pour les frais de déplacement si nécessaire.</p>
@@ -258,8 +258,8 @@
           <label>Nom / raison sociale *<input name="issuer_name" maxlength="160"></label>
           <label>Adresse complète de la structure *<textarea name="issuer_address" rows="2" maxlength="350"></textarea></label>
           <label>Identifiant officiel (SIRET / RNA selon le cas) *<input name="issuer_identifier" maxlength="90"></label>
-          <label>Contact de la structure<input name="issuer_contact" maxlength="180"></label>
-          <label>Autres mentions légales (statut, registre…) <textarea name="issuer_legal" rows="2" maxlength="250"></textarea></label>
+          <label>Code APE et autres mentions légales (si applicables)<textarea name="issuer_legal" rows="2" maxlength="250" placeholder="Ex. Code APE : 9001Z"></textarea></label>
+          <label>E-mail / téléphone de contact (affiché sous le code APE)<input name="issuer_contact" maxlength="180" placeholder="Ex. LesKlosques@hotmail.com"></label>
           <h3>3. Prestations et prix séparés</h3>
           <p id="invoicePricingInfo" class="muted small">Saisis les prix TTC convenus pour le concert, les déplacements ou les prestations techniques.</p>
           <div class="quote-lines-header" aria-hidden="true"><span>Prestation</span><span>Qté</span><span id="invoicePriceTypeText">Prix unitaire TTC</span><span></span></div>
