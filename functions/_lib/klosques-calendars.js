@@ -31,7 +31,7 @@ export async function resolveKlosquesCalendars(env,accessToken){
 
   const selected={};
   for(const [kind,name] of Object.entries(GROUP_NAMES)){
-    const possible=entries.filter(item=>item&&item.deleted!==true&&item.id&&matches(item,name));
+    const possible=entries.filter(item=>item&&item.deleted!==true&&item.primary!==true&&item.id&&matches(item,name));
     const key=kind==="concerts"?"GOOGLE_KLOSQUES_CALENDAR_ID":"GOOGLE_KLOSQUES_UNAVAILABLE_CALENDAR_ID";
     const specified=String(env[key]||"").trim();
     const narrowed=specified?possible.filter(c=>c.id===specified):possible;
