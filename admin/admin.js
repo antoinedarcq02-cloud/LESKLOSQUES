@@ -278,7 +278,11 @@ function currentGoogleEvents(month) {
   if(state.googleMonth!==month)return [];
   // Les concerts publiés par Manager n'apparaissent pas deux fois.
   const linked=new Set(state.googleLinks
-    .filter(link=>state.items.some(b=>b.id===link.booking_id))
+    // Les demandes "à traiter" et "en discussion" ne figurent pas dans les
+    // fiches concerts de l'agenda commun : montrer leur entrée Google.
+    // Dès qu'une fiche est en option ou confirmée, ne pas la doubler.
+    .filter(link=>state.items.some(b=>b.id===link.booking_id&&
+      ['option','confirme','termine'].includes(b.status)))
     .map(link=>link.event_id));
   return state.googleEvents.filter(event=>!(
     event.calendar==='concerts'&&event.own_event&&linked.has(event.id)
