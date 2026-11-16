@@ -390,12 +390,13 @@ document.querySelector('[data-tab="messagerie"]').addEventListener('click',loadO
 function handleConnectionReturn(){
   const url=new URL(window.location.href);
   const status=url.searchParams.get('connexion')||'';
-  if(!/^(google|microsoft)-(ok|erreur|expire|refuse|configuration|mauvais-compte)$/.test(status))return;
+  if(!/^(google|microsoft)-(ok|erreur|expire|refuse|configuration|mauvais-compte|permissions)$/.test(status))return;
   url.searchParams.delete('connexion');
   window.history.replaceState(null,'',url.pathname+url.search+url.hash);
   setPage('site');
   const provider=status.startsWith('google')?'Google Agenda':'Boîte Hotmail';
   notify(status.endsWith('-ok')?provider+' connecté avec succès.':
     status.endsWith('mauvais-compte')?'Compte Microsoft incorrect : autorise uniquement LesKlosques@hotmail.com.':
+    status.endsWith('permissions')?'Autorisation Mail.Send manquante : reconnecte Hotmail et accepte le droit d’envoyer des e-mails.':
     'Connexion '+provider+' non terminée. Vérifie le compte, les autorisations et la configuration.');
 }
