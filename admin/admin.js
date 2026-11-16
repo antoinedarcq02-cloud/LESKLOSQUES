@@ -62,6 +62,8 @@ async function signedIn(account, showWelcome = false) {
   $('identity').textContent = account.display_name || account.username;
   $('membersPanel').hidden = account.role !== 'admin';
   $('emailSettingsPanel').hidden = account.role !== 'admin';
+  $('externalConnectionsPanel').hidden = account.role !== 'admin';
+  document.querySelector('[data-tab="messagerie"]').hidden = account.role !== 'admin';
   $('cancelPasswordChange').hidden = state.mustChangePassword;
   $('passwordExplanation').textContent = state.mustChangePassword
     ? 'Ceci est ton mot de passe provisoire : choisis-en un nouveau, personnel, avant de consulter les dossiers.'
@@ -77,7 +79,9 @@ async function signedIn(account, showWelcome = false) {
   if (state.role === 'admin') {
     await loadMembers();
     await loadEmailSettings();
+    await loadExternalConnections();
   }
+  handleConnectionReturn();
 }
 async function initialize() {
   $('agendaMonth').value = new Date().getFullYear() + '-' + String(new Date().getMonth()+1).padStart(2,'0');
@@ -179,7 +183,8 @@ function setPage(page) {
   document.querySelectorAll('[data-tab]').forEach(el => el.classList.toggle('active', el.dataset.tab === page));
   $('pageTitle').textContent = {
     home:'Tableau de bord',agenda:'Agenda',demandes:'Demandes clients',
-    concerts:'Fiches concerts',devis:'Devis',factures:'Factures',site:'Gestion du site'
+    concerts:'Fiches concerts',devis:'Devis',factures:'Factures',
+    messagerie:'Boîte mail',site:'Gestion du site'
   }[page] || 'Klosques Manager';
   render();
 }

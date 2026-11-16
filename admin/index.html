@@ -12,6 +12,7 @@
 <script src="/admin/quote-builder.js" defer></script>
 <script src="/admin/invoice-builder.js" defer></script>
 <script src="/admin/reminders.js" defer></script>
+<script src="/admin/integrations-ui.js" defer></script>
 </head>
 <body>
 <header class="topbar">
@@ -115,6 +116,21 @@
       <p class="muted">Les dates en option et confirmées sont visibles ici. Aucune gestion de disponibilité individuelle.</p>
       <div id="calendar" class="calendar"></div>
       <div id="agendaList" class="card-list"></div>
+      <section id="googleCalendarPanel" class="panel integration-panel" aria-labelledby="googleCalendarTitle">
+        <div class="section-header">
+          <div><h2 id="googleCalendarTitle">Google Agenda</h2>
+            <p class="muted small">Consulte les événements du calendrier relié et repère les dates déjà occupées.</p>
+          </div>
+          <button type="button" class="secondary" id="refreshGoogleCalendar">Actualiser Google</button>
+        </div>
+        <p id="googleCalendarStatus" class="muted small" role="status">Google Agenda non encore chargé.</p>
+        <div id="googleCalendarEvents" class="integration-items"></div>
+        <div id="googlePublishPanel" hidden>
+          <h3>Concerts confirmés à synchroniser</h3>
+          <p class="muted small">Publication uniquement sur confirmation, en journée entière car l'heure du concert n'est pas encore enregistrée dans le dossier. La mise à jour ne modifie que les événements créés par Manager. Aucune suppression automatique.</p>
+          <div id="googlePublishItems" class="integration-items"></div>
+        </div>
+      </section>
     </section>
     <section id="panel-demandes" class="page" hidden>
       <div class="section-header"><h2>Demandes clients</h2><select id="requestFilter" aria-label="Filtrer les demandes"><option value="all">Toutes</option><option value="nouveau">Nouvelles</option><option value="en_discussion">En discussion</option><option value="devis_envoye">Devis envoyé</option><option value="refuse">Refusées</option></select></div>
@@ -305,6 +321,16 @@
       </section>
       <p class="muted small">Attention : pour les opérations concernées par la réforme française de facturation électronique, un simple PDF envoyé par e-mail ne remplace pas une facture électronique transmise par une plateforme agréée.</p>
     </section>
+    <section id="panel-messagerie" class="page" hidden>
+      <div class="section-header">
+        <div><h2>Boîte mail Les Klosques</h2>
+          <p class="muted small">Les 20 derniers messages reçus sur Hotmail. Consultation réservée au responsable, sans changement des messages sur Outlook.</p></div>
+        <button id="refreshOutlookMail" class="secondary" type="button">Actualiser la boîte</button>
+      </div>
+      <p id="outlookMailStatus" class="muted small" role="status">Connecte ta boîte dans Site → Connexions.</p>
+      <div id="outlookMailList" class="integration-items"></div>
+      <p class="muted small">Pour répondre, ouvre le message dans Outlook. Aucun e-mail n'est envoyé automatiquement par Klosques Manager.</p>
+    </section>
     <section id="panel-site" class="page" hidden>
       <div class="panel">
         <h2>Modifier les textes et les vidéos du site</h2>
@@ -322,6 +348,19 @@
           <div class="modal-actions"><a class="secondary link" href="/" target="_blank" rel="noopener">Voir le site ↗</a><button class="primary" type="submit">Publier les modifications</button></div>
         </form>
       </div>
+      <section class="panel integration-panel" id="externalConnectionsPanel" hidden>
+        <h2>Connexions Google Agenda et boîte Hotmail</h2>
+        <p class="muted small">Les comptes sont connectés avec leur autorisation officielle. Les accès sont chiffrés dans la base privée et ne sont jamais affichés ici.</p>
+        <div id="externalConnectionsStatus" class="integration-items" aria-live="polite">Vérification des connexions…</div>
+        <div class="integration-actions">
+          <a id="connectGoogle" class="secondary link" href="/api/admin/connect/google">Connecter Google Agenda</a>
+          <button id="disconnectGoogle" class="secondary" type="button" hidden>Déconnecter Google</button>
+          <a id="connectOutlook" class="secondary link" href="/api/admin/connect/microsoft">Connecter Hotmail</a>
+          <button id="disconnectOutlook" class="secondary" type="button" hidden>Déconnecter Hotmail</button>
+          <button id="refreshConnections" class="secondary" type="button">Actualiser</button>
+        </div>
+        <p class="muted small">Google : configurer GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET. Microsoft : configurer MICROSOFT_CLIENT_ID et MICROSOFT_CLIENT_SECRET. Les liens ne deviennent utilisables qu'après cette configuration dans Cloudflare. Le calendrier Google et la boîte Hotmail ne sont jamais modifiés par la simple connexion.</p>
+      </section>
       <div class="panel email-settings-panel" id="emailSettingsPanel" hidden>
         <h2>Messagerie et notifications</h2>
         <p class="muted">État de la configuration d'envoi pour les nouvelles demandes, les devis et les factures. Les secrets restent uniquement dans Cloudflare.</p>
@@ -370,6 +409,7 @@
     <button type="button" data-tab="concerts"><span>♫</span>Concerts</button>
     <button type="button" data-tab="devis"><span>€</span>Devis</button>
     <button type="button" data-tab="factures"><span>▤</span>Factures</button>
+    <button type="button" data-tab="messagerie"><span>✉</span>Boîte mail</button>
     <button type="button" data-tab="site"><span>⚙</span>Site</button>
   </nav>
 </div>

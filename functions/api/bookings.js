@@ -75,7 +75,9 @@ export async function onRequestPost({ request, env, waitUntil }) {
       return errorResponse("Merci de vérifier la prestation, la date et les coordonnées obligatoires.", 400);
 
     // L'agenda reste facultatif : un incident Google ne bloque pas les devis.
-    if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET && env.GOOGLE_REFRESH_TOKEN) {
+    // La connexion Google peut maintenant être stockée chiffrée dans D1 après OAuth.
+    // Ne plus exiger l'ancien GOOGLE_REFRESH_TOKEN dans les secrets Cloudflare.
+    if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
       try {
         const start = new Date(Date.parse(date + "T00:00:00Z") - 86400000).toISOString();
         const end = new Date(Date.parse(date + "T00:00:00Z") + 172800000).toISOString();
