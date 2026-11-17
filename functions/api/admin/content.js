@@ -7,6 +7,8 @@ const KEYS = [...Object.keys(TEXT_FIELDS), ...VIDEO_FIELDS, "facebook_reel"];
 export async function onRequestGet(context) {
   const user = await authorize(context);
   if (user.error) return user.error;
+  if (user.user?.role !== "admin")
+    return respond({ error: "Accès à la page Site réservé au gestionnaire." }, 403);
   try {
     const { results } = await context.env.DB.prepare("SELECT key,value FROM site_content").all();
     return respond({ content: Object.fromEntries((results || []).map(row => [row.key, row.value])) });
@@ -18,6 +20,8 @@ export async function onRequestGet(context) {
 export async function onRequestPatch(context) {
   const user = await authorize(context, true);
   if (user.error) return user.error;
+  if (user.user?.role !== "admin")
+    return respond({ error: "Modification du site réservée au gestionnaire." }, 403);
   try {
     const raw = await context.request.text();
     if (raw.length > 6000) return respond({ error: "Contenu trop long." }, 413);
