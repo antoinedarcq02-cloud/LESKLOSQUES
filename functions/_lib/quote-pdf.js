@@ -277,9 +277,13 @@ export function createQuotePdf(quote,options={}){
     right(value,breaks[4]-4,y-16,emphasis?8.5:8.1,emphasis);
     y-=height;
   }
-  totalRow(totals.direct?"SOUS-TOTAL":"SOUS-TOTAL HT",money(totals.ht));
+  // Prix TTC sans ventilation ou franchise : le modèle d'origine affiche
+  // seulement le sous-total et le total. La mention d'exonération reste en bas.
+  const simplifiedTotals=totals.direct||q.vat_mode==="franchise";
+  totalRow(simplifiedTotals?"SOUS-TOTAL":"SOUS-TOTAL HT",
+    money(simplifiedTotals?totals.ttc:totals.ht));
   y-=3; // léger espacement du total, comme dans le modèle fourni.
-  if(totals.direct){
+  if(simplifiedTotals){
     totalRow("TOTAL TTC",money(totals.ttc),true);
   }else if(totals.taxable){
     totalRow(q.vat_mode==="franchise"?"TVA NON APPLIC.":"TVA "+String(q.vat_mode)+" %",money(totals.tax));
