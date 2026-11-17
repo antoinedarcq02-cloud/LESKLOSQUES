@@ -113,7 +113,10 @@ function updateQuoteLock() {
   }
   $('quoteLocked').hidden = !locked;
   $('printOfficialQuote').disabled = !officialQuoteState.current;
-  $('downloadOfficialQuote').disabled = !officialQuoteState.current;
+  $('downloadOfficialQuote').hidden = !officialQuoteState.current ||
+    officialQuoteState.current.status !== 'finalise';
+  $('downloadOfficialQuote').disabled = !officialQuoteState.current ||
+    officialQuoteState.current.status !== 'finalise';
   $('finalizeOfficialQuote').hidden = locked;
   $('saveOfficialQuote').hidden = locked;
   $('sendOfficialQuote').hidden = !locked;
@@ -189,18 +192,25 @@ function renderOfficialQuotes() {
     ? officialQuoteState.quotes.map(quote => {
         const safe = escapeHtml;
         const delivery = quoteEmailStatus(quote);
-        return '<button type="button" class="booking-card" data-quote-id="'+quote.id+'">' +
-        '<div class="card-top"><span class="date">'+safe(quote.number)+'</span>' +
-        '<span class="tag '+delivery.className+'">'+safe(delivery.label)+'</span></div>' +
-        (quote.status === 'brouillon' ? '<p class="small">Brouillon à finaliser avant l’envoi</p>' : '') +
-        '<h3>'+safe(quote.data.client_name || 'Client à préciser')+'</h3>' +
-        '<p>'+safe(quote.data.event_date ? dateLabel(quote.data.event_date) : 'Date à préciser')+'</p>' +
-        '<p>'+safe(officialTotals(quote.data).pending ? 'Montant TTC à préciser' : 'Montant TTC : '+officialMoney(officialTotals(quote.data).ttc))+'</p>' +
-        (quote.sent_at ? '<p class="small quote-email-sent">E-mail transmis le '+safe(quote.sent_at)+'</p>' : '') +
-        '<p class="small">Ouvrir le devis →</p></button>';
+        const finalized = quote.status === 'finalise';
+        return '<article class="document-list-item" data-document-quote="'+quote.id+'">' +
+          '<button type="button" class="booking-card" data-quote-id="'+quote.id+'">' +
+          '<div class="card-top"><span class="date">'+safe(quote.number)+'</span>' +
+          '<span class="tag '+delivery.className+'">'+safe(delivery.label)+'</span></div>' +
+          (!finalized ? '<p class="small">Brouillon à finaliser avant l’envoi</p>' : '') +
+          '<h3>'+safe(quote.data.client_name || 'Client à préciser')+'</h3>' +
+          '<p>'+safe(quote.data.event_date ? dateLabel(quote.data.event_date) : 'Date à préciser')+'</p>' +
+          '<p>'+safe(officialTotals(quote.data).pending ? 'Montant TTC à préciser' : 'Montant TTC : '+officialMoney(officialTotals(quote.data).ttc))+'</p>' +
+          (quote.sent_at ? '<p class="small quote-email-sent">E-mail transmis le '+safe(quote.sent_at)+'</p>' : '') +
+          '<p class="small">'+(finalized ? 'Consulter le devis →' : 'Modifier le brouillon →')+'</p></button>' +
+          '<div class="document-pdf-actions" aria-label="PDF du devis '+safe(quote.number)+'">' +
+          '<button type="button" class="secondary" data-quote-pdf-preview="'+quote.id+'" aria-label="Visualiser le PDF du devis '+safe(quote.number)+'">Visualiser le PDF</button>' +
+          (finalized ? '<button type="button" class="secondary" data-quote-pdf-download="'+quote.id+'" aria-label="Télécharger le PDF du devis '+safe(quote.number)+'">Télécharger le PDF</button>' : '') +
+          '</div></article>';
       }).join('')
     : '<p class="empty">Aucun devis enregistré pour le moment. Clique sur « Nouveau devis ».</p>';
 }
+
 async function loadOfficialQuotes() {
   if (!state.logged) return;
   try {
@@ -216,6 +226,14 @@ $('closeQuote').addEventListener('click',()=>{$('quoteFormPanel').hidden = true;
 $('quoteBooking').addEventListener('change',fillFromBooking);
 $('addQuoteLine').addEventListener('click',()=>quoteLine());
 $('officialQuotesList').addEventListener('click',event => {
+  const pdfButton=event.target.closest('[data-quote-pdf-preview],[data-quote-pdf-download]');
+  if(pdfButton){
+    const download=pdfButton.hasAttribute('data-quote-pdf-download');
+    const id=download?pdfButton.dataset.quotePdfDownload:pdfButton.dataset.quotePdfPreview;
+    const quote=officialQuoteState.quotes.find(item=>String(item.id)===id);
+    if(quote)showOfficialQuotePdf(download,quote,pdfButton);
+    return;
+  }
   const card = event.target.closest('[data-quote-id]');
   if (!card) return;
   const quote = officialQuoteState.quotes.find(item => String(item.id) === card.dataset.quoteId);
@@ -373,10 +391,20 @@ async function saveOfficialQuote(finalize = false) {
     await loadOfficialQuotes();
     // Met à jour immédiatement le badge sur la demande liée, sans actualiser la page.
     await refresh();
-    fillQuoteForm(response.quote);
+    // Refermer le formulaire après la sauvegarde : les actions PDF
+    // restent visibles sous la carte du document dans la liste.
+    $('quoteFormPanel').hidden=true;
+    officialQuoteState.current=null;
+    renderOfficialQuotes();
+    const selected=Array.from($('officialQuotesList').querySelectorAll('[data-quote-id]'))
+      .find(el=>el.dataset.quoteId===String(response.quote.id));
+    if(selected){
+      selected.focus({preventScroll:true});
+      selected.scrollIntoView({block:'center',behavior:'smooth'});
+    }
     notify(finalize
-      ? 'Devis finalisé et verrouillé. Tu peux l’imprimer en PDF et le transmettre manuellement après vérification.'
-      : 'Brouillon du devis enregistré.');
+      ? 'Devis finalisé. Visualise ou télécharge son PDF sous le devis.'
+      : 'Brouillon enregistré. Visualise son PDF sous le devis ou rouvre-le pour le modifier.');
   } catch(error) { notify(error.message); }
   finally { saveButton.disabled = false; finalButton.disabled = false; }
 }
@@ -395,9 +423,13 @@ function saveQuotePdfBlob(url,filename){
   document.body.appendChild(link);link.click();link.remove();
   window.setTimeout(()=>{URL.revokeObjectURL(url);openQuotePdfUrls.delete(url);},60000);
 }
-async function showOfficialQuotePdf(download=false){
-  const quote=officialQuoteState.current;
+async function showOfficialQuotePdf(download=false,selectedQuote=null,actionButton=null){
+  const quote=selectedQuote||officialQuoteState.current;
   if(!quote?.id){notify('Enregistre le devis avant de consulter son PDF.');return;}
+  if(download&&quote.status!=='finalise'){
+    notify('Le téléchargement est réservé aux devis finalisés.');
+    return;
+  }
   const newTab=download?null:window.open('about:blank','_blank');
   if(newTab){
     try{
@@ -407,6 +439,7 @@ async function showOfficialQuotePdf(download=false){
   }
   const preview=$('printOfficialQuote'),save=$('downloadOfficialQuote');
   preview.disabled=save.disabled=true;
+  if(actionButton)actionButton.disabled=true;
   try{
     const response=await fetch('/api/admin/quotes/'+encodeURIComponent(quote.id)+'/pdf',{
       credentials:'same-origin',cache:'no-store',headers:{Accept:'application/pdf'}
@@ -427,15 +460,18 @@ async function showOfficialQuotePdf(download=false){
       newTab.location.replace(url);
       try{newTab.opener=null;}catch{}
     }else{
-      saveQuotePdfBlob(url,name);
-      notify('L’aperçu est bloqué par ton navigateur. Le PDF a été téléchargé.');
+      URL.revokeObjectURL(url);
+      openQuotePdfUrls.delete(url);
+      notify('Le navigateur a bloqué l’aperçu. Autorise les fenêtres contextuelles pour visualiser le PDF.');
     }
   }catch(error){
     if(newTab&&!newTab.closed)newTab.close();
     notify('PDF non ouvert : '+error.message);
   }finally{
-    const ready=Boolean(officialQuoteState.current?.id);
-    preview.disabled=save.disabled=!ready;
+    const current=officialQuoteState.current;
+    preview.disabled=!current?.id;
+    save.disabled=!current?.id||current.status!=='finalise';
+    if(actionButton&&actionButton.isConnected)actionButton.disabled=false;
   }
 }
 $('printOfficialQuote').addEventListener('click',()=>showOfficialQuotePdf(false));
