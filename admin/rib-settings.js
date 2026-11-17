@@ -17,8 +17,8 @@ async function loadInvoiceRibStatus(){
     ribDownload.hidden=!data.configured;
     ribDelete.hidden=!data.configured;
     ribStatus.textContent=data.configured
-      ?'RIB enregistré : '+data.filename+' ('+Math.round(data.size_bytes/1024)+' Ko). Il sera joint automatiquement aux factures envoyées.'
-      :'Aucun RIB enregistré. Ajoute le PDF avant d’envoyer une facture par e-mail.';
+      ?'RIB enregistré : '+data.filename+' ('+Math.round(data.size_bytes/1024)+' Ko). Il sera joint automatiquement aux devis et factures envoyés.'
+      :'Aucun RIB enregistré. Ajoute le PDF avant d’envoyer un devis ou une facture par e-mail.';
   }catch(error){
     ribStatus.textContent='Impossible de vérifier le RIB : '+error.message;
   }
@@ -44,7 +44,7 @@ ribUpload.addEventListener('click',async()=>{
     });
     ribFile.value='';
     await loadInvoiceRibStatus();
-    notify('RIB Happy Live 66 enregistré pour l’envoi automatique avec les factures.');
+    notify('RIB Happy Live 66 enregistré pour l’envoi automatique avec les devis et factures.');
   }catch(error){ribStatus.textContent='Enregistrement impossible : '+error.message;}
   finally{ribUpload.disabled=false;}
 });
@@ -56,13 +56,13 @@ ribDownload.addEventListener('click',()=>{
 });
 ribDelete.addEventListener('click',async()=>{
   if(state.role!=='admin')return;
-  if(!window.confirm('Retirer le RIB ? Les factures ne pourront plus être envoyées avec le RIB tant qu’un nouveau PDF n’aura pas été enregistré.'))return;
+  if(!window.confirm('Retirer le RIB ? Les devis et factures ne pourront plus être envoyés avec le RIB tant qu’un nouveau PDF n’aura pas été enregistré.'))return;
   ribDelete.disabled=true;
   try{
     await jsonCall('/api/admin/invoice-rib','DELETE',{confirm:true});
     ribStatus.textContent='RIB retiré.';
     await loadInvoiceRibStatus();
-    notify('RIB retiré des futures factures.');
+    notify('RIB retiré des futurs devis et factures.');
   }catch(error){ribStatus.textContent='Suppression impossible : '+error.message;}
   finally{ribDelete.disabled=false;}
 });
