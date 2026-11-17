@@ -416,15 +416,6 @@ async function showInvoicePdf(download=false,selectedInvoice=null,actionButton=n
     notify('Le téléchargement est réservé aux factures émises.');
     return;
   }
-  // Ouvrir l'onglet pendant le clic pour ne pas déclencher le bloqueur
-  // de fenêtres contextuelles après l'attente réseau.
-  const newTab=download?null:window.open('about:blank','_blank');
-  if(newTab){
-    try{
-      newTab.document.title='Ouverture de la facture';
-      newTab.document.body.textContent='Chargement du PDF de la facture…';
-    }catch{}
-  }
   const previewButton=$('previewInvoice'),downloadButton=$('printInvoice');
   previewButton.disabled=true;downloadButton.disabled=true;
   if(actionButton)actionButton.disabled=true;
@@ -447,18 +438,10 @@ async function showInvoicePdf(download=false,selectedInvoice=null,actionButton=n
     const filename=(invoice.number||'BROUILLON-'+invoice.id.slice(0,8))+'.pdf';
     if(download){
       downloadInvoicePdfBlob(url,filename);
-    }else if(newTab&&!newTab.closed){
-      // Aucun cookie n'est nécessaire dans l'onglet de visualisation :
-      // les octets proviennent déjà de la requête authentifiée.
-      newTab.location.replace(url);
-      try{newTab.opener=null;}catch{}
     }else{
-      URL.revokeObjectURL(url);
-      invoicePdfPreviewUrls.delete(url);
-      notify('Le navigateur a bloqué l’aperçu. Autorise les fenêtres contextuelles pour visualiser le PDF.');
+      showManagerPdfPreview(url,invoice.number||'Brouillon de facture','factures');
     }
   }catch(error){
-    if(newTab&&!newTab.closed)newTab.close();
     notify('PDF non ouvert : '+error.message);
   }finally{
     const current=invoiceState.current;
