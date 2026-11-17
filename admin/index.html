@@ -650,7 +650,10 @@
     <button type="button" class="secondary" id="managerPdfPreviewClose" aria-label="Fermer l’aperçu PDF">Fermer ✕</button>
   </div>
   <div class="manager-pdf-viewer-tools">
-    <span id="managerPdfPreviewStatus" role="status" aria-live="polite">Préparation du PDF…</span>
+    <div class="manager-pdf-viewer-status">
+      <span id="managerPdfPreviewStatus" role="status" aria-live="polite">Préparation du PDF…</span>
+      <button type="button" class="secondary" id="managerPdfRetry" hidden>Réessayer</button>
+    </div>
     <div class="manager-pdf-zoom" aria-label="Agrandissement du PDF">
       <button type="button" class="small-button" id="managerPdfZoomOut" aria-label="Réduire l’aperçu">−</button>
       <output id="managerPdfZoomLabel">100 %</output>
