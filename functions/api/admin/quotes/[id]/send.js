@@ -57,7 +57,7 @@ export async function onRequestPost(context){
   let body;
   try{
     const input=await context.request.text();
-    if(input.length>1000)return respond({error:"Confirmation trop longue."},413);
+    if(input.length>5000)return respond({error:"Confirmation trop longue."},413);
     body=JSON.parse(input);
   }catch{return respond({error:"Confirmation invalide."},400);}
   if(body?.confirm_send!==true)
@@ -67,6 +67,11 @@ export async function onRequestPost(context){
      !EMAIL.test(body.recipient.trim()))
     return respond({error:"Saisis une seule adresse e-mail valide pour le destinataire."},400);
   const recipient=body.recipient.trim();
+  if(body.personal_message!==undefined && typeof body.personal_message!=="string")
+    return respond({error:"Le message personnel est invalide."},400);
+  const personalMessage=String(body.personal_message||"").trim().replace(/\r\n?/g,"\n");
+  if(personalMessage.length>2000)
+    return respond({error:"Le message personnel ne doit pas dépasser 2 000 caractères."},400);
   if(!await quoteMailReady(context.env))
     return respond({error:"Envoi d'e-mails non configuré : un expéditeur vérifié et un service d'envoi sont nécessaires."},503);
   try{
@@ -110,6 +115,7 @@ export async function onRequestPost(context){
       "Date prévue : "+(data.event_date||"à préciser"),
       "Lieu : "+(data.event_location||"à préciser"),
       "",
+      ...(personalMessage?[personalMessage,""]:[]),
       "Merci de nous confirmer par retour d'e-mail si vous acceptez ce devis, ou de nous contacter pour toute question.",
       "",
       "Bien cordialement,",
@@ -120,7 +126,8 @@ export async function onRequestPost(context){
     const html="<p>Bonjour,</p><p>Vous trouverez en pièce jointe notre devis <strong>"+
       safe(number)+"</strong> concernant votre événement.</p><p>Date prévue : "+
       safe(data.event_date||"à préciser")+"<br>Lieu : "+safe(data.event_location||"à préciser")+
-      "</p><p>Merci de nous confirmer par retour d'e-mail si vous acceptez ce devis, ou de nous contacter pour toute question.</p>"+
+      "</p>"+(personalMessage?"<p>"+safe(personalMessage).replace(/\n/g,"<br>")+"</p>":"")+
+      "<p>Merci de nous confirmer par retour d'e-mail si vous acceptez ce devis, ou de nous contacter pour toute question.</p>"+
       "<p>Bien cordialement,<br><strong>Les Klosques</strong><br>"+
       safe(REPLY_TO)+"</p>";
     let receipt;
