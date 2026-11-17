@@ -63,18 +63,23 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
 .quote-lines-header,.official-quote-line{display:grid;grid-template-columns:minmax(0,3fr) minmax(65px,.7fr) minmax(95px,1fr) 36px;gap:9px;align-items:center}
 .quote-lines-header{color:#c6b9be;font-size:.76rem;margin:14px 0 8px;font-weight:800}
 .official-quote-line{margin-bottom:9px}
-.official-quote-line input{min-width:0;padding:10px 8px}
+.official-quote-panel .quote-line-field{display:block;min-width:0;margin:0;font-size:.78rem}
+.quote-line-field-title{display:none}
+.official-quote-line input{min-width:0;width:100%;padding:10px 8px}
 .official-quote-line .small-button{padding:9px 5px;min-height:42px}
+.tag.draft{background:#3b3542;color:#e1d4e9}
 .quote-total{text-align:right;padding:18px 14px;margin-top:17px;background:#2d222a;border:1px solid #7b4655;border-radius:10px;color:#fff;font-size:1.03rem;font-weight:800}
 .quote-lock-note{padding:14px;border:1px solid #e3a665;border-radius:11px;color:#ffe1b3;background:#3a2b1f}
 .official-quote-actions{border-top:1px solid #43333b;padding-top:17px}
 @media(max-width:620px){
   .quote-lines-header{display:none}
   .official-quote-line{grid-template-columns:minmax(0,1fr) 83px 34px;gap:6px}
-  .official-quote-line .quote-line-label{grid-column:1/-1}
-  .official-quote-line .quote-line-price{grid-column:1}
-  .official-quote-line .quote-line-qty{grid-column:2;grid-row:2}
-  .official-quote-line .quote-line-remove{grid-column:3;grid-row:2}
+  .official-quote-line .quote-line-description-field{grid-column:1/-1}
+  .official-quote-line .quote-line-price-field{grid-column:1;grid-row:2}
+  .official-quote-line .quote-line-quantity-field{grid-column:2;grid-row:2}
+  .official-quote-line .quote-line-remove{grid-column:3;grid-row:2;align-self:end}
+  .official-quote-line .quote-line-field-title{display:block;margin-bottom:5px;color:#f0cfd7;font-weight:800;line-height:1.3}
+  .official-quote-line .quote-line-field{margin-bottom:0}
   .official-quote-actions{display:grid;grid-template-columns:1fr}
   .official-quote-actions button{width:100%}
 }
