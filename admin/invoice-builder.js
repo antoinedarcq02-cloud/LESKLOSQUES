@@ -225,6 +225,7 @@ function fillInvoice(invoice=null){
     :'Un numéro officiel sera attribué uniquement à l’émission de la facture.';
   $('invoiceEditorPanel').hidden=false;
   updateInvoiceTotal();lockInvoiceEditor();
+  captureDocumentBaseline('factures');
   $('invoiceEditorPanel').scrollIntoView({block:'start',behavior:'smooth'});
 }
 function renderInvoices(){

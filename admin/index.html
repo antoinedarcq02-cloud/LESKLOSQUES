@@ -15,6 +15,7 @@
 <script src="/admin/integrations-ui.js" defer></script>
 <script src="/admin/navigation-enhancements.js" defer></script>
 <script src="/admin/booking-actions.js" defer></script>
+<script src="/admin/draft-guards.js" defer></script>
 </head>
 <body>
 <header class="topbar">
@@ -108,7 +109,7 @@
         <div class="section-header">
           <div>
             <h2 id="remindersTitle">Rappels à traiter <span id="remindersCount" class="reminders-count">0</span></h2>
-            <p class="muted small">Demandes sans réponse depuis 48 h, devis envoyés sans suite depuis 7 jours et factures envoyées dont l'échéance est dépassée.</p>
+            <p class="muted small">Demandes sans réponse, devis ou factures prêts à envoyer, relances de devis et factures échues.</p>
           </div>
           <button id="refreshReminders" class="secondary" type="button">Actualiser</button>
         </div>
@@ -159,6 +160,7 @@
           <button type="button" id="closeQuote" class="secondary">Fermer</button>
         </div>
         <p id="quoteNumber" class="muted small">Numéro attribué lors du premier enregistrement.</p>
+        <p id="quoteDraftStatus" class="draft-saved-status" role="status" aria-live="polite" hidden></p>
         <p><span id="quoteEmailStatus" class="tag pending" role="status" aria-live="polite" hidden>En attente d’envoi</span></p>
         <p id="quoteLocked" class="quote-lock-note" hidden>Ce devis est finalisé et verrouillé pour préserver la version transmise. Pour une modification, prépare un nouveau devis.</p>
         <form id="officialQuoteForm">
@@ -201,7 +203,8 @@
           <label>Conditions particulières<textarea name="conditions" rows="3" maxlength="1400" placeholder="Annulation, frais éventuels, obligations de l'organisateur…"></textarea></label>
           <p class="muted small">Un brouillon peut être enregistré avec des champs incomplets. La finalisation demande les mentions principales et verrouille ensuite le document.</p>
           <div class="modal-actions official-quote-actions">
-            <button type="button" class="secondary" id="printOfficialQuote" disabled>Imprimer / PDF</button>
+            <button type="button" class="secondary" id="printOfficialQuote" disabled>Visualiser le PDF</button>
+            <button type="button" class="secondary" id="downloadOfficialQuote" disabled>Télécharger le PDF</button>
             <button type="button" class="secondary" id="saveOfficialQuote">Enregistrer le brouillon</button>
             <button type="button" class="primary" id="finalizeOfficialQuote">Finaliser le devis</button>
           </div>
@@ -235,6 +238,7 @@
           <button type="button" class="secondary" id="closeInvoice">Fermer</button>
         </div>
         <p id="invoiceNumber" class="muted small">Un numéro officiel sera attribué uniquement lors de l'émission.</p>
+        <p id="invoiceDraftStatus" class="draft-saved-status" role="status" aria-live="polite" hidden></p>
         <p id="invoiceLocked" class="quote-lock-note" hidden>Cette facture est émise et ne peut plus être modifiée ni supprimée. Tu peux l'archiver pour la retirer de la liste courante, mais elle restera accessible dans les archives. Si elle est erronée, il faut établir une facture rectificative ou un avoir selon la situation.</p>
         <form id="invoiceForm">
           <h3>1. Client et prestation</h3>

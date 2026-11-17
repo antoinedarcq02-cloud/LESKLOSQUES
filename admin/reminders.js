@@ -37,6 +37,27 @@ function computeManagerReminders(bookings,quotes,invoices,now=new Date()){
       order:0,stamp:updatedAt
     });
   }
+  // Documents prêts à transmettre : aucune action automatique, juste un
+  // accès direct au dossier pour validation et envoi manuel.
+  for(const quote of quotes){
+    if(quote.status!=='finalise'||quote.sent_at)continue;
+    if(quote.data?.event_date&&quote.data.event_date<today)continue;
+    reminders.push({
+      key:'quote-ready:'+quote.id,type:'quote',id:String(quote.id),
+      label:'Devis finalisé à envoyer',name:quote.data?.client_name||'Client',
+      detail:(quote.number||'Devis')+' · en attente d’envoi au client',
+      order:2,stamp:reminderTimestamp(quote.updated_at||quote.created_at)||nowMs
+    });
+  }
+  for(const invoice of invoices){
+    if(invoice.status!=='emise'||invoice.sent_at||invoice.paid||invoice.archived)continue;
+    reminders.push({
+      key:'invoice-ready:'+invoice.id,type:'invoice',id:String(invoice.id),
+      label:'Facture émise à envoyer',name:invoice.data?.client_name||'Client',
+      detail:(invoice.number||'Facture')+' · en attente d’envoi au client',
+      order:3,stamp:reminderTimestamp(invoice.issued_at||invoice.created_at)||nowMs
+    });
+  }
   for(const quote of quotes){
     if(quote.status!=='finalise'||!quote.booking_id||!quote.sent_at)continue;
     const booking=allowedBookings.get(quote.booking_id);
@@ -49,7 +70,7 @@ function computeManagerReminders(bookings,quotes,invoices,now=new Date()){
       key:'quote:'+quote.id,type:'quote',id:String(quote.id),
       label:'Devis envoyé sans réponse',name:quote.data?.client_name||booking.name||'Client',
       detail:(quote.number||'Devis')+' · envoyé il y a '+days+' jours',
-      order:1,stamp:sentAt
+      order:4,stamp:sentAt
     });
   }
   for(const invoice of invoices){
@@ -63,7 +84,7 @@ function computeManagerReminders(bookings,quotes,invoices,now=new Date()){
       key:'invoice:'+invoice.id,type:'invoice',id:String(invoice.id),
       label:'Facture en retard de paiement',name:invoice.data?.client_name||'Client',
       detail:(invoice.number||'Facture')+' · échéance dépassée de '+late+' jour'+(late>1?'s':''),
-      order:2,stamp:Date.parse(due+'T12:00:00Z')
+      order:1,stamp:Date.parse(due+'T12:00:00Z')
     });
   }
   return reminders.sort((a,b)=>a.order-b.order||a.stamp-b.stamp).slice(0,30);

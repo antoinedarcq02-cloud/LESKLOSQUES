@@ -318,3 +318,7 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
 #bookingRelatedDocuments > button{min-height:42px;text-align:left}
 #bookingRelatedDocuments > p{margin:0}
 @media(max-width:550px){.booking-related-buttons{flex-direction:column}.booking-related-buttons button{flex:none;width:100%}}
+
+/* Avertissement explicite lorsque le formulaire contient des changements. */
+.draft-saved-status{margin:10px 0;padding:9px 12px;border-left:3px solid #609c75;background:#1c3027;color:#d6f6df;font-size:.83rem;border-radius:6px}
+.draft-saved-status.has-unsaved{border-color:#ebad59;background:#39291c;color:#ffedc4}

@@ -87,6 +87,7 @@ $('bookingStartQuote').addEventListener('click',async()=>{
     fillQuoteForm();
     $('quoteBooking').value=item.id;
     fillFromBooking();
+    updateDocumentDraftStatus('devis');
   }catch(error){notify('Impossible de préparer le devis : '+error.message);}
 });
 $('bookingStartInvoice').addEventListener('click',async()=>{
@@ -99,6 +100,7 @@ $('bookingStartInvoice').addEventListener('click',async()=>{
     fillInvoice();
     $('invoiceBooking').value=item.id;
     populateInvoiceFromBooking();
+    updateDocumentDraftStatus('factures');
   }catch(error){notify('Impossible de préparer la facture : '+error.message);}
 });
 bookingDialog.addEventListener('close',()=>{bookingRelatedRequest++;});
