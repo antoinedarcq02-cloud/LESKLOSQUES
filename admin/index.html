@@ -159,7 +159,7 @@
         </div>
         <p id="quoteNumber" class="muted small">Numéro attribué lors du premier enregistrement.</p>
         <p id="quoteDraftStatus" class="draft-saved-status" role="status" aria-live="polite" hidden></p>
-        <p><span id="quoteEmailStatus" class="tag pending" role="status" aria-live="polite" hidden>En attente d’envoi</span></p>
+        <p><span id="quoteEmailStatus" class="tag draft" role="status" aria-live="polite" hidden>Brouillon</span></p>
         <p id="quoteLocked" class="quote-lock-note" hidden>Ce devis est finalisé et verrouillé pour préserver la version transmise. Pour une modification, prépare un nouveau devis.</p>
         <form id="officialQuoteForm">
           <h3>1. Client</h3>
@@ -176,14 +176,14 @@
             <label>Date de la prestation *<input name="event_date" type="date"></label>
             <label>Lieu de la prestation *<input name="event_location" maxlength="240" placeholder="Ex. Marché de Noël de Pia"></label>
           </div>
-          <p class="muted small" id="quotePricingInfo">Écris la description à faire apparaître dans le tableau du devis, indique la quantité (1 par défaut) et le prix TTC.</p>
+          <p class="muted small" id="quotePricingInfo">Dans « Type de prestation », indique le concert ou le service. Dans « Prix TTC (€) », saisis le montant en euros. La quantité est à 1 par défaut.</p>
           <datalist id="klosquesServiceSuggestions">
             <option value="Prestation Groupe Les Klosques"></option>
             <option value="Prestation Groupe Les Klosques + 1 technicien sans prestataire technique"></option>
             <option value="Animation musicale pour réception partenaires commerciaux et clients"></option>
             <option value="Frais de déplacement"></option>
           </datalist>
-          <div class="quote-lines-header" aria-hidden="true"><span>Description sur le PDF</span><span>Qté</span><span id="quotePriceTypeText">Prix TTC (€)</span><span></span></div>
+          <div class="quote-lines-header" aria-hidden="true"><span>Type de prestation</span><span>Quantité</span><span id="quotePriceTypeText">Prix TTC (€)</span><span></span></div>
           <div id="quoteLines"></div>
           <button id="addQuoteLine" type="button" class="secondary">+ Ajouter une ligne</button>
           <div class="quote-total" id="quoteTotals">Total TTC : 0,00 €</div>
@@ -277,8 +277,8 @@
             <label>Date de la prestation *<input type="date" name="event_date"></label>
             <label>Lieu de la prestation *<input name="event_location" maxlength="240" placeholder="Ex. Cabestany"></label>
           </div>
-          <p id="invoicePricingInfo" class="muted small">Décris la prestation telle qu’elle figurera dans le tableau de la facture ; saisis le montant TTC convenu.</p>
-          <div class="quote-lines-header" aria-hidden="true"><span>Description sur le PDF</span><span>Qté</span><span id="invoicePriceTypeText">Prix TTC (€)</span><span></span></div>
+          <p id="invoicePricingInfo" class="muted small">Dans « Type de prestation », indique le concert ou le service. Dans « Prix TTC (€) », saisis le montant en euros. La quantité est à 1 par défaut.</p>
+          <div class="quote-lines-header" aria-hidden="true"><span>Type de prestation</span><span>Quantité</span><span id="invoicePriceTypeText">Prix TTC (€)</span><span></span></div>
           <div id="invoiceLines"></div>
           <button type="button" class="secondary" id="addInvoiceLine">+ Ajouter une ligne</button>
           <p id="invoiceTotals" class="quote-total">Total TTC : 0,00 €</p>
