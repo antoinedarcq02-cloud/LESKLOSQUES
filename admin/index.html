@@ -15,6 +15,7 @@
 <script src="/admin/reminders.js" defer></script>
 <script src="/admin/integrations-ui.js" defer></script>
 <script src="/admin/rib-settings.js" defer></script>
+<script src="/admin/data-protection.js" defer></script>
 <script src="/admin/navigation-enhancements.js" defer></script>
 <script src="/admin/booking-actions.js" defer></script>
 <script src="/admin/draft-guards.js" defer></script>
@@ -399,6 +400,19 @@
         </div>
         <p id="invoiceRibStatus" class="muted small" role="status" aria-live="polite">Vérification du RIB…</p>
         <p class="muted small">Le PDF est conservé dans la base privée de Klosques Manager. Seul le gestionnaire peut l’ajouter, le remplacer ou le retirer. Les musiciens peuvent envoyer les factures avec le RIB, sans accéder à son fichier dans cette rubrique.</p>
+      </section>
+      <section class="panel" id="dataProtectionPanel" hidden>
+        <h2>Sauvegardes et protection des dossiers</h2>
+        <p class="muted">Télécharge une archive privée des demandes, devis, factures et historiques administratifs. Elle contient des données de clients : conserve-la dans un emplacement sûr, sans l’envoyer par messagerie.</p>
+        <div class="modal-actions">
+          <button type="button" class="primary" id="exportManagerArchive">Exporter les données administratives</button>
+        </div>
+        <p id="exportManagerStatus" class="muted small" role="status" aria-live="polite"></p>
+        <p class="muted small">Cet export JSON n’inclut ni le RIB, ni les mots de passe, ni les accès Google/Hotmail. Ce n’est pas une sauvegarde D1 complète : pour restaurer la base, utilise les outils de restauration Cloudflare D1.</p>
+        <h3>Anciennes demandes et conservation</h3>
+        <p class="muted small">L’accueil signale les demandes du site sans suite apparente depuis environ 11 mois, à vérifier avant toute suppression. Il n’y a <strong>aucune suppression automatique</strong> : l’existence d’un devis, d’une facture ou d’échanges extérieurs doit être prise en compte.</p>
+        <h3>Corriger une facture déjà émise</h3>
+        <p class="muted small">Une facture émise reste verrouillée et numérotée. Une correction doit être justifiée avec une facture rectificative ou un avoir portant sa propre référence et celle de la facture initiale selon le cas. Ne modifie pas simplement le PDF d’origine. <a href="https://entreprendre.service-public.gouv.fr/vosdroits/F23208" target="_blank" rel="noopener noreferrer">Consulter les règles officielles de facturation</a>.</p>
       </section>
       <div class="panel email-settings-panel" id="emailSettingsPanel" hidden>
         <h2>Messagerie et notifications</h2>
