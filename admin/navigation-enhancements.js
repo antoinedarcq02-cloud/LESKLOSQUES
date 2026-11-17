@@ -1,9 +1,11 @@
 'use strict';
 
-// Recherche transversale réservée aux musiciens connectés : aucune donnée
-// personnelle n'est mise dans l'URL, le stockage local ou un moteur externe.
+// Recherche contextuelle réservée aux musiciens connectés et limitée aux
+// Demandes, Devis et Factures. Aucune donnée personnelle n'est envoyée
+// à un moteur externe, stockée localement ou mise dans l'URL.
 (()=>{
   const input=$('managerSearchInput');
+  const panel=$('managerSearchPanel');
   const results=$('managerSearchResults');
   const moreToggle=$('managerMoreToggle');
   const moreMenu=$('managerMoreMenu');
@@ -14,7 +16,7 @@
   let loading=false;
   const closeSearch=()=>{results.hidden=true;results.replaceChildren();};
   const entries=()=>{
-    const bookings=state.items.map(item=>({
+    const bookings=state.items.filter(item=>item.source==='site').map(item=>({
       type:'dossier',id:item.id,title:item.name||'Concert',
       info:[item.location,item.event_date,item.email,item.status,item.package].filter(Boolean).join(' · '),
       tokens:[item.name,item.location,item.event_date,item.email,item.phone,item.package,item.status].join(' '),
@@ -30,12 +32,16 @@
       info:[inv.number||'Brouillon',inv.data?.event_date,inv.data?.event_location,inv.paid?'Payée':inv.status].filter(Boolean).join(' · '),
       tokens:[inv.number,inv.data?.client_name,inv.data?.client_email,inv.data?.event_date,inv.data?.event_location].join(' ')
     }));
-    return [...bookings,...quotes,...invoices];
+    return state.page==='demandes'?bookings:
+      state.page==='devis'?quotes:
+      state.page==='factures'?invoices:[];
   };
   function renderSearch(){
     results.replaceChildren();
     const query=normalise(input.value);
-    if(!state.logged||!query){closeSearch();return;}
+    if(!state.logged||panel.hidden||!['demandes','devis','factures'].includes(state.page)||!query){
+      closeSearch();return;
+    }
     const words=query.split(/\s+/).filter(Boolean);
     const found=entries().filter(entry=>{
       const tokens=normalise(entry.tokens);
@@ -44,8 +50,8 @@
     results.hidden=false;
     const header=document.createElement('p');
     header.className='manager-search-count';
-    header.textContent=found.length?found.length+' résultat(s) affiché(s)'+(loading?' · Recherche des documents…':'')
-      :(loading?'Recherche des devis et factures…':'Aucun résultat. Essaie un autre nom, numéro ou lieu.');
+    header.textContent=found.length?found.length+' résultat(s) affiché(s)'+(loading?' · Chargement…':'')
+      :(loading?'Recherche en cours…':'Aucun résultat. Essaie un autre nom, numéro ou lieu.');
     results.append(header);
     for(const entry of found){
       const button=document.createElement('button');
@@ -60,17 +66,20 @@
     }
   }
   async function loadSearchDocuments(){
-    if(!state.logged)return;
+    if(!state.logged||panel.hidden)return;
+    const page=state.page;
+    if(page==='demandes'){renderSearch();return;}
+    if(page!=='devis'&&page!=='factures')return;
     const version=++searchVersion;
     loading=true;renderSearch();
     try{
-      const [quotes,invoices]=await Promise.all([
-        callApi('/api/admin/quotes'),callApi('/api/admin/invoices')
-      ]);
-      if(version!==searchVersion||!state.logged)return;
-      documents={quotes:quotes.quotes||[],invoices:invoices.invoices||[]};
+      const data=await callApi(page==='devis'?'/api/admin/quotes':'/api/admin/invoices');
+      if(version!==searchVersion||!state.logged||page!==state.page)return;
+      if(page==='devis')documents.quotes=data.quotes||[];
+      else documents.invoices=data.invoices||[];
     }catch(error){
-      if(version===searchVersion)notify('Recherche des documents indisponible : '+error.message);
+      if(version===searchVersion&&page===state.page)
+        notify('Recherche des documents indisponible : '+error.message);
     }finally{
       if(version===searchVersion){loading=false;renderSearch();}
     }
@@ -81,17 +90,8 @@
       if(entry.type==='dossier'){
         const item=state.items.find(x=>x.id===entry.id);
         if(!item){notify('Ce dossier n’est plus accessible.');return;}
-        if(item.source==='site'&&!['option','confirme','termine'].includes(item.status)){
-          $('requestFilter').value='all';setPage('demandes');
-        }else{
-          const month=String(item.event_date||'').slice(0,7);
-          if(/^\d{4}-(0[1-9]|1[0-2])$/.test(month)){
-            $('agendaMonth').value=month;
-            state.selectedDay=item.event_date;
-          }
-          setPage('agenda');
-          loadGoogleCalendar();
-        }
+        $('requestFilter').value='all';
+        setPage('demandes');
         openEditor(item);
       }else if(entry.type==='devis'){
         setPage('devis');
@@ -110,7 +110,7 @@
       }
     }catch(error){notify('Impossible d’ouvrir le document : '+error.message);}
   }
-  input.addEventListener('focus',()=>{if(state.logged)loadSearchDocuments();});
+  input.addEventListener('focus',()=>{if(state.logged&&!panel.hidden)loadSearchDocuments();});
   input.addEventListener('input',renderSearch);
   input.addEventListener('keydown',event=>{
     if(event.key==='Escape'){closeSearch();input.blur();}
