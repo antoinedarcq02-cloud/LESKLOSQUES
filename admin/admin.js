@@ -76,7 +76,7 @@ async function signedIn(account, showWelcome = false) {
   $('externalConnectionsPanel').hidden = account.role !== 'admin';
   $('newGoogleEvent').hidden = false;
   $('newGoogleEvent').disabled = true; // Activé après vérification de la connexion Google.
-  document.querySelector('[data-tab="messagerie"]').hidden = account.role !== 'admin';
+  document.querySelectorAll('[data-tab="messagerie"]').forEach(button=>{button.hidden=account.role!=='admin';});
   $('cancelPasswordChange').hidden = state.mustChangePassword;
   $('passwordExplanation').textContent = state.mustChangePassword
     ? 'Ceci est ton mot de passe provisoire : choisis-en un nouveau, personnel, avant de consulter les dossiers.'

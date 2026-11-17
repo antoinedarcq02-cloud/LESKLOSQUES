@@ -13,6 +13,7 @@
 <script src="/admin/invoice-builder.js" defer></script>
 <script src="/admin/reminders.js" defer></script>
 <script src="/admin/integrations-ui.js" defer></script>
+<script src="/admin/navigation-enhancements.js" defer></script>
 </head>
 <body>
 <header class="topbar">
@@ -86,6 +87,11 @@
 <div id="workspace" class="workspace" hidden>
   <main class="content">
     <div class="heading"><div><p class="eyebrow">ESPACE PRIVÉ DES MUSICIENS</p><h1 id="pageTitle">Tableau de bord</h1></div></div>
+    <section class="manager-quick-search" role="search" aria-label="Recherche dans KLOSQUE MANAGER">
+      <label for="managerSearchInput">Rechercher un client, un dossier, un devis ou une facture</label>
+      <input id="managerSearchInput" type="search" autocomplete="off" spellcheck="false" placeholder="Nom, ville, date ou numéro de document…">
+      <div id="managerSearchResults" class="manager-search-results" aria-live="polite" hidden></div>
+    </section>
     <section id="panel-home" class="page">
       <div class="stats">
         <div class="stat"><span>Demandes à traiter</span><strong id="statRequests">0</strong></div>
@@ -406,6 +412,12 @@
     <button type="button" data-tab="factures"><span>▤</span>Factures</button>
     <button type="button" data-tab="messagerie"><span>✉</span>Boîte mail</button>
     <button type="button" data-tab="site"><span>⚙</span>Site</button>
+    <button type="button" class="more-nav-toggle" id="managerMoreToggle" aria-expanded="false" aria-controls="managerMoreMenu" type="button"><span aria-hidden="true">☰</span>Plus</button>
+    <div id="managerMoreMenu" class="more-nav-panel" hidden aria-label="Autres rubriques">
+      <button type="button" data-tab="concerts">♫ Fiches concerts</button>
+      <button type="button" data-tab="messagerie">✉ Boîte mail</button>
+      <button type="button" data-tab="site">⚙ Gestion du site</button>
+    </div>
   </nav>
 </div>
 <dialog id="bookingDialog" aria-labelledby="dialogTitle">

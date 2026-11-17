@@ -283,3 +283,28 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
 .invoice-pdf-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;min-height:44px}
 .invoice-pdf-link:hover,.invoice-pdf-link:focus-visible{color:#fff;border-color:#ca7883}
 
+
+/* Recherche transversale, disponible sur tous les écrans du Manager. */
+.manager-quick-search{position:relative;margin:-12px 0 22px;z-index:5;max-width:740px}
+.manager-quick-search label{margin:0 0 7px;color:#ded3d9}
+.manager-quick-search input{min-height:46px;background:#231d23;border-color:#765863}
+.manager-search-results{position:relative;margin-top:6px;padding:7px;background:#231d23;border:1px solid #70535c;border-radius:12px;box-shadow:0 15px 35px #0006;max-height:360px;overflow-y:auto}
+.manager-search-count{font-size:.78rem;color:#dac8cf;margin:5px 9px 9px}
+.manager-search-result{display:flex;flex-direction:column;align-items:flex-start;text-align:left;width:100%;padding:11px 12px;border:0;border-radius:9px;color:#f9f2f4;background:transparent;gap:4px}
+.manager-search-result:hover,.manager-search-result:focus-visible{background:#41303a;outline:2px solid #b56a77}
+.manager-search-result span{font-size:.78rem;color:#cfbec6;overflow-wrap:anywhere}
+.more-nav-toggle,.more-nav-panel{display:none}
+@media(max-width:730px){
+  .manager-quick-search{margin:-6px 0 18px}
+  .bottom-nav{overflow-x:visible;justify-content:space-around}
+  .bottom-nav > button[data-tab="concerts"],
+  .bottom-nav > button[data-tab="messagerie"],
+  .bottom-nav > button[data-tab="site"]{display:none}
+  .bottom-nav > button[data-tab],.bottom-nav > .more-nav-toggle{display:flex;flex:1 1 0;min-width:0;width:auto;min-height:57px;padding:9px 1px 6px;font-size:.67rem}
+  .bottom-nav > .more-nav-toggle{display:flex}
+  .bottom-nav > .more-nav-toggle[aria-expanded="true"],
+  .bottom-nav > .more-nav-toggle.active{color:#ff7180;font-weight:800}
+  .bottom-nav > .more-nav-panel:not([hidden]){display:flex;position:absolute;bottom:calc(100% + 8px);right:7px;width:min(290px,calc(100vw - 14px));flex-direction:column;gap:4px;padding:9px;border:1px solid #805c68;border-radius:14px;background:#241d24;box-shadow:0 9px 35px #000b}
+  .bottom-nav > .more-nav-panel button{display:block;width:100%;min-height:45px;flex:none;text-align:left;padding:11px 14px;font-size:.9rem;border-radius:9px}
+  .bottom-nav > .more-nav-panel button.active{background:#4a2933}
+}
