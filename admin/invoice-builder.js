@@ -433,13 +433,12 @@ async function showInvoicePdf(download=false,selectedInvoice=null,actionButton=n
       throw Error('Le serveur n’a pas retourné de PDF. Reconnecte-toi puis réessaie.');
     const blob=await response.blob();
     if(!blob.size)throw Error('Le fichier PDF est vide.');
-    const url=URL.createObjectURL(blob);
-    invoicePdfPreviewUrls.add(url);
-    const filename=(invoice.number||'BROUILLON-'+invoice.id.slice(0,8))+'.pdf';
     if(download){
-      downloadInvoicePdfBlob(url,filename);
+      const url=URL.createObjectURL(blob);
+      invoicePdfPreviewUrls.add(url);
+      downloadInvoicePdfBlob(url,(invoice.number||'BROUILLON-'+invoice.id.slice(0,8))+'.pdf');
     }else{
-      showManagerPdfPreview(url,invoice.number||'Brouillon de facture','factures');
+      await showManagerPdfPreview(blob,invoice.number||'Brouillon de facture','factures');
     }
   }catch(error){
     notify('PDF non ouvert : '+error.message);
