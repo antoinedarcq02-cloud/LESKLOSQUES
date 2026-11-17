@@ -1,0 +1,31 @@
+name: Contrôles du site et du Manager
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  javascript:
+    name: Vérification JavaScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Vérifier la syntaxe des scripts publics, administratifs et API
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in script.js admin/*.js; do
+            node --input-type=module --check < "$file"
+          done
+          while IFS= read -r -d '' file; do
+            node --input-type=module --check < "$file"
+          done < <(find functions -name '*.js' -type f -print0)
+      - name: Exécuter les contrôles de non-régression
+        run: node --test tests/*.test.mjs
