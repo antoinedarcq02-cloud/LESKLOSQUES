@@ -112,6 +112,7 @@ function updateQuoteLock() {
   }
   $('quoteLocked').hidden = !locked;
   $('printOfficialQuote').disabled = !officialQuoteState.current;
+  $('downloadOfficialQuote').disabled = !officialQuoteState.current;
   $('finalizeOfficialQuote').hidden = locked;
   $('saveOfficialQuote').hidden = locked;
   $('sendOfficialQuote').hidden = !locked;
@@ -364,114 +365,62 @@ async function saveOfficialQuote(finalize = false) {
 }
 $('saveOfficialQuote').addEventListener('click',()=>saveOfficialQuote(false));
 $('finalizeOfficialQuote').addEventListener('click',()=>saveOfficialQuote(true));
-function quoteDocumentHtml(quote) {
-  // Memes colonnes et totaux TTC que la piece jointe PDF envoyee par Hotmail.
-  // Le devis imprime s'inspire du modele HAPPY LIVE 66 fourni par le groupe.
-  const data=quote.data;
-  const safe=value=>escapeHtml(String(value??''));
-  const htmlLine=value=>safe(value).replace(/\n/g,'<br>');
-  const totals=officialTotals(data);
-  const taxable=!totals.pending;
-  const direct=totals.direct;
-  const rate=direct || !taxable || data.vat_mode==='franchise'?0:Number(data.vat_mode);
-  let cumulativeHT=0,previousTax=0;
-  const rows=data.lines.map(line=>{
-    const ht=Math.round(line.qty*line.price_cents);
-    cumulativeHT+=ht;
-    const currentTax=Math.round(cumulativeHT*rate/100);
-    const displayed=taxable?ht+currentTax-previousTax:ht;
-    previousTax=currentTax;
-    return '<tr><td>'+safe(line.label)+'</td><td class="number">'+
-      safe(Number(line.qty).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}))+
-      '</td><td class="number">'+safe(officialMoney(taxable?
-        Math.round(line.price_cents*(100+rate)/100):line.price_cents))+
-      '</td><td class="number">'+safe(officialMoney(displayed))+'</td></tr>';
-  }).join('');
-  const brand=/happy\s*live\s*66/i.test(data.issuer_name||'')?'Happy Live 66':'Les Klosques';
-  const taxLabel=data.vat_mode==='franchise'?'TVA non applicable':('TVA '+safe(data.vat_mode)+' %');
-  const draftLabel=quote.status==='finalise'?'':'<p class="draft">BROUILLON - NE PAS TRANSMETTRE</p>';
-  return '<!doctype html><html lang="fr"><head><meta charset="utf-8">'+
-    '<title>'+safe(quote.number)+' - Les Klosques</title>'+
-    '<style>'+
-    '@page{size:A4;margin:17mm}*{box-sizing:border-box}'+
-    'body{font:10px/1.45 Arial,Helvetica,sans-serif;color:#2d2d2d;margin:0;background:#fff}'+
-    '.sheet{position:relative;max-width:176mm;margin:0 auto}'+
-    '.top{min-height:108px;position:relative;display:flex;align-items:center;padding:19px 0 0 30px;gap:20px}'+
-    '.faders{display:flex;gap:20px;height:54px;align-items:center}'+
-    '.faders i{height:46px;width:1px;background:#989f9f;display:block;position:relative}'+
-    '.faders i:after{content:"";display:block;position:absolute;left:-5px;top:9px;width:11px;height:7px;background:#a1a7a6;border:1px solid #828b89}'+
-    '.faders i:nth-child(2):after{top:23px}.faders i:nth-child(3):after{top:13px}.faders i:nth-child(4):after{top:34px}'+
-    '.brand{font:italic bold 19px Georgia,serif;color:#666;margin:0}'+
-    '.document-label{position:absolute;right:22px;bottom:0;font-size:17px;color:#e3e3e3;letter-spacing:2px}'+
-    '.identity{display:grid;grid-template-columns:52% 48%;gap:13px;margin-top:25px;min-height:170px}'+
-    '.identity strong{font-size:9px}.issuer,.metadata,.client{overflow-wrap:anywhere}'+
-    '.issuer p,.metadata p,.client p{margin:3px 0}'+
-    '.metadata{padding-top:9px}.client{margin-top:48px;font-size:10px}'+
-    '.event{margin:6px 0 24px;font-size:9px;min-height:26px}'+
-    'table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:9px}'+
-    'th,td{border:1px solid #cacaca;padding:7px 6px;text-align:left;vertical-align:top;overflow-wrap:anywhere}'+
-    'th{text-align:center;background:#f8f8f8;font-size:8px;font-weight:700}'+
-    'td.number{text-align:right;white-space:nowrap}'+
-    'th:nth-child(1){width:48%}th:nth-child(2){width:10%}th:nth-child(3){width:24%}th:nth-child(4){width:18%}'+
-    '.totals{width:41%;margin-left:auto;margin-top:0}'+
-    '.totals td{padding:5px 6px}.totals .label{font-size:8.5px;text-align:right;width:57%}'+
-    '.totals .price{text-align:right;white-space:nowrap}.totals .grand{font-weight:700;background:#f6f6f6}'+
-    '.vat-note{font-size:8px;text-align:right;margin:6px 0;color:#555}'+
-    '.payment{margin-top:52px;white-space:normal;font-size:9px}'+
-    '.payment p{margin:5px 0}.agreement{margin-top:35px;font-size:9px}'+
-    '.signature-line{margin-top:40px;border-bottom:1px solid #aaa;width:44%}'+
-    '.draft{border:1px solid #b22;color:#b22;font-size:15px;font-weight:bold;padding:8px;text-align:center}'+
-    '.actions{margin:26px 0}button{border:0;background:#333;color:white;padding:10px 16px;cursor:pointer}'+
-    '@media print{.actions{display:none}.sheet{max-width:none}thead{display:table-header-group}tr{break-inside:avoid}}'+
-    '</style></head><body><main class="sheet">'+
-    '<div class="top"><div class="faders" aria-hidden="true"><i></i><i></i><i></i><i></i></div>'+
-    '<h1 class="brand">'+safe(brand)+'</h1><span class="document-label">DEVIS</span></div>'+
-    draftLabel+
-    '<section class="identity"><div class="issuer"><strong>'+safe(data.issuer_name||'Structure émettrice')+'</strong>'+
-    '<p>'+htmlLine(data.issuer_address)+'</p>'+
-    (data.issuer_identifier?'<p>Identifiant : '+safe(data.issuer_identifier)+'</p>':'')+
-    (data.issuer_tax_number?'<p>TVA : '+safe(data.issuer_tax_number)+'</p>':'')+
-    (data.issuer_legal?'<p>'+htmlLine(data.issuer_legal)+'</p>':'')+
-    (data.issuer_contact?'<p>'+htmlLine(data.issuer_contact)+'</p>':'')+
-    '</div><div><div class="metadata"><p><strong>DATE :</strong> '+safe(dateLabel(data.issue_date))+'</p>'+
-    '<p><strong>N° DEVIS :</strong> '+safe(quote.number)+'</p>'+
-    '<p><strong>VALABLE JUSQU’AU :</strong> '+safe(dateLabel(data.valid_until))+'</p></div>'+
-    '<div class="client"><p><strong>À : '+safe(data.client_name)+'</strong></p>'+
-    '<p>'+htmlLine(data.client_address)+'</p>'+
-    (data.client_email?'<p>'+safe(data.client_email)+'</p>':'')+
-    '</div></div></section>'+
-    '<p class="event"><strong>PRESTATION :</strong> '+safe(dateLabel(data.event_date))+
-    (data.event_time?' à '+safe(data.event_time):'')+
-    (data.event_location?' - '+safe(data.event_location):'')+
-    (data.description?'<br>'+htmlLine(data.description):'')+'</p>'+
-    '<table><thead><tr><th>DESCRIPTION</th><th>QUANTITÉ</th><th>PRIX UNITAIRE ('+
-    (taxable?'TTC':'HT')+')</th><th>MONTANT ('+(taxable?'TTC':'HT')+
-    ')</th></tr></thead><tbody>'+rows+'</tbody></table>'+
-    '<table class="totals"><tbody><tr><td class="label">'+(direct?'SOUS-TOTAL':'SOUS-TOTAL HT')+
-    '</td><td class="price">'+safe(officialMoney(totals.ht))+'</td></tr>'+
-    (direct?'':'<tr><td class="label">'+(taxable?taxLabel:'TVA À PRÉCISER')+
-    '</td><td class="price">'+safe(taxable?officialMoney(totals.vat):'—')+'</td></tr>')+
-    '<tr class="grand"><td class="label">TOTAL TTC</td><td class="price">'+
-    safe(taxable?officialMoney(totals.ttc):'À préciser')+'</td></tr></tbody></table>'+
-    (data.vat_mode==='franchise'?'<p class="vat-note">TVA non applicable, art. 293 B du CGI</p>':'')+
-    (data.payment_terms||data.conditions?'<section class="payment">'+
-      (data.payment_terms?'<p>Ordre du règlement : '+safe(data.issuer_name)+
-        '</p><p>Modalités de paiement : '+htmlLine(data.payment_terms)+'</p>':'')+
-      (data.conditions?'<p>Conditions particulières : '+htmlLine(data.conditions)+'</p>':'')+
-    '</section>':'')+
-    '<div class="agreement">Bon pour accord - date et signature du client :'+
-    '<div class="signature-line"></div></div>'+
-    '<div class="actions"><button onclick="window.print()">Imprimer / Enregistrer en PDF</button></div>'+
-    '</main></body></html>';
-}
-$('printOfficialQuote').addEventListener('click',()=> {
-  const quote = officialQuoteState.current;
-  if (!quote) return;
-  const win = window.open('','_blank');
-  if (!win) {notify('Autorise les fenêtres contextuelles pour imprimer le devis.');return;}
-  win.document.open();
-  win.document.write(quoteDocumentHtml(quote));
-  win.document.close();
-  win.focus();
+// Le PDF consulté est strictement celui produit par l'API sécurisée pour
+// les pièces jointes envoyées aux clients. Aucun doublon de modèle HTML.
+const openQuotePdfUrls=new Set();
+window.addEventListener('pagehide',()=>{
+  for(const url of openQuotePdfUrls)URL.revokeObjectURL(url);
+  openQuotePdfUrls.clear();
 });
+function saveQuotePdfBlob(url,filename){
+  const link=document.createElement('a');
+  link.href=url;link.download=filename;
+  document.body.appendChild(link);link.click();link.remove();
+  window.setTimeout(()=>{URL.revokeObjectURL(url);openQuotePdfUrls.delete(url);},60000);
+}
+async function showOfficialQuotePdf(download=false){
+  const quote=officialQuoteState.current;
+  if(!quote?.id){notify('Enregistre le devis avant de consulter son PDF.');return;}
+  const newTab=download?null:window.open('about:blank','_blank');
+  if(newTab){
+    try{
+      newTab.document.title='Ouverture du devis';
+      newTab.document.body.textContent='Chargement du devis PDF…';
+    }catch{}
+  }
+  const preview=$('printOfficialQuote'),save=$('downloadOfficialQuote');
+  preview.disabled=save.disabled=true;
+  try{
+    const response=await fetch('/api/admin/quotes/'+encodeURIComponent(quote.id)+'/pdf',{
+      credentials:'same-origin',cache:'no-store',headers:{Accept:'application/pdf'}
+    });
+    if(!response.ok){
+      if(response.status===401)throw Error('Session expirée. Reconnecte-toi au Manager.');
+      throw Error('Le PDF du devis est indisponible.');
+    }
+    if(!String(response.headers.get('Content-Type')||'').includes('application/pdf'))
+      throw Error('Le serveur n’a pas renvoyé un PDF.');
+    const blob=await response.blob();
+    if(!blob.size)throw Error('Le devis PDF est vide.');
+    const url=URL.createObjectURL(blob);
+    openQuotePdfUrls.add(url);
+    const name=(quote.number||'DEVIS-BROUILLON')+'.pdf';
+    if(download)saveQuotePdfBlob(url,name);
+    else if(newTab&&!newTab.closed){
+      newTab.location.replace(url);
+      try{newTab.opener=null;}catch{}
+    }else{
+      saveQuotePdfBlob(url,name);
+      notify('L’aperçu est bloqué par ton navigateur. Le PDF a été téléchargé.');
+    }
+  }catch(error){
+    if(newTab&&!newTab.closed)newTab.close();
+    notify('PDF non ouvert : '+error.message);
+  }finally{
+    const ready=Boolean(officialQuoteState.current?.id);
+    preview.disabled=save.disabled=!ready;
+  }
+}
+$('printOfficialQuote').addEventListener('click',()=>showOfficialQuotePdf(false));
+$('downloadOfficialQuote').addEventListener('click',()=>showOfficialQuotePdf(true));
 document.querySelector('[data-tab="devis"]').addEventListener('click',loadOfficialQuotes);
