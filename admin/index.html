@@ -89,9 +89,9 @@
 <div id="workspace" class="workspace" hidden>
   <main class="content">
     <div class="heading"><div><p class="eyebrow">ESPACE PRIVÉ DES MUSICIENS</p><h1 id="pageTitle">Tableau de bord</h1></div></div>
-    <section class="manager-quick-search" role="search" aria-label="Recherche dans KLOSQUE MANAGER">
-      <label for="managerSearchInput">Rechercher un client, un dossier, un devis ou une facture</label>
-      <input id="managerSearchInput" type="search" autocomplete="off" spellcheck="false" placeholder="Nom, ville, date ou numéro de document…">
+    <section id="managerSearchPanel" class="manager-quick-search" role="search" aria-label="Rechercher dans les demandes, devis et factures" hidden>
+      <label id="managerSearchLabel" for="managerSearchInput">Rechercher une demande</label>
+      <input id="managerSearchInput" type="search" autocomplete="off" spellcheck="false" placeholder="Nom, ville ou date de la demande…">
       <div id="managerSearchResults" class="manager-search-results" aria-live="polite" hidden></div>
     </section>
     <section id="panel-home" class="page">
