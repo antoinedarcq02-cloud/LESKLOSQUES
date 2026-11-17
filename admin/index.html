@@ -146,8 +146,7 @@
       <div class="section-header">
         <div>
           <h2>Devis à remplir</h2>
-          <p class="muted small">Crée un devis depuis une demande client ou sans demande préalable. Après finalisation, envoie-le à l’adresse e-mail fournie par le client.</p>
-          <p class="muted small">Lors de l’envoi, le devis PDF sera accompagné du RIB de l’association Happy Live 66. Aucun envoi n’est automatique.</p>
+          <p class="muted small">Crée un devis depuis une demande client ou sans demande préalable. Après finalisation, envoie le PDF à l’adresse e-mail fournie par le client. Aucun envoi automatique.</p>
         </div>
         <button type="button" class="primary" id="newQuote">+ Nouveau devis</button>
       </div>
@@ -232,6 +231,7 @@
         <div>
           <h2>Factures Les Klosques</h2>
           <p class="muted small">Crée une facture sans demande préalable ou depuis un devis, puis envoie son PDF à l'adresse fournie par le client. Aucun envoi automatique.</p>
+          <p class="muted small">Lors de l’envoi, la facture PDF sera accompagnée du RIB de l’association Happy Live 66.</p>
         </div>
         <button type="button" class="primary" id="newInvoice">+ Nouvelle facture</button>
       </div>
@@ -387,8 +387,8 @@
         </div>
       </section>
       <section class="panel" id="invoiceRibPanel" hidden>
-        <h2>RIB à joindre aux devis et factures</h2>
-        <p class="muted">Enregistre ici une seule fois le PDF bancaire de Happy Live 66. Il sera joint automatiquement aux e-mails de devis et de factures envoyés depuis Klosques Manager, sans publication sur le site.</p>
+        <h2>RIB à joindre aux factures</h2>
+        <p class="muted">Enregistre ici une seule fois le PDF bancaire de Happy Live 66. Il sera joint automatiquement à chaque facture envoyée depuis Klosques Manager, sans publication sur le site.</p>
         <label for="invoiceRibFile">Choisir le RIB au format PDF (1,35 Mo maximum)
           <input id="invoiceRibFile" type="file" accept=".pdf,application/pdf">
         </label>
@@ -398,7 +398,7 @@
           <button type="button" class="danger" id="deleteInvoiceRib" hidden>Retirer le RIB</button>
         </div>
         <p id="invoiceRibStatus" class="muted small" role="status" aria-live="polite">Vérification du RIB…</p>
-        <p class="muted small">Le PDF est conservé dans la base privée de Klosques Manager. Seul le gestionnaire peut l’ajouter, le remplacer ou le retirer. Les musiciens peuvent envoyer les devis et factures avec le RIB, sans accéder à son fichier dans cette rubrique.</p>
+        <p class="muted small">Le PDF est conservé dans la base privée de Klosques Manager. Seul le gestionnaire peut l’ajouter, le remplacer ou le retirer. Les musiciens peuvent envoyer les factures avec le RIB, sans accéder à son fichier dans cette rubrique.</p>
       </section>
       <div class="panel email-settings-panel" id="emailSettingsPanel" hidden>
         <h2>Messagerie et notifications</h2>
@@ -562,7 +562,6 @@
     <input id="sendQuoteEmail" type="email" maxlength="254" autocomplete="off" placeholder="client@exemple.fr" required>
   </label>
   <p id="sendQuoteDestination" class="delete-request-details" aria-live="polite"></p>
-  <p id="sendQuoteRibStatus" class="muted small" role="status" aria-live="polite">Vérification du RIB Happy Live 66…</p>
   <label for="sendQuoteMessage">Message personnel à joindre à l'e-mail (facultatif)
     <textarea id="sendQuoteMessage" rows="4" maxlength="2000" placeholder="Ex. Merci pour votre confiance. Nous restons disponibles pour toute question."></textarea>
   </label>
