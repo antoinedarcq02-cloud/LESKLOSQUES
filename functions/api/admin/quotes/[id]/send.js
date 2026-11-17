@@ -2,6 +2,7 @@ import { authorize, respond } from "../../../../_lib/admin-auth.js";
 import { createQuotePdf, encodePdfBase64 } from "../../../../_lib/quote-pdf.js";
 import { quoteMailReady, ensureQuoteEmailLog } from "../../../../_lib/quote-mail.js";
 import {microsoftMailReady,sendMicrosoftMail} from "../../../../_lib/microsoft-mail.js";
+import {getInvoiceRib} from "../../../../_lib/invoice-rib.js";
 
 const EMAIL = /^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/;
 const REPLY_TO = "LesKlosques@hotmail.com";
@@ -22,7 +23,10 @@ async function deliver(env,message){
     const result=await env.EMAIL.send({
       from:{name:"Les Klosques",email:env.QUOTE_FROM_EMAIL},to:message.to,
       replyTo:REPLY_TO,subject:message.subject,html:message.html,text:message.text,
-      attachments:[{content:message.attachment,filename:message.filename,type:"application/pdf",disposition:"attachment"}]
+      attachments:message.attachments.map(file=>({
+        content:file.content,filename:file.filename,
+        type:"application/pdf",disposition:"attachment"
+      }))
     });
     if(!result?.messageId)throw new Error("Le service Cloudflare n'a pas confirmé l'envoi.");
     return {provider:"cloudflare",id:result.messageId};
@@ -37,7 +41,7 @@ async function deliver(env,message){
       from:"Les Klosques <"+env.RESEND_FROM_EMAIL+">",
       to:[message.to],reply_to:REPLY_TO,
       subject:message.subject,html:message.html,text:message.text,
-      attachments:[{content:message.attachment,filename:message.filename}]
+      attachments:message.attachments.map(file=>({content:file.content,filename:file.filename}))
     })
   });
   const body=await res.json().catch(()=>({}));
@@ -103,15 +107,28 @@ export async function onRequestPost(context){
       if(Number.isFinite(sent)&&Date.now()-sent<15000)
         return respond({error:"Un envoi vient d'être effectué pour ce devis. Patiente quelques secondes avant de le renvoyer."},429);
     }
+    // Envoyer le devis et le RIB dans un seul e-mail, sans jamais exposer
+    // le document bancaire dans les fichiers publics du site.
+    const rib=await getInvoiceRib(DB);
+    if(!rib)return respond({
+      error:"RIB non configuré : le gestionnaire doit l’ajouter dans Site → RIB à joindre aux devis et factures avant l’envoi.",
+      rib_missing:true
+    },409);
     const data=JSON.parse(quote.data_json);
     const number=quoteNumber(quote);
     const pdf=createQuotePdf({number,data});
     if(pdf.byteLength>4*1024*1024)
       return respond({error:"Le PDF du devis dépasse la taille maximale autorisée."},413);
+    const filename=number+".pdf";
+    const attachments=[
+      {filename,content:encodePdfBase64(pdf)},
+      {filename:rib.filename,content:rib.content}
+    ];
     const lines=[
       "Bonjour,",
       "",
-      "Vous trouverez en pièce jointe notre devis "+number+" concernant votre événement.",
+      "Vous trouverez en pièces jointes notre devis "+number+
+        " concernant votre événement, accompagné du RIB de l’association Happy Live 66.",
       "Date prévue : "+(data.event_date||"à préciser"),
       "Lieu : "+(data.event_location||"à préciser"),
       "",
@@ -123,8 +140,8 @@ export async function onRequestPost(context){
       REPLY_TO
     ];
     const subject="Votre devis Les Klosques - "+number;
-    const html="<p>Bonjour,</p><p>Vous trouverez en pièce jointe notre devis <strong>"+
-      safe(number)+"</strong> concernant votre événement.</p><p>Date prévue : "+
+    const html="<p>Bonjour,</p><p>Vous trouverez en pièces jointes notre devis <strong>"+
+      safe(number)+"</strong> concernant votre événement, accompagné du RIB de l’association Happy Live 66.</p><p>Date prévue : "+
       safe(data.event_date||"à préciser")+"<br>Lieu : "+safe(data.event_location||"à préciser")+
       "</p>"+(personalMessage?"<p>"+safe(personalMessage).replace(/\n/g,"<br>")+"</p>":"")+
       "<p>Merci de nous confirmer par retour d'e-mail si vous acceptez ce devis, ou de nous contacter pour toute question.</p>"+
@@ -134,7 +151,7 @@ export async function onRequestPost(context){
     try{
       receipt=await deliver(context.env,{
         to:recipient,subject,html,text:lines.join("\n"),
-        attachment:encodePdfBase64(pdf),filename:number+".pdf"
+        attachments
       });
     }catch(error){
       console.warn("Envoi refusé",error?.message);
@@ -163,7 +180,8 @@ export async function onRequestPost(context){
     return respond({
       sent:true,accepted:true,recipient,number,
       recorded,status_updated:statusUpdated,
-      message:"Le service de messagerie a accepté l'e-mail avec le devis PDF en pièce jointe."
+      attachments:[filename,rib.filename],
+      message:"Le service de messagerie a accepté le devis PDF et le RIB Happy Live 66 PDF."
     });
   }catch(error){
     console.warn("Erreur préparation de l'envoi du devis",error?.message);
