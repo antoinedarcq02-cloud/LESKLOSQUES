@@ -148,7 +148,7 @@ export function createQuotePdf(quote,options={}){
   // par le groupe : logo coloré, coordonnées en deux colonnes, tableau bleu.
   // Le contenu client et les références proviennent toujours du document.
   const documentLabel=invoice?"FACTURE":"DEVIS";
-  const isHappy=/happy\\s*live\\s*66/i.test(q.issuer_name||"");
+  const isHappy=/happy\s*live\s*66/i.test(q.issuer_name||"");
   const brand=isHappy?"Happy Live 66":"Les Klosques";
   function drawLogo(){
     // Version vectorielle du symbole à quatre curseurs du modèle original,
@@ -185,7 +185,7 @@ export function createQuotePdf(quote,options={}){
     y=para(q.issuer_address||"",43,y-1,281,8.2,10.7);
     if(q.issuer_identifier){
       const id=String(q.issuer_identifier);
-      const label=/^[\\d\\s]{12,20}$/.test(id)?"SIRET":"Identifiant";
+      const label=/^[\d\s]{12,20}$/.test(id)?"SIRET":"Identifiant";
       y=para(label+" : "+id,43,y-3,280,8.1,11);
     }
     if(q.issuer_tax_number)y=para("N° TVA : "+q.issuer_tax_number,43,y-1,280,8.1,11);
@@ -306,7 +306,7 @@ export function createQuotePdf(quote,options={}){
   // plus de rubrique de paiement ni de texte "A preciser" artificiel.
   if(!invoice){
     const payee=String(q.issuer_name||"Structure emettrice")
-      .replace(/\\s*-\\s*Groupe\\s+LES\\s+KLOSQUES.*$/i,"").trim();
+      .replace(/\s*-\s*Groupe\s+LES\s+KLOSQUES.*$/i,"").trim();
     text("Ordre du reglement : "+payee,43,footerY,8.4);
     footerY-=18;
     if(q.valid_until)footerY=para("Devis valable jusqu'au : "+dateLabel(q.valid_until),43,footerY,495,8.1,11);
