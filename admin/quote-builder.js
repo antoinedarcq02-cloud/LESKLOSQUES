@@ -160,6 +160,7 @@ function fillQuoteForm(record = null) {
   $('deleteOfficialQuote').hidden = !record;
   updateOfficialTotals();
   updateQuoteLock();
+  captureDocumentBaseline('devis');
   $('quoteFormPanel').scrollIntoView({block:'start',behavior:'smooth'});
 }
 function fillFromBooking() {
