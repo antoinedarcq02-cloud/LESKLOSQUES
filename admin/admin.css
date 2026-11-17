@@ -308,3 +308,13 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
   .bottom-nav > .more-nav-panel button{display:block;width:100%;min-height:45px;flex:none;text-align:left;padding:11px 14px;font-size:.9rem;border-radius:9px}
   .bottom-nav > .more-nav-panel button.active{background:#4a2933}
 }
+
+/* Actions documentaires dans la fiche client, adaptées au téléphone. */
+.booking-related-actions{margin:20px 0 8px;padding:15px;border:1px solid #6e4b5b;border-radius:13px;background:#251c24}
+.booking-related-actions h3{margin:0 0 10px}
+.booking-related-buttons{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:10px}
+.booking-related-buttons button{flex:1 1 160px;min-height:44px}
+#bookingRelatedDocuments{display:flex;flex-direction:column;gap:8px}
+#bookingRelatedDocuments > button{min-height:42px;text-align:left}
+#bookingRelatedDocuments > p{margin:0}
+@media(max-width:550px){.booking-related-buttons{flex-direction:column}.booking-related-buttons button{flex:none;width:100%}}
