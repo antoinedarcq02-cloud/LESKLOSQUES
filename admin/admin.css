@@ -353,9 +353,23 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
 }
 .manager-pdf-toolbar strong{text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .manager-pdf-toolbar button{min-height:43px}
-.manager-pdf-preview iframe{
-  display:block;flex:1 1 auto;width:100%;min-height:0;border:0;
-  background:#fff
+.manager-pdf-viewer-tools{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;flex:none;padding:9px 12px;
+  color:#e5d9de;background:#211c22;font-size:.82rem
+}
+.manager-pdf-viewer-tools>span{min-width:0;overflow-wrap:anywhere}
+.manager-pdf-zoom{display:flex;flex:none;gap:8px;align-items:center}
+.manager-pdf-zoom output{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+.manager-pdf-zoom button{min-width:40px;min-height:38px;padding:8px}
+.manager-pdf-pages{
+  flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;
+  padding:12px;background:#39363a;text-align:center;
+  touch-action:pan-x pan-y;
+}
+.manager-pdf-page{
+  display:block;margin:0 auto 14px;max-width:none;
+  background:#fff;box-shadow:0 3px 12px #0004
 }
 .manager-pdf-hint{
   margin:0;padding:7px 12px;text-align:center;
@@ -376,4 +390,7 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
   .manager-pdf-toolbar .primary{text-align:left}
   .manager-pdf-toolbar .secondary{grid-column:2;grid-row:1;padding:11px}
   .manager-pdf-hint{font-size:.74rem;padding:6px 8px}
+  .manager-pdf-viewer-tools{padding:7px 9px;font-size:.72rem}
+  .manager-pdf-pages{padding:8px}
+  .manager-pdf-zoom{gap:3px}
 }
