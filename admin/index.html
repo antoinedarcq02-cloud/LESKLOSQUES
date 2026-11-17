@@ -649,8 +649,16 @@
     <strong id="managerPdfPreviewTitle">Aperçu PDF</strong>
     <button type="button" class="secondary" id="managerPdfPreviewClose" aria-label="Fermer l’aperçu PDF">Fermer ✕</button>
   </div>
-  <iframe id="managerPdfPreviewFrame" title="Aperçu du document PDF"></iframe>
-  <p class="manager-pdf-hint">Pour revenir à la liste, utilise le bouton « Retour » ci-dessus.</p>
+  <div class="manager-pdf-viewer-tools">
+    <span id="managerPdfPreviewStatus" role="status" aria-live="polite">Préparation du PDF…</span>
+    <div class="manager-pdf-zoom" aria-label="Agrandissement du PDF">
+      <button type="button" class="small-button" id="managerPdfZoomOut" aria-label="Réduire l’aperçu">−</button>
+      <output id="managerPdfZoomLabel">100 %</output>
+      <button type="button" class="small-button" id="managerPdfZoomIn" aria-label="Agrandir l’aperçu">+</button>
+    </div>
+  </div>
+  <div id="managerPdfPreviewPages" class="manager-pdf-pages" aria-label="Pages du document"></div>
+  <p class="manager-pdf-hint">Fais défiler les pages. Le bouton « Retour » te ramène à la liste.</p>
 </dialog>
 </body>
 </html>
