@@ -445,11 +445,13 @@ async function showOfficialQuotePdf(download=false,selectedQuote=null,actionButt
       throw Error('Le serveur n’a pas renvoyé un PDF.');
     const blob=await response.blob();
     if(!blob.size)throw Error('Le devis PDF est vide.');
-    const url=URL.createObjectURL(blob);
-    openQuotePdfUrls.add(url);
-    const name=(quote.number||'DEVIS-BROUILLON')+'.pdf';
-    if(download)saveQuotePdfBlob(url,name);
-    else showManagerPdfPreview(url,quote.number||'Brouillon de devis','devis');
+    if(download){
+      const url=URL.createObjectURL(blob);
+      openQuotePdfUrls.add(url);
+      saveQuotePdfBlob(url,(quote.number||'DEVIS-BROUILLON')+'.pdf');
+    }else{
+      await showManagerPdfPreview(blob,quote.number||'Brouillon de devis','devis');
+    }
   }catch(error){
     notify('PDF non ouvert : '+error.message);
   }finally{
