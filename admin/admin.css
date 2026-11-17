@@ -274,7 +274,7 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
 .invoice-pdf-link:hover,.invoice-pdf-link:focus-visible{color:#fff;border-color:#ca7883}
 
 
-/* Recherche transversale, disponible sur tous les écrans du Manager. */
+/* Recherche contextuelle : seulement Demandes clients, Devis et Factures. */
 .manager-quick-search{position:relative;margin:-12px 0 22px;z-index:5;max-width:740px}
 .manager-quick-search label{margin:0 0 7px;color:#ded3d9}
 .manager-quick-search input{min-height:46px;background:#231d23;border-color:#765863}
