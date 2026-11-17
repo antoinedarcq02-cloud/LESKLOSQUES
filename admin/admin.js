@@ -437,6 +437,7 @@ function openEditor(item) {
   $('printDraft').disabled = !item;
   // La suppression n'est proposée que pour les demandes issues du site.
   $('deleteRequest').hidden = !item || item.source !== 'site';
+  updateBookingActions(item);
   bookingDialog.showModal();
 }
 const deleteRequestDialog = $('deleteRequestDialog');
