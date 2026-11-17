@@ -13,11 +13,17 @@ async function requireManager(context,write=false){
 }
 
 export async function onRequestGet(context){
-  const user=await requireManager(context);
+  // Les musiciens peuvent consulter uniquement l'état (configuré / absent).
+  // La lecture du document bancaire reste réservée au gestionnaire.
+  const user=await authorize(context);
   if(user.error)return user.error;
+  if(!["admin","member"].includes(user.user?.role))
+    return respond({error:"Accès réservé aux musiciens."},403);
+  const query=new URL(context.request.url).searchParams;
+  if(query.get("download")==="1"&&user.user.role!=="admin")
+    return respond({error:"Téléchargement du RIB réservé au gestionnaire."},403);
   try{
     const rib=await getInvoiceRib(context.env.DB);
-    const query=new URL(context.request.url).searchParams;
     if(query.get("download")==="1"){
       if(!rib)return respond({error:"Aucun RIB enregistré."},404);
       const bytes=decodeRibPdf(rib.content);
