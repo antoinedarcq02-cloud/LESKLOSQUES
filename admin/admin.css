@@ -338,3 +338,42 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
 }
 .document-pdf-actions>.secondary:disabled{opacity:.55;cursor:wait}
 .document-list-item:focus-within>.booking-card{border-color:#ff8793}
+
+
+/* Aperçu PDF interne : bouton Retour toujours visible, y compris sur iOS/PWA. */
+.manager-pdf-preview[open]{
+  width:min(98vw,1100px);height:min(96dvh,960px);max-width:none;max-height:none;
+  padding:0;overflow:hidden;display:flex;flex-direction:column;
+  border:1px solid #76545e;border-radius:14px;background:#1b181d
+}
+.manager-pdf-toolbar{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;
+  align-items:center;gap:10px;padding:12px;
+  background:#201a20;border-bottom:1px solid #5a404a;flex:none
+}
+.manager-pdf-toolbar strong{text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.manager-pdf-toolbar button{min-height:43px}
+.manager-pdf-preview iframe{
+  display:block;flex:1 1 auto;width:100%;min-height:0;border:0;
+  background:#fff
+}
+.manager-pdf-hint{
+  margin:0;padding:7px 12px;text-align:center;
+  color:#d2c4cb;font-size:.8rem;background:#201a20;flex:none
+}
+@media(max-width:650px){
+  .manager-pdf-preview[open]{
+    position:fixed;inset:0;width:100vw;height:100dvh;margin:0;
+    border:0;border-radius:0;padding-bottom:env(safe-area-inset-bottom)
+  }
+  .manager-pdf-toolbar{
+    grid-template-columns:minmax(0,1fr) auto;gap:8px;
+    padding:calc(8px + env(safe-area-inset-top)) 10px 9px
+  }
+  .manager-pdf-toolbar strong{
+    grid-column:1/-1;grid-row:2;text-align:left;font-size:.86rem
+  }
+  .manager-pdf-toolbar .primary{text-align:left}
+  .manager-pdf-toolbar .secondary{grid-column:2;grid-row:1;padding:11px}
+  .manager-pdf-hint{font-size:.74rem;padding:6px 8px}
+}
