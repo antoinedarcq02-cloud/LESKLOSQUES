@@ -161,44 +161,57 @@
         <p><span id="quoteEmailStatus" class="tag pending" role="status" aria-live="polite" hidden>En attente d’envoi</span></p>
         <p id="quoteLocked" class="quote-lock-note" hidden>Ce devis est finalisé et verrouillé pour préserver la version transmise. Pour une modification, prépare un nouveau devis.</p>
         <form id="officialQuoteForm">
-          <h3>1. Demande et coordonnées du client</h3>
-          <label>Dossier client existant (facultatif)
-            <select id="quoteBooking"><option value="">Devis indépendant / sans demande</option></select>
+          <h3>1. Client</h3>
+          <label>Reprendre une demande existante (facultatif)
+            <select id="quoteBooking"><option value="">Nouveau client / devis indépendant</option></select>
           </label>
-          <p class="muted small">Pas besoin d’une demande du site : tu peux créer un devis pour un contact transmis par un musicien.</p>
+          <p class="muted small">Si tu choisis une demande, le nom, l’e-mail, la date et le lieu sont repris automatiquement.</p>
+          <label>Nom du client ou de l’organisateur *<input name="client_name" maxlength="160" required placeholder="Ex. SAS HESTIA ou Stéphane Condamines"></label>
+          <label>Adresse du client à afficher sur le devis *<textarea name="client_address" rows="2" maxlength="350" placeholder="Rue, code postal, ville"></textarea></label>
+          <label>E-mail du client (pour l’envoi, non imprimé sur le PDF)<input name="client_email" type="email" maxlength="254" placeholder="client@exemple.fr"></label>
+
+          <h3>2. Concert et prix</h3>
           <div class="field-row">
-            <label>Nom du client / organisateur *<input name="client_name" maxlength="160" required></label>
-            <label>E-mail du client (facultatif pour le brouillon)<input name="client_email" type="email" maxlength="254" placeholder="client@exemple.fr"></label>
+            <label>Date de la prestation *<input name="event_date" type="date"></label>
+            <label>Lieu de la prestation *<input name="event_location" maxlength="240" placeholder="Ex. Marché de Noël de Pia"></label>
           </div>
-          <label>Adresse complète du client *<textarea name="client_address" rows="2" maxlength="350" placeholder="Rue, code postal, ville"></textarea></label>
-          <div class="field-row">
-            <label>Date de l'événement *<input name="event_date" type="date"></label>
-            <label>Heure de début (facultative)<input name="event_time" type="time"></label>
-          </div>
-          <label>Lieu de la prestation *<input name="event_location" maxlength="240" placeholder="Nom de la salle et adresse"></label>
-          <h3>2. Structure qui émet le devis</h3>
-          <p class="muted small">À compléter avec les véritables informations de la structure qui facture, pas seulement le nom du groupe.</p>
-          <label>Nom / raison sociale *<input name="issuer_name" maxlength="160" placeholder="Nom juridique de l'association, société ou entreprise"></label>
-          <label>Adresse complète de la structure *<textarea name="issuer_address" rows="2" maxlength="350"></textarea></label>
-          <label>Identifiant officiel (SIRET, RNA selon la structure) *<input name="issuer_identifier" maxlength="90"></label>
-          <label>Code APE et autres mentions légales (si applicables)<textarea name="issuer_legal" rows="2" maxlength="250" placeholder="Ex. Code APE : 9001Z"></textarea></label>
-          <label>E-mail / téléphone de contact (affiché sous le code APE)<input name="issuer_contact" maxlength="180" placeholder="Ex. LesKlosques@hotmail.com"></label>
-          <button type="button" id="saveQuoteProfile" class="secondary">Mémoriser ces coordonnées pour les prochains devis et factures</button>
-          <h3>3. Prestations et prix</h3>
-          <p class="muted small" id="quotePricingInfo">Saisis directement les prix TTC proposés au client. Ajoute une ligne pour les frais de déplacement si nécessaire.</p>
-          <div class="quote-lines-header" aria-hidden="true"><span>Prestation</span><span>Qté</span><span id="quotePriceTypeText">Prix unitaire TTC</span><span></span></div>
+          <p class="muted small" id="quotePricingInfo">Écris la description à faire apparaître dans le tableau du devis, indique la quantité (1 par défaut) et le prix TTC.</p>
+          <datalist id="klosquesServiceSuggestions">
+            <option value="Prestation Groupe Les Klosques"></option>
+            <option value="Prestation Groupe Les Klosques + 1 technicien sans prestataire technique"></option>
+            <option value="Animation musicale pour réception partenaires commerciaux et clients"></option>
+            <option value="Frais de déplacement"></option>
+          </datalist>
+          <div class="quote-lines-header" aria-hidden="true"><span>Description sur le PDF</span><span>Qté</span><span id="quotePriceTypeText">Prix TTC (€)</span><span></span></div>
           <div id="quoteLines"></div>
-          <button id="addQuoteLine" type="button" class="secondary">+ Ajouter une prestation</button>
+          <button id="addQuoteLine" type="button" class="secondary">+ Ajouter une ligne</button>
           <div class="quote-total" id="quoteTotals">Total TTC : 0,00 €</div>
-          <p class="muted small">Les mentions fiscales éventuellement obligatoires sur le devis restent à vérifier selon la situation de la structure émettrice.</p>
-          <h3>4. Conditions et validité</h3>
+
+          <h3>3. Dates du devis</h3>
           <div class="field-row">
             <label>Date du devis *<input name="issue_date" type="date"></label>
-            <label>Valable jusqu'au *<input name="valid_until" type="date"></label>
+            <label>Devis valable jusqu’au *<input name="valid_until" type="date"></label>
           </div>
-          <label>Précisions sur la prestation<textarea name="description" rows="3" maxlength="900" placeholder="Horaires, durée, matériel, installation…"></textarea></label>
-          <label>Conditions particulières<textarea name="conditions" rows="3" maxlength="1400" placeholder="Annulation, frais éventuels, obligations de l'organisateur…"></textarea></label>
-          <p class="muted small">Un brouillon peut être enregistré avec des champs incomplets. La finalisation demande les mentions principales et verrouille ensuite le document.</p>
+          <p class="muted small">Le numéro et le total du devis seront calculés automatiquement.</p>
+
+          <details id="quoteIssuerDetails" class="document-advanced">
+            <summary>Coordonnées de Happy Live 66 (préremplies et modifiables)</summary>
+            <p class="muted small">Ces mentions sont reprises des devis Happy Live 66. Vérifie-les si les coordonnées légales ont changé.</p>
+            <label>Nom de l’association *<input name="issuer_name" maxlength="160" placeholder="Association HAPPY LIVE 66 - Groupe LES KLOSQUES"></label>
+            <label>Adresse de l’association *<textarea name="issuer_address" rows="2" maxlength="350"></textarea></label>
+            <label>SIRET ou identifiant officiel *<input name="issuer_identifier" maxlength="90"></label>
+            <label>Code APE et mentions légales<textarea name="issuer_legal" rows="2" maxlength="250" placeholder="Code APE : 9002Z"></textarea></label>
+            <label>Contact de l’association (facultatif)<input name="issuer_contact" maxlength="180" placeholder="LesKlosques@hotmail.com"></label>
+            <button type="button" id="saveQuoteProfile" class="secondary">Mémoriser ces coordonnées</button>
+          </details>
+          <details id="quoteAdditionalDetails" class="document-advanced">
+            <summary>Options complémentaires (facultatives)</summary>
+            <label>Heure de la prestation<input name="event_time" type="time"></label>
+            <label>Notes complémentaires<textarea name="description" rows="3" maxlength="900" placeholder="Horaires, installation, matériel…"></textarea></label>
+            <label>Conditions particulières<textarea name="conditions" rows="3" maxlength="1400" placeholder="Annulation, frais éventuels…"></textarea></label>
+            <p class="muted small">Pour que la description soit imprimée dans le tableau du PDF, inscris-la directement dans « Description sur le PDF » ci-dessus.</p>
+          </details>
+          <p class="muted small">Enregistre un brouillon puis vérifie le PDF. Le devis n’est verrouillé qu’à la finalisation.</p>
           <div class="modal-actions official-quote-actions">
             <button type="button" class="secondary" id="printOfficialQuote" disabled>Visualiser le PDF</button>
             <button type="button" class="secondary" id="downloadOfficialQuote" disabled>Télécharger le PDF</button>
@@ -238,69 +251,77 @@
         <p id="invoiceDraftStatus" class="draft-saved-status" role="status" aria-live="polite" hidden></p>
         <p id="invoiceLocked" class="quote-lock-note" hidden>Cette facture est émise et ne peut plus être modifiée ni supprimée. Tu peux l'archiver pour la retirer de la liste courante, mais elle restera accessible dans les archives. Si elle est erronée, il faut établir une facture rectificative ou un avoir selon la situation.</p>
         <form id="invoiceForm">
-          <h3>1. Client et prestation</h3>
-          <label>Demande client (facultative)
-            <select id="invoiceBooking"><option value="">Facture indépendante / sans demande</option></select>
+          <h3>1. Client</h3>
+          <label>Reprendre une demande existante (facultatif)
+            <select id="invoiceBooking"><option value="">Nouveau client / facture indépendante</option></select>
           </label>
-          <p class="muted small">Une facture indépendante ne nécessite pas de demande sur le site : renseigne directement le client.</p>
-          <label>Devis d'origine (facultatif)
+          <label>Reprendre un devis déjà créé (facultatif)
             <select id="invoiceQuote"><option value="">Aucun devis associé</option></select>
           </label>
-          <button type="button" class="secondary" id="importInvoiceQuote" hidden>Reprendre les prestations détaillées du devis</button>
-          <p class="muted small">Les tarifs restent libres. Les lignes du devis ne sont reprises que si tu cliques sur ce bouton.</p>
-          <div class="field-row">
-            <label>Client / organisateur *<input name="client_name" maxlength="160" required></label>
-            <label>E-mail du client<input name="client_email" type="email" maxlength="254"></label>
+          <button type="button" class="secondary" id="importInvoiceQuote" hidden>Reprendre les prestations du devis</button>
+          <p class="muted small">Choisir un devis remplit les coordonnées et, si la ligne de prestation est vide, reprend aussi les prestations et les prix. Tu peux toujours les modifier avant l’émission.</p>
+          <label>Nom du client ou de l’entreprise *<input name="client_name" maxlength="160" required placeholder="Ex. SAS HESTIA"></label>
+          <label>Adresse du client à afficher sur la facture *<textarea name="client_address" rows="2" maxlength="350" placeholder="Rue, code postal, ville"></textarea></label>
+          <label>E-mail du client (pour l’envoi, non imprimé sur le PDF)<input name="client_email" type="email" maxlength="254" placeholder="client@exemple.fr"></label>
+          <label>Type de client
+            <select name="client_type"><option value="particulier">Particulier / non professionnel</option><option value="professionnel">Entreprise / professionnel</option></select>
+          </label>
+          <div id="invoiceProfessionalFields" hidden>
+            <label>SIREN / SIRET du client professionnel (si nécessaire)<input name="client_identifier" maxlength="100"></label>
+            <label>Pénalités de retard applicables au client professionnel *<textarea name="late_penalties" rows="2" maxlength="250" placeholder="Taux ou modalités prévues pour le retard"></textarea></label>
           </div>
-          <label>Adresse complète du client *<textarea name="client_address" rows="2" maxlength="350"></textarea></label>
+
+          <h3>2. Prestation et prix</h3>
           <div class="field-row">
-            <label>Type de client<select name="client_type"><option value="particulier">Particulier / non professionnel</option><option value="professionnel">Entreprise / professionnel</option></select></label>
-            <label>SIREN / SIRET du client professionnel (si applicable)<input name="client_identifier" maxlength="100"></label>
+            <label>Date de la prestation *<input type="date" name="event_date"></label>
+            <label>Lieu de la prestation *<input name="event_location" maxlength="240" placeholder="Ex. Cabestany"></label>
           </div>
-          <div class="field-row">
-            <label>Date de réalisation de la prestation *<input type="date" name="event_date"></label>
-            <label>Heure de la prestation (facultative)<input type="time" name="event_time"></label>
-          </div>
-          <label>Lieu de la prestation *<input name="event_location" maxlength="240"></label>
-          <h3>2. Coordonnées de la structure qui facture</h3>
-          <p class="muted small">Indique les véritables informations légales de la structure émettrice, pas seulement le nom du groupe.</p>
-          <label>Nom / raison sociale *<input name="issuer_name" maxlength="160"></label>
-          <label>Adresse complète de la structure *<textarea name="issuer_address" rows="2" maxlength="350"></textarea></label>
-          <label>Identifiant officiel (SIRET / RNA selon le cas) *<input name="issuer_identifier" maxlength="90"></label>
-          <label>Code APE et autres mentions légales (si applicables)<textarea name="issuer_legal" rows="2" maxlength="250" placeholder="Ex. Code APE : 9001Z"></textarea></label>
-          <label>E-mail / téléphone de contact (affiché sous le code APE)<input name="issuer_contact" maxlength="180" placeholder="Ex. LesKlosques@hotmail.com"></label>
-          <button type="button" id="saveInvoiceProfile" class="secondary">Mémoriser ces coordonnées pour les prochains devis et factures</button>
-          <h3>3. Prestations et prix séparés</h3>
-          <p id="invoicePricingInfo" class="muted small">Saisis les prix TTC convenus pour le concert, les déplacements ou les prestations techniques.</p>
-          <div class="quote-lines-header" aria-hidden="true"><span>Prestation</span><span>Qté</span><span id="invoicePriceTypeText">Prix unitaire TTC</span><span></span></div>
+          <p id="invoicePricingInfo" class="muted small">Décris la prestation telle qu’elle figurera dans le tableau de la facture ; saisis le montant TTC convenu.</p>
+          <div class="quote-lines-header" aria-hidden="true"><span>Description sur le PDF</span><span>Qté</span><span id="invoicePriceTypeText">Prix TTC (€)</span><span></span></div>
           <div id="invoiceLines"></div>
-          <button type="button" class="secondary" id="addInvoiceLine">+ Ajouter une prestation</button>
+          <button type="button" class="secondary" id="addInvoiceLine">+ Ajouter une ligne</button>
           <p id="invoiceTotals" class="quote-total">Total TTC : 0,00 €</p>
-          <details id="invoiceTaxDetails">
-            <summary><strong>Mentions fiscales à vérifier avant émission</strong></summary>
-            <p class="muted small">Une facture peut nécessiter le taux de TVA ou la mention d'exonération et le numéro de TVA de la structure. Cette rubrique reste obligatoire à vérifier avant d'émettre une facture.</p>
-            <label>Régime de TVA de la structure pour cette facture
-              <select name="vat_mode">
-                <option value="non_precise">À vérifier avant l'émission</option>
-                <option value="franchise">TVA non applicable — franchise en base (si éligible)</option>
-                <option value="20">TVA 20 %</option><option value="10">TVA 10 %</option>
-                <option value="5.5">TVA 5,5 %</option><option value="0">TVA 0 % (régime à justifier)</option>
-              </select>
-            </label>
-            <label>N° de TVA intracommunautaire (si requis)
-              <input name="issuer_tax_number" maxlength="70">
-            </label>
-          </details>
-          <h3>4. Échéance et mentions légales</h3>
+
+          <h3>3. Dates et TVA</h3>
           <div class="field-row">
-            <label>Date d'émission (fixée lors de la finalisation)<input name="issue_date" type="date" disabled></label>
+            <label>Date d’émission (automatique)<input name="issue_date" type="date" disabled></label>
             <label>Date limite de paiement *<input name="payment_due_date" type="date"></label>
           </div>
-          <label>Précisions de la prestation<textarea name="description" rows="3" maxlength="900"></textarea></label>
-          <label>Conditions particulières<textarea name="conditions" rows="3" maxlength="1400"></textarea></label>
-          <label>Pénalités de retard (à préciser pour les clients professionnels)<textarea name="late_penalties" rows="2" maxlength="250" placeholder="Taux ou modalités applicables aux professionnels"></textarea></label>
-          <p class="muted small">La finalisation verrouille les montants, les coordonnées et les mentions. En cas d'erreur après émission, une rectification ou un avoir sera nécessaire.</p>
-          <p class="muted small">Pour visualiser le PDF, enregistre d'abord le brouillon. Après une modification, enregistre à nouveau pour actualiser l'aperçu.</p>
+          <label>TVA applicable à cette facture (à vérifier avant émission)
+            <select id="invoiceVatMode" name="vat_mode">
+              <option value="non_precise">Choisir le régime de TVA</option>
+              <option value="franchise">TVA non applicable — franchise en base (si éligible)</option>
+              <option value="20">TVA 20 %</option>
+              <option value="10">TVA 10 %</option>
+              <option value="5.5">TVA 5,5 %</option>
+              <option value="0">TVA 0 % (régime à justifier)</option>
+            </select>
+          </label>
+          <p class="muted small">Ne sélectionne pas d’exonération sans l’avoir vérifiée. Le total est calculé automatiquement ; le numéro de facture sera attribué lors de l’émission.</p>
+
+          <details id="invoiceIssuerDetails" class="document-advanced">
+            <summary>Coordonnées de Happy Live 66 (préremplies et modifiables)</summary>
+            <p class="muted small">Ces informations sont celles figurant sur les modèles transmis. Vérifie-les si elles ont changé.</p>
+            <label>Nom de l’association *<input name="issuer_name" maxlength="160"></label>
+            <label>Adresse de l’association *<textarea name="issuer_address" rows="2" maxlength="350"></textarea></label>
+            <label>SIRET ou identifiant officiel *<input name="issuer_identifier" maxlength="90"></label>
+            <label>Code APE et mentions légales<textarea name="issuer_legal" rows="2" maxlength="250" placeholder="Code APE : 9002Z"></textarea></label>
+            <label>Contact de l’association (facultatif)<input name="issuer_contact" maxlength="180" placeholder="LesKlosques@hotmail.com"></label>
+            <button type="button" id="saveInvoiceProfile" class="secondary">Mémoriser ces coordonnées</button>
+          </details>
+          <details id="invoiceTaxDetails" class="document-advanced">
+            <summary>N° de TVA intracommunautaire (si requis)</summary>
+            <label>N° de TVA intracommunautaire<input name="issuer_tax_number" maxlength="70"></label>
+          </details>
+          <details id="invoiceAdditionalDetails" class="document-advanced">
+            <summary>Options complémentaires (facultatives)</summary>
+            <label>Heure de la prestation<input type="time" name="event_time"></label>
+            <label>Notes complémentaires<textarea name="description" rows="3" maxlength="900"></textarea></label>
+            <label>Conditions particulières<textarea name="conditions" rows="3" maxlength="1400"></textarea></label>
+            <p class="muted small">La description imprimée dans le tableau du PDF est celle renseignée dans « Description sur le PDF ».</p>
+          </details>
+          <p class="muted small">Enregistre d’abord un brouillon, puis vérifie le PDF. Après émission, une correction peut nécessiter un avoir ou une facture rectificative.</p>
+          <p class="muted small">Un PDF transmis par e-mail ne remplace pas les obligations éventuelles de facturation électronique.</p>
           <div class="modal-actions official-quote-actions">
             <button type="button" class="secondary invoice-pdf-link" id="previewInvoice" hidden>Visualiser le PDF</button>
             <button type="button" class="secondary invoice-pdf-link" id="printInvoice" hidden>Télécharger le PDF</button>
