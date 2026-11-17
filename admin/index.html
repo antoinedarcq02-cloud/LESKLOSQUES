@@ -141,10 +141,6 @@
       <div class="section-header"><h2>Demandes clients</h2><select id="requestFilter" aria-label="Filtrer les demandes"><option value="all">Toutes</option><option value="nouveau">Nouvelles</option><option value="en_discussion">En discussion</option><option value="devis_envoye">Devis envoyé</option><option value="refuse">Refusées</option></select></div>
       <div id="requestsList" class="card-list"></div>
     </section>
-    <section id="panel-concerts" class="page" hidden>
-      <div class="section-header"><h2>Fiches concerts</h2><div class="concert-actions"><select id="concertFilter" aria-label="Filtrer les concerts"><option value="all">Tous les concerts</option><option value="option">En option</option><option value="confirme">Confirmés</option><option value="termine">Terminés</option></select><button id="newBooking" class="primary" type="button">+ Concert</button></div></div>
-      <div id="concertsList" class="card-list"></div>
-    </section>
     <section id="panel-devis" class="page" hidden>
       <div class="section-header">
         <div>
@@ -412,14 +408,12 @@
     <button type="button" data-tab="home" class="active"><span>⌂</span>Accueil</button>
     <button type="button" data-tab="agenda"><span>▦</span>Agenda</button>
     <button type="button" data-tab="demandes"><span>✉</span>Demandes</button>
-    <button type="button" data-tab="concerts"><span>♫</span>Concerts</button>
     <button type="button" data-tab="devis"><span>€</span>Devis</button>
     <button type="button" data-tab="factures"><span>▤</span>Factures</button>
     <button type="button" data-tab="messagerie"><span>✉</span>Boîte mail</button>
     <button type="button" data-tab="site"><span>⚙</span>Site</button>
     <button type="button" class="more-nav-toggle" id="managerMoreToggle" aria-expanded="false" aria-controls="managerMoreMenu" type="button"><span aria-hidden="true">☰</span>Plus</button>
     <div id="managerMoreMenu" class="more-nav-panel" hidden aria-label="Autres rubriques">
-      <button type="button" data-tab="concerts">♫ Fiches concerts</button>
       <button type="button" data-tab="messagerie">✉ Boîte mail</button>
       <button type="button" data-tab="site">⚙ Gestion du site</button>
     </div>
@@ -427,7 +421,7 @@
 </div>
 <dialog id="bookingDialog" aria-labelledby="dialogTitle">
   <form id="bookingEditor">
-    <div class="modal-top"><h2 id="dialogTitle">Fiche concert</h2><button type="button" id="closeDialog" class="small-button" aria-label="Fermer">✕</button></div>
+    <div class="modal-top"><h2 id="dialogTitle">Dossier client / concert</h2><button type="button" id="closeDialog" class="small-button" aria-label="Fermer">✕</button></div>
     <div class="field-row">
       <label>Nom / organisateur<input name="name" maxlength="150" required></label>
       <label>Statut<select name="status">
@@ -467,7 +461,7 @@
       <h2 id="googleEventTitle">Nouvel événement Google</h2>
       <button type="button" id="closeGoogleEvent" class="small-button" aria-label="Fermer">✕</button>
     </div>
-    <p id="googleEventHelp" class="muted small">Cet événement sera enregistré directement dans le calendrier Google partagé choisi. Il apparaîtra ensuite dans l'agenda commun sans créer de fiche concert.</p>
+    <p id="googleEventHelp" class="muted small">Cet événement sera enregistré directement dans le calendrier Google partagé choisi. Il apparaîtra ensuite dans l'agenda commun sans créer de dossier supplémentaire.</p>
     <label>Agenda partagé
       <select name="calendar" required>
         <option value="concerts">KLOSQUES PARTAGE</option>
