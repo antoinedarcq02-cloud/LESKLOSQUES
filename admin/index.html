@@ -13,6 +13,7 @@
 <script src="/admin/invoice-builder.js" defer></script>
 <script src="/admin/reminders.js" defer></script>
 <script src="/admin/integrations-ui.js" defer></script>
+<script src="/admin/rib-settings.js" defer></script>
 <script src="/admin/navigation-enhancements.js" defer></script>
 <script src="/admin/booking-actions.js" defer></script>
 <script src="/admin/draft-guards.js" defer></script>
@@ -363,6 +364,20 @@
           <div id="googlePublishItems" class="integration-items"></div>
         </div>
       </section>
+      <section class="panel" id="invoiceRibPanel" hidden>
+        <h2>RIB à joindre aux factures</h2>
+        <p class="muted">Enregistre ici une seule fois le PDF bancaire de Happy Live 66. Il sera joint automatiquement à chaque facture envoyée depuis Klosques Manager, avec la facture PDF, sans publication sur le site.</p>
+        <label for="invoiceRibFile">Choisir le RIB au format PDF (1,35 Mo maximum)
+          <input id="invoiceRibFile" type="file" accept=".pdf,application/pdf">
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="primary" id="uploadInvoiceRib">Enregistrer le RIB</button>
+          <button type="button" class="secondary" id="downloadInvoiceRib" hidden>Télécharger le RIB enregistré</button>
+          <button type="button" class="danger" id="deleteInvoiceRib" hidden>Retirer le RIB</button>
+        </div>
+        <p id="invoiceRibStatus" class="muted small" role="status" aria-live="polite">Vérification du RIB…</p>
+        <p class="muted small">Le PDF est conservé dans la base privée de Klosques Manager. Seul le gestionnaire peut l’ajouter, le remplacer ou le retirer. Les musiciens peuvent envoyer les factures avec le RIB, sans accéder à son fichier dans cette rubrique.</p>
+      </section>
       <div class="panel email-settings-panel" id="emailSettingsPanel" hidden>
         <h2>Messagerie et notifications</h2>
         <p class="muted">État de la configuration d'envoi pour les nouvelles demandes, les devis et les factures. Les secrets restent uniquement dans Cloudflare.</p>
@@ -583,6 +598,7 @@
     <input id="invoiceSendEmail" type="email" maxlength="254" autocomplete="off" placeholder="client@exemple.fr" required>
   </label>
   <p id="invoiceSendDestination" class="delete-request-details" aria-live="polite"></p>
+  <p id="invoiceSendRibStatus" class="muted small" role="status" aria-live="polite">Vérification du RIB Happy Live 66…</p>
   <label for="invoiceSendMessage">Message personnel à joindre à l'e-mail (facultatif)
     <textarea id="invoiceSendMessage" rows="4" maxlength="2000" placeholder="Ex. Merci encore pour votre accueil. Vous trouverez notre facture en pièce jointe."></textarea>
   </label>
