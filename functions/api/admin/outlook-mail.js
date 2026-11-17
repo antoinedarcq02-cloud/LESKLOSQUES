@@ -5,8 +5,8 @@ import {ensureIntegrationTables,getConnected,providerAccessToken} from "../../_l
 export async function onRequestGet(context){
   const user=await authorize(context);
   if(user.error)return user.error;
-  if(user.user?.role!=="admin")
-    return respond({error:"Boîte mail réservée au responsable de Klosques Manager."},403);
+  if(!["admin","member"].includes(user.user?.role))
+    return respond({error:"Boîte mail réservée aux musiciens du groupe."},403);
   try{
     const DB=context.env.DB;
     await ensureIntegrationTables(DB);
@@ -39,6 +39,6 @@ export async function onRequestGet(context){
     return respond({connected:true,account:link.account_label,messages});
   }catch(error){
     console.warn("Accès boîte Outlook indisponible",error?.message);
-    return respond({error:"Impossible de lire la boîte Hotmail. Reconnecte Outlook dans l'onglet Site si nécessaire."},503);
+    return respond({error:"Impossible de lire la boîte Hotmail. Demande au gestionnaire de vérifier la connexion Outlook dans Site."},503);
   }
 }
