@@ -554,20 +554,24 @@ $('confirmPayInvoice').addEventListener('click',async()=>{
   finally{button.disabled=false;}
 });
 let pendingInvoiceSend=null;
+let invoiceRibAvailable=false;
 const invoiceSendDialog=$('sendInvoiceDialog');
 function updateInvoiceSendRecipient(){
   const recipient=$('invoiceSendEmail').value.trim();
   $('invoiceSendDestination').textContent=recipient
     ?'Facture PDF destinée à : '+recipient
     :'Saisis une adresse e-mail pour envoyer la facture.';
-  $('confirmSendInvoice').disabled=!invoiceState.mailReady||!invoiceEmailValid(recipient);
+  $('confirmSendInvoice').disabled=!invoiceState.mailReady||!invoiceRibAvailable||
+    !invoiceEmailValid(recipient);
 }
 $('invoiceSendEmail').addEventListener('input',updateInvoiceSendRecipient);
-$('sendInvoice').addEventListener('click',()=>{
+$('sendInvoice').addEventListener('click',async()=>{
   const invoice=invoiceState.current;
   if(!invoice||invoice.status!=='emise')return;
   const linked=state.items.find(item=>item.id===invoice.booking_id);
   pendingInvoiceSend=invoice.id;
+  invoiceRibAvailable=false;
+  $('invoiceSendRibStatus').textContent='Vérification du RIB Happy Live 66…';
   $('invoiceSendEmail').value=invoice.data.client_email||linked?.email||'';
   $('invoiceSendMessage').value='';
   $('invoiceSendWarning').hidden=invoiceState.mailReady;
@@ -575,11 +579,22 @@ $('sendInvoice').addEventListener('click',()=>{
   $('invoiceSendFeedback').textContent='';
   updateInvoiceSendRecipient();
   invoiceSendDialog.showModal();
+  try{
+    const data=await callApi('/api/admin/invoice-rib');
+    if(pendingInvoiceSend!==invoice.id||!invoiceSendDialog.open)return;
+    invoiceRibAvailable=data.configured===true;
+    $('invoiceSendRibStatus').textContent=invoiceRibAvailable
+      ?'Pièces jointes : la facture PDF et le RIB Happy Live 66 PDF.'
+      :'RIB non configuré : le gestionnaire doit l’ajouter dans Site → RIB à joindre aux factures avant l’envoi.';
+  }catch(error){
+    if(pendingInvoiceSend===invoice.id&&invoiceSendDialog.open)
+      $('invoiceSendRibStatus').textContent='RIB non vérifié : '+error.message;
+  }finally{updateInvoiceSendRecipient();}
 });
 $('cancelSendInvoice').addEventListener('click',()=>invoiceSendDialog.close());
-invoiceSendDialog.addEventListener('close',()=>{pendingInvoiceSend=null;});
+invoiceSendDialog.addEventListener('close',()=>{pendingInvoiceSend=null;invoiceRibAvailable=false;});
 $('confirmSendInvoice').addEventListener('click',async()=>{
-  const id=pendingInvoiceSend;if(!id||!invoiceState.mailReady)return;
+  const id=pendingInvoiceSend;if(!id||!invoiceState.mailReady||!invoiceRibAvailable)return;
   const recipient=$('invoiceSendEmail').value.trim();
   const personalMessage=$('invoiceSendMessage').value.trim();
   if(personalMessage.length>2000){
@@ -599,8 +614,8 @@ $('confirmSendInvoice').addEventListener('click',async()=>{
     const updated=invoiceState.invoices.find(i=>i.id===id);
     if(updated){invoiceState.current=updated;lockInvoiceEditor();}
     notify(response.recorded
-      ? 'Le service de messagerie a accepté la facture PDF pour '+response.recipient+'.'
-      : 'Le service a accepté la facture PDF pour '+response.recipient+
+      ? 'Le service de messagerie a accepté la facture et le RIB en PDF pour '+response.recipient+'.'
+      : 'Le service a accepté la facture et le RIB en PDF pour '+response.recipient+
         ', mais l’historique n’a pas pu être sauvegardé. Vérifie avant de renvoyer.');
   }catch(error){$('invoiceSendFeedback').textContent='Envoi non effectué : '+error.message;}
   finally{
