@@ -44,13 +44,13 @@ export async function onRequestGet(context){
       // Le nom SQL provient exclusivement de la liste fixe ci-dessus.
       const rows=[];
       for(let offset=0;;offset+=PAGE_SIZE){
-        if(offset>=MAX_ROWS_PER_TABLE)
-          return fail("Export trop volumineux : certaines données dépassent la limite. Utilise une sauvegarde D1 complète.",413);
         const page=await DB.prepare(
           "SELECT * FROM "+table+" ORDER BY rowid LIMIT ? OFFSET ?"
         ).bind(PAGE_SIZE,offset).all();
         const chunk=page.results||[];
         rows.push(...chunk);
+        if(rows.length>MAX_ROWS_PER_TABLE)
+          return fail("Export trop volumineux : certaines données dépassent la limite. Utilise une sauvegarde D1 complète.",413);
         if(chunk.length<PAGE_SIZE)break;
       }
       snapshot.tables[table]=rows;
