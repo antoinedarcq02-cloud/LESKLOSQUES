@@ -17,6 +17,17 @@ const STATUSES = {
   option:'En option',confirme:'Confirmé',termine:'Terminé',refuse:'Refusé'
 };
 const quoteKeys = ['name','email','phone','event_type','event_date','location','package','message','notes','status'];
+// Coordonnées reprises des devis et factures Happy Live 66 fournis par le groupe.
+// Valeurs par défaut uniquement : un profil déjà sauvegardé reste prioritaire,
+// et ces informations sont toujours modifiables avant finalisation.
+const HAPPY_LIVE_ISSUER_DEFAULTS = Object.freeze({
+  issuer_name:'Association HAPPY LIVE 66 - Groupe LES KLOSQUES',
+  issuer_address:'4 Rue des Sarcelles\n66380 Pia',
+  issuer_identifier:'823 692 546 00018',
+  issuer_legal:'Code APE : 9002Z',
+  issuer_contact:'LesKlosques@hotmail.com',
+  issuer_tax_number:''
+});
 const state = { items:[], googleEvents:[], googleLinks:[], googleMonth:'', current:null, selectedDay:null, page:'home', logged:false };
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => (
   {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]
