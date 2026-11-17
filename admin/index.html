@@ -14,6 +14,7 @@
 <script src="/admin/reminders.js" defer></script>
 <script src="/admin/integrations-ui.js" defer></script>
 <script src="/admin/navigation-enhancements.js" defer></script>
+<script src="/admin/booking-actions.js" defer></script>
 </head>
 <body>
 <header class="topbar">
@@ -441,6 +442,14 @@
     <p id="bookingQuoteStatus" class="booking-quote-status" hidden aria-live="polite"></p>
     <p id="bookingInvoiceStatus" class="booking-quote-status" hidden aria-live="polite"></p>
     <p id="editorMeta" class="muted small"></p>
+    <section id="bookingRelatedActions" class="booking-related-actions" hidden>
+      <h3>Actions et documents associés</h3>
+      <div class="booking-related-buttons">
+        <button type="button" class="secondary" id="bookingStartQuote">+ Préparer un devis</button>
+        <button type="button" class="secondary" id="bookingStartInvoice">+ Préparer une facture</button>
+      </div>
+      <div id="bookingRelatedDocuments" aria-live="polite"><p class="muted small">Chargement des documents…</p></div>
+    </section>
     <div class="modal-actions">
       <button type="button" id="deleteRequest" class="danger" hidden>Supprimer la demande</button>
       <button type="button" id="printDraft" class="secondary">Proposition PDF (brouillon)</button>
