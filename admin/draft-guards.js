@@ -74,6 +74,21 @@ document.addEventListener('click',event=>{
   if(kind==='devis')officialQuoteState.current=null;
   else invoiceState.current=null;
 },true);
+// Changer la vue Archives/En cours masque aussi l'éditeur des factures.
+let lastInvoiceVisibility=$('invoiceVisibility').value;
+$('invoiceVisibility').addEventListener('focus',()=>{
+  lastInvoiceVisibility=$('invoiceVisibility').value;
+});
+$('invoiceVisibility').addEventListener('change',event=>{
+  if(state.page==='factures'&&!guardDocumentExit('factures')){
+    $('invoiceVisibility').value=lastInvoiceVisibility;
+    event.stopImmediatePropagation();
+    return;
+  }
+  documentPanel('factures').hidden=true;
+  invoiceState.current=null;
+  lastInvoiceVisibility=$('invoiceVisibility').value;
+},true);
 window.addEventListener('beforeunload',event=>{
   if(documentHasUnsavedChanges('devis')||documentHasUnsavedChanges('factures')){
     event.preventDefault();
