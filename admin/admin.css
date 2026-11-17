@@ -313,3 +313,16 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
 /* Avertissement explicite lorsque le formulaire contient des changements. */
 .draft-saved-status{margin:10px 0;padding:9px 12px;border-left:3px solid #609c75;background:#1c3027;color:#d6f6df;font-size:.83rem;border-radius:6px}
 .draft-saved-status.has-unsaved{border-color:#ebad59;background:#39291c;color:#ffedc4}
+
+/* Formulaires de documents : saisie essentielle en premier, détails repliables. */
+.official-quote-panel .document-advanced{margin:17px 0;padding:0 15px 14px;border:1px solid #5a4851;border-radius:12px;background:#211b21}
+.official-quote-panel .document-advanced summary{cursor:pointer;padding:15px 4px;font-weight:800;color:#f6d4db;list-style-position:inside}
+.official-quote-panel .document-advanced[open] summary{border-bottom:1px solid #503c45;margin-bottom:12px}
+.official-quote-panel .document-advanced label{margin:12px 0}
+.official-quote-panel .document-advanced button{margin-top:8px}
+#invoiceProfessionalFields{padding:4px 14px 12px;background:#2a2027;border:1px solid #6c4b58;border-radius:12px;margin:10px 0}
+.official-quote-panel .quote-lines-header{margin-top:11px}
+.official-quote-panel #quoteTotals,.official-quote-panel #invoiceTotals{margin-bottom:22px}
+@media(max-width:620px){
+  .official-quote-panel .document-advanced{padding:0 11px 12px}
+}
