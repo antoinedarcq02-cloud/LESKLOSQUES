@@ -51,13 +51,18 @@ export async function onRequestPost(context){
   let body;
   try{
     const raw=await context.request.text();
-    if(raw.length>1000)return respond({error:"Confirmation trop longue."},413);
+    if(raw.length>5000)return respond({error:"Confirmation trop longue."},413);
     body=JSON.parse(raw);
   }catch{return respond({error:"Confirmation invalide."},400);}
   if(body?.confirm_send!==true)return respond({error:"Confirmation explicite requise avant l'envoi."},400);
   if(typeof body.recipient!=="string"||body.recipient.length>254||!EMAIL.test(body.recipient.trim()))
     return respond({error:"Renseigne une seule adresse e-mail de destinataire valide."},400);
   const recipient=body.recipient.trim();
+  if(body.personal_message!==undefined && typeof body.personal_message!=="string")
+    return respond({error:"Le message personnel est invalide."},400);
+  const personalMessage=String(body.personal_message||"").trim().replace(/\r\n?/g,"\n");
+  if(personalMessage.length>2000)
+    return respond({error:"Le message personnel ne doit pas dépasser 2 000 caractères."},400);
   if(!await quoteMailReady(context.env))
     return respond({error:"Envoi non configuré : il faut une adresse d'expédition vérifiée et un service d'e-mail."},503);
   const DB=context.env.DB;
@@ -96,6 +101,7 @@ export async function onRequestPost(context){
       "Date de la prestation : "+(invoice.data.event_date||"à préciser"),
       "Échéance de paiement : "+(invoice.data.payment_due_date||"à préciser"),
       "",
+      ...(personalMessage?[personalMessage,""]:[]),
       "Pour toute question relative à cette facture, répondez simplement à cet e-mail.",
       "Bien cordialement,","Les Klosques",REPLY_TO
     ].join("\n");
@@ -103,6 +109,7 @@ export async function onRequestPost(context){
       safe(invoice.number)+"</strong> pour notre prestation musicale.</p>"+
       "<p>Date de la prestation : "+safe(invoice.data.event_date)+
       "<br>Échéance de paiement : "+safe(invoice.data.payment_due_date)+"</p>"+
+      (personalMessage?"<p>"+safe(personalMessage).replace(/\n/g,"<br>")+"</p>":"")+
       "<p>Pour toute question, répondez à cet e-mail.</p>"+
       "<p>Bien cordialement,<br><strong>Les Klosques</strong><br>"+safe(REPLY_TO)+"</p>";
     let receipt;
