@@ -350,7 +350,7 @@ googleEventForm.addEventListener('submit',async event=>{
 });
 
 async function loadOutlookMailbox(){
-  if(!state.logged||state.role!=='admin')return;
+  if(!state.logged||!['admin','member'].includes(state.role))return;
   const status=$('outlookMailStatus'),root=$('outlookMailList');
   status.textContent='Lecture des messages Hotmail…';
   $('refreshOutlookMail').disabled=true;
@@ -358,7 +358,7 @@ async function loadOutlookMailbox(){
     const data=await callApi('/api/admin/outlook-mail');
     root.replaceChildren();
     if(!data.connected){
-      status.textContent='Boîte Hotmail non connectée. Va dans Site → Connexions.';
+      status.textContent='Boîte Hotmail non connectée. Demande au gestionnaire de vérifier Site → Connexions.';
       return;
     }
     status.textContent='Boîte '+(data.account||'Hotmail')+
