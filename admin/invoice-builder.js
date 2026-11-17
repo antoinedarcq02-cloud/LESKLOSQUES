@@ -569,6 +569,7 @@ $('sendInvoice').addEventListener('click',()=>{
   const linked=state.items.find(item=>item.id===invoice.booking_id);
   pendingInvoiceSend=invoice.id;
   $('invoiceSendEmail').value=invoice.data.client_email||linked?.email||'';
+  $('invoiceSendMessage').value='';
   $('invoiceSendWarning').hidden=invoiceState.mailReady;
   $('invoiceSendPreviously').hidden=!invoice.sent_at;
   $('invoiceSendFeedback').textContent='';
@@ -580,13 +581,19 @@ invoiceSendDialog.addEventListener('close',()=>{pendingInvoiceSend=null;});
 $('confirmSendInvoice').addEventListener('click',async()=>{
   const id=pendingInvoiceSend;if(!id||!invoiceState.mailReady)return;
   const recipient=$('invoiceSendEmail').value.trim();
+  const personalMessage=$('invoiceSendMessage').value.trim();
+  if(personalMessage.length>2000){
+    $('invoiceSendFeedback').textContent='Le message doit contenir au maximum 2 000 caractères.';
+    return;
+  }
   if(!invoiceEmailValid(recipient)){updateInvoiceSendRecipient();return;}
   const btn=$('confirmSendInvoice');btn.disabled=true;
   $('invoiceSendEmail').disabled=true;
+  $('invoiceSendMessage').disabled=true;
   $('invoiceSendFeedback').textContent='Envoi du PDF à '+recipient+'…';
   try{
     const response=await jsonCall('/api/admin/invoices/'+encodeURIComponent(id)+'/send',
-      'POST',{confirm_send:true,recipient});
+      'POST',{confirm_send:true,recipient,personal_message:personalMessage});
     pendingInvoiceSend=null;invoiceSendDialog.close();
     await loadInvoices();await refresh();
     const updated=invoiceState.invoices.find(i=>i.id===id);
@@ -596,6 +603,10 @@ $('confirmSendInvoice').addEventListener('click',async()=>{
       : 'Le service a accepté la facture PDF pour '+response.recipient+
         ', mais l’historique n’a pas pu être sauvegardé. Vérifie avant de renvoyer.');
   }catch(error){$('invoiceSendFeedback').textContent='Envoi non effectué : '+error.message;}
-  finally{$('invoiceSendEmail').disabled=false;updateInvoiceSendRecipient();}
+  finally{
+    $('invoiceSendEmail').disabled=false;
+    $('invoiceSendMessage').disabled=false;
+    updateInvoiceSendRecipient();
+  }
 });
 document.querySelector('[data-tab="factures"]').addEventListener('click',loadInvoices);
