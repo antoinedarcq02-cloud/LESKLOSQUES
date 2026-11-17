@@ -331,6 +331,12 @@
             <button type="button" class="primary" id="issueInvoice">Émettre la facture</button>
           </div>
         </form>
+        <details class="document-advanced" id="invoiceCorrectionHelp" hidden>
+          <summary>Une erreur sur cette facture émise ?</summary>
+          <p id="invoiceCorrectionReference" class="muted small"></p>
+          <p class="muted small">La facture déjà émise est conservée intacte. Selon la situation, la correction peut nécessiter un avoir ou une facture rectificative avec un nouveau numéro et une référence à la facture initiale. Ne modifie pas simplement le PDF existant.</p>
+          <p class="muted small">Le Manager ne génère pas encore d’avoir officiel. Fais valider la démarche avant d’établir le document correctif. <a href="https://entreprendre.service-public.gouv.fr/vosdroits/F23208" target="_blank" rel="noopener noreferrer">Voir les règles officielles</a>.</p>
+        </details>
         <div class="modal-actions">
           <button type="button" class="danger" id="deleteInvoiceDraft" hidden>Supprimer le brouillon</button>
           <button type="button" class="secondary" id="archiveInvoice" hidden>Archiver la facture</button>
