@@ -281,6 +281,7 @@ $('sendOfficialQuote').addEventListener('click',()=>{
   pendingSendQuote=quote.id;
   $('sendQuoteInfo').textContent='Vérifie le destinataire avant d’envoyer le devis '+quote.number+' par e-mail.';
   $('sendQuoteEmail').value=quote.data?.client_email||request?.email||'';
+  $('sendQuoteMessage').value='';
   $('sendQuoteUnavailable').hidden=officialQuoteState.mailReady;
   $('sendQuotePreviously').hidden=!quote.sent_at;
   updateQuoteSendRecipient();
@@ -295,6 +296,11 @@ $('confirmSendQuote').addEventListener('click',async()=>{
   const id=pendingSendQuote;
   if(!Number.isSafeInteger(id)||id<1 || !officialQuoteState.mailReady)return;
   const recipient=$('sendQuoteEmail').value.trim();
+  const personalMessage=$('sendQuoteMessage').value.trim();
+  if(personalMessage.length>2000){
+    $('sendQuoteInfo').textContent='Le message doit contenir au maximum 2 000 caractères.';
+    return;
+  }
   if(!quoteRecipientValid(recipient)){
     notify('Renseigne une seule adresse e-mail valide pour le destinataire.');
     updateQuoteSendRecipient();
@@ -303,9 +309,11 @@ $('confirmSendQuote').addEventListener('click',async()=>{
   const button=$('confirmSendQuote');
   button.disabled=true;
   $('sendQuoteEmail').disabled=true;
+  $('sendQuoteMessage').disabled=true;
   $('sendQuoteInfo').textContent='Envoi du devis PDF vers '+recipient+'…';
   try{
-    const result=await jsonCall('/api/admin/quotes/'+encodeURIComponent(id)+'/send','POST',{confirm_send:true,recipient});
+    const result=await jsonCall('/api/admin/quotes/'+encodeURIComponent(id)+'/send','POST',
+      {confirm_send:true,recipient,personal_message:personalMessage});
     pendingSendQuote=null;
     sendQuoteDialog.close();
     await loadOfficialQuotes();
@@ -320,6 +328,7 @@ $('confirmSendQuote').addEventListener('click',async()=>{
     $('sendQuoteInfo').textContent='Envoi non effectué : '+error.message;
   }finally{
     $('sendQuoteEmail').disabled=false;
+    $('sendQuoteMessage').disabled=false;
     updateQuoteSendRecipient();
   }
 });
