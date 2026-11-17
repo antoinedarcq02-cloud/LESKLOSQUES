@@ -1,3 +1,4 @@
+import { HAPPY_LIVE_LOGO_JPEG_BASE64 } from "./happy-live-logo.js";
 // Modele de devis A4 inspire du document HAPPY LIVE 66 fourni par le groupe.
 // Le meme format est utilise pour la piece jointe PDF Microsoft / Resend.
 // Pas de reprise d'une signature, d'un tampon, ni de donnees clients de l'exemple.
@@ -151,24 +152,24 @@ export function createQuotePdf(quote,options={}){
   const isHappy=/happy\s*live\s*66/i.test(q.issuer_name||"");
   const brand=isHappy?"Happy Live 66":"Les Klosques";
   function drawLogo(){
-    // Version vectorielle du symbole à quatre curseurs du modèle original,
-    // afin de conserver un PDF autonome sans dépendre d'une image distante.
     const offset=invoice?-15:0;
-    const base=[715,704,712,691];
-    for(let i=0;i<4;i++){
-      const x=77+i*30;
-      const knob=base[i]+offset;
-      stroke(x,683+offset,x,746+offset,"0.09 0.51 0.72",1.25);
-      stroke(x-1.9,746+offset,x+1.9,746+offset,"0.09 0.51 0.72",.55);
-      fillRect(x-6,knob-4.5,12,9,"0.17 0.57 0.79");
-      rect(x-6,knob-4.5,12,9,"0.09 0.39 0.61",.7);
-      stroke(x-4,knob+2.5,x+4,knob+2.5,"0.48 0.76 0.88",.65);
-    }
     if(isHappy){
-      text("Happy",187,711+offset,17,true,"0.03 0.43 0.70",true);
-      text("Live",245,711+offset,17,true,"0.53 0.08 0.34",true);
-      text("66",286,711+offset,17,true,"0.43 0.08 0.31",true);
-    }else text("Les Klosques",186,711+offset,16.7,true,"0.48 0.08 0.30",true);
+      // Le logo réel provient du document de référence fourni par le groupe.
+      // Il est intégré dans chaque PDF : ni image distante, ni dépendance réseau.
+      ops.push("q 260 0 0 84 43 "+(invoice?649:664)+" cm /HL66 Do Q");
+    }else{
+      // Repli neutre si la structure émettrice n'est pas Happy Live 66.
+      const base=[715,704,712,691];
+      for(let i=0;i<4;i++){
+        const x=77+i*30;
+        const knob=base[i]+offset;
+        stroke(x,683+offset,x,746+offset,"0.09 0.51 0.72",1.25);
+        stroke(x-1.9,746+offset,x+1.9,746+offset,"0.09 0.51 0.72",.55);
+        fillRect(x-6,knob-4.5,12,9,"0.17 0.57 0.79");
+        rect(x-6,knob-4.5,12,9,"0.09 0.39 0.61",.7);
+      }
+      text("Les Klosques",186,711+offset,16.7,true,"0.48 0.08 0.30",true);
+    }
     text(documentLabel,invoice?469:481,invoice?663:681,15,true,"0.82 0.88 0.90");
     if(invoice&&quote.status!=="emise")
       text("BROUILLON - NON EMIS",43,657,9,true,"0.67 0.12 0.16");
@@ -339,11 +340,20 @@ export function createQuotePdf(quote,options={}){
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>",
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-BoldOblique /Encoding /WinAnsiEncoding >>"];
+  let logoObjectId=null;
+  if(isHappy){
+    const binary=atob(HAPPY_LIVE_LOGO_JPEG_BASE64);
+    logoObjectId=objs.length;
+    objs.push("<< /Type /XObject /Subtype /Image /Width 311 /Height 100"+
+      " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length "+
+      binary.length+" >>\nstream\n"+binary+"\nendstream");
+  }
   const kids=[];
   for(const commands of pages){
     const idx=objs.length;
     kids.push(idx+" 0 R");
-    objs.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents "+(idx+1)+" 0 R >>");
+    const xObject=logoObjectId===null?"":" /XObject << /HL66 "+logoObjectId+" 0 R >>";
+    objs.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >>"+xObject+" >> /Contents "+(idx+1)+" 0 R >>");
     objs.push("<< /Length "+commands.length+" >>\nstream\n"+commands+"endstream");
   }
   objs[2]="<< /Type /Pages /Count "+pages.length+" /Kids ["+kids.join(" ")+"] >>";
