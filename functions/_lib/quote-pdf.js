@@ -141,9 +141,29 @@ export function createQuotePdf(quote,options={}){
     return y;
   }
   function pageEnd(){if(ops.length){pages.push(ops.join("\n")+"\n");ops=[];}}
+  // Largeurs de Helvetica (unités pour 1000) : éviter les libellés de totaux
+  // qui débordaient sur les cellules grises et centrer les intitulés.
+  const caps={A:722,B:667,C:722,D:722,E:667,F:611,G:778,H:722,I:278,
+    J:556,K:722,L:611,M:833,N:722,O:778,P:667,Q:778,R:722,S:667,
+    T:611,U:722,V:667,W:944,X:667,Y:667,Z:611};
+  function textWidth(value,size,bold=false){
+    let units=0;
+    for(const char of String(value)){
+      if(caps[char])units+=caps[char];
+      else if(/[0-9]/.test(char))units+=556;
+      else if(char===" ")units+=278;
+      else if(char==="-")units+=333;
+      else if(char===",")units+=278;
+      else if(char===".")units+=278;
+      else if(char==="€")units+=556;
+      else if(char===":")units+=278;
+      else units+=bold?565:520;
+    }
+    return units*size/1000;
+  }
   function centered(s,left,right,y,size=8,bold=false,color){
-    const approx=s.length*size*.52;
-    text(s,Math.max(left+4,left+(right-left-approx)/2),y,size,bold,color);
+    const measured=textWidth(s,size,bold);
+    text(s,Math.max(left+3,left+(right-left-measured)/2),y,size,bold,color);
   }
   // Présentation A4 inspirée des devis et factures HAPPY LIVE 66 transmis
   // par le groupe : logo coloré, coordonnées en deux colonnes, tableau bleu.
@@ -156,7 +176,8 @@ export function createQuotePdf(quote,options={}){
     if(isHappy){
       // Le logo réel provient du document de référence fourni par le groupe.
       // Il est intégré dans chaque PDF : ni image distante, ni dépendance réseau.
-      ops.push("q 260 0 0 84 43 "+(invoice?649:664)+" cm /HL66 Do Q");
+      // Recentré sur les mêmes coordonnées visuelles que le logo de référence.
+      ops.push("q 225 0 0 61 69 "+(invoice?692:705)+" cm /HL66 Do Q");
     }else{
       // Repli neutre si la structure émettrice n'est pas Happy Live 66.
       const base=[715,704,712,691];
@@ -176,56 +197,69 @@ export function createQuotePdf(quote,options={}){
   }
   function drawFirstHeader(){
     drawLogo();
-    let y=invoice?631:654;
+    let y=invoice?628:649;
     const strapline=isHappy
-      ?"HAPPY LIVE 66 - CONCERTS - ANIMATIONS"
+      ?(invoice?"HAPPY LIVE 66 - CONCERTS - ANIMATIONS":
+        "Association HAPPY LIVE 66 - CONCERTS - ANIMATIONS")
       :"LES KLOSQUES - CONCERTS - ANIMATIONS";
-    text(strapline,43,y,8.4,true,"0.14 0.14 0.14",true);
+    text(strapline,43,y,invoice?8.4:7.45,true,"0.14 0.14 0.14",true);
     y-=18;
-    y=para(q.issuer_name||"Structure emettrice",43,y,286,8.4,11);
-    y=para(q.issuer_address||"",43,y-1,281,8.2,10.7);
+    // Nom complet affiché selon les documents de référence, sans modifier
+    // le nom légal stocké dans les dossiers.
+    const issuerName= /^Association\s+Happy\s+Live\s+66(?:\s*-\s*Groupe\s+LES\s+KLOSQUES)?$/i
+      .test(String(q.issuer_name||"").trim())
+      ?"Association HAPPY LIVE 66 - Groupe LES KLOSQUES"
+      :(q.issuer_name||"Structure émettrice");
+    y=para(issuerName,43,y,290,8.35,10.5);
+    // Si l'adresse du profil est sur une seule ligne, séparer rue et CP/ville.
+    const address=String(q.issuer_address||"").trim();
+    const splitAddress=!address.includes("\n")&&address.match(/^(.+?)\s+(\d{5}\s+.+)$/);
+    y=para(splitAddress?(splitAddress[1]+"\n"+splitAddress[2]):address,43,y-1,281,8.1,10.5);
     if(q.issuer_identifier){
-      const id=String(q.issuer_identifier);
-      const label=/^[\d\s]{12,20}$/.test(id)?"SIRET":"Identifiant";
-      y=para(label+" : "+id,43,y-3,280,8.1,11);
+      const id=String(q.issuer_identifier).trim();
+      const digits=id.replace(/\s/g,"");
+      const siren=/^\d{14}$/.test(digits);
+      const normalized=siren?digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{5})$/,"$1 $2 $3 $4"):id;
+      y=para((siren?"SIRET":"Identifiant")+" : "+normalized,43,y-3,280,8.1,11);
     }
     if(q.issuer_tax_number)y=para("N° TVA : "+q.issuer_tax_number,43,y-1,280,8.1,11);
     if(q.issuer_legal)y=para(q.issuer_legal,43,y-1,280,8.1,11);
-    if(q.issuer_contact)y=para(q.issuer_contact,43,y-1,280,8.0,11);
+    // Les e-mails personnels/de contact restent dans Manager et dans les
+    // messages d'envoi, pas dans la zone d'adresse de cette maquette.
 
     const dateY=invoice?609:632;
     text("DATE : "+dateLabel(q.issue_date),377,dateY,8.3,true);
     text("N° "+documentLabel+" : "+String(quote.number||"NON ATTRIBUE"),377,dateY-11,8.3,true);
 
     // Le client est placé à droite, comme dans les exemples.
-    let cy=invoice?543:552;
-    cy=para("A : "+String(q.client_name||"Client a preciser"),370,cy,183,8.5,11,true);
+    let cy=invoice?543:548;
+    cy=para((invoice?"À : ":"")+String(q.client_name||"Client à préciser"),370,cy,183,8.5,11,true);
     cy=para(q.client_address||"",370,cy-2,183,8.2,11,true);
-    if(q.client_email)cy=para(q.client_email,370,cy-2,183,7.8,10);
     if(invoice&&q.client_identifier)
       cy=para("SIREN / SIRET : "+q.client_identifier,370,cy-2,183,8.0,10);
 
     // Les blocs longs repoussent le tableau et évitent les chevauchements.
-    return Math.min(invoice?466:475,y-36,cy-29);
+    return Math.min(invoice?466.5:476.2,y-37,cy-30);
   }
   // La première colonne large conserve la description et le lieu du concert.
-  const breaks=[43,323,367,483,555];
+  const breaks=invoice?[43,319,371,470,554]:[43,323,368,483,555];
+  const headerHeight=invoice?16.5:14.2;
   function tableHead(top){
-    fillRect(breaks[0],top-17,breaks[4]-breaks[0],17,"0.85 0.91 0.93");
-    rect(breaks[0],top-17,breaks[4]-breaks[0],17,"0.59 0.63 0.65",.55);
+    fillRect(breaks[0],top-headerHeight,breaks[4]-breaks[0],headerHeight,"0.847 0.894 0.910");
+    rect(breaks[0],top-headerHeight,breaks[4]-breaks[0],headerHeight,"0 0 0",.55);
     for(let j=1;j<breaks.length-1;j++)
-      stroke(breaks[j],top,breaks[j],top-17,"0.59 0.63 0.65",.55);
-    centered("DESCRIPTION",breaks[0],breaks[1],top-12,8.1,true,"0.10 0.10 0.10");
-    centered("QUANTITE",breaks[1],breaks[2],top-12,7.0,true,"0.10 0.10 0.10");
+      stroke(breaks[j],top,breaks[j],top-headerHeight,"0 0 0",.55);
+    const textY=top-(invoice?11.8:10.7);
+    centered("DESCRIPTION",breaks[0],breaks[1],textY,invoice?8:7.8,true,"0.10 0.10 0.10");
+    centered("QUANTITE",breaks[1],breaks[2],textY,invoice?7.2:6.9,true,"0.10 0.10 0.10");
     centered(totals.taxable?"PRIX UNITAIRE (TTC)":"PRIX UNITAIRE (HT)",
-      breaks[2],breaks[3],top-12,7.2,true,"0.10 0.10 0.10");
+      breaks[2],breaks[3],textY,invoice?7.1:7,true,"0.10 0.10 0.10");
     centered(totals.taxable?"MONTANT (TTC)":"MONTANT (HT)",
-      breaks[3],breaks[4],top-12,7.2,true,"0.10 0.10 0.10");
-    return top-17;
+      breaks[3],breaks[4],textY,invoice?7.1:7,true,"0.10 0.10 0.10");
+    return top-headerHeight;
   }
   function right(s,rightEdge,y,size=8,bold=false,color){
-    const approx=String(s).length*size*.48;
-    text(s,rightEdge-approx,y,size,bold,color);
+    text(s,rightEdge-textWidth(s,size,bold),y,size,bold,color);
   }
   function continuation(){
     pageEnd();
@@ -255,27 +289,27 @@ export function createQuotePdf(quote,options={}){
     if(firstRow&&q.event_location&&
        !description.toLocaleLowerCase("fr-FR").includes(String(q.event_location).toLocaleLowerCase("fr-FR")))
       labelLines.push(...wrap("Lieu : "+q.event_location,62));
-    const height=Math.max(34,12+labelLines.length*11);
+    const height=Math.max(invoice?49.9:42.6,12+labelLines.length*11);
     if(y-height<172)y=continuation();
-    rect(breaks[0],y-height,breaks[4]-breaks[0],height,"0.65 0.65 0.65",.55);
+    rect(breaks[0],y-height,breaks[4]-breaks[0],height,"0 0 0",.55);
     for(let j=1;j<breaks.length-1;j++)
-      stroke(breaks[j],y,breaks[j],y-height,"0.65 0.65 0.65",.55);
-    let ly=y-13;
-    for(const line of labelLines){if(line)text(line,breaks[0]+4,ly,7.7);ly-=11;}
-    centered(qtyLabel(row.qty),breaks[1],breaks[2],y-14,7.8);
-    right(money(row.unitDisplayed),breaks[3]-6,y-14,7.8);
-    right(money(row.amountDisplayed),breaks[4]-4,y-14,7.8);
+      stroke(breaks[j],y,breaks[j],y-height,"0 0 0",.55);
+    let ly=y-(invoice?12:11);
+    for(const line of labelLines){if(line)text(line,breaks[0]+1,ly,7.6);ly-=11;}
+    centered(qtyLabel(row.qty),breaks[1],breaks[2],y-13,7.8);
+    right(money(row.unitDisplayed),breaks[3]-5,y-13,7.8);
+    right(money(row.amountDisplayed),breaks[4]-1,y-13,7.8);
     y-=height;
     firstRow=false;
   }
   if(y-86<153)y=continuation();
   function totalRow(label,value,emphasis=false){
-    const height=25;
-    fillRect(breaks[3],y-height,breaks[4]-breaks[3],height,
-      emphasis?"0.89 0.89 0.89":"0.91 0.91 0.91");
-    rect(breaks[3],y-height,breaks[4]-breaks[3],height,"0.69 0.69 0.69",.5);
-    right(label,breaks[3]-7,y-16,emphasis?9:8.2,emphasis);
-    right(value,breaks[4]-4,y-16,emphasis?8.5:8.1,emphasis);
+    const height=invoice?16.6:14.2;
+    fillRect(breaks[3],y-height,breaks[4]-breaks[3],height,"0.918 0.918 0.918");
+    rect(breaks[3],y-height,breaks[4]-breaks[3],height,"0 0 0",.5);
+    const baseline=y-(invoice?12:10);
+    right(label,breaks[3]-1,baseline,emphasis?8:7.7,emphasis);
+    right(value,breaks[4]-1,baseline,emphasis?8.2:7.8,emphasis);
     y-=height;
   }
   // Prix TTC sans ventilation ou franchise : le modèle d'origine affiche
@@ -283,7 +317,7 @@ export function createQuotePdf(quote,options={}){
   const simplifiedTotals=totals.direct||q.vat_mode==="franchise";
   totalRow(simplifiedTotals?"SOUS-TOTAL":"SOUS-TOTAL HT",
     money(simplifiedTotals?totals.ttc:totals.ht));
-  y-=3; // léger espacement du total, comme dans le modèle fourni.
+  y-=invoice?16.6:14.2; // Espacement réel entre sous-total et total dans les modèles.
   if(simplifiedTotals){
     totalRow("TOTAL TTC",money(totals.ttc),true);
   }else if(totals.taxable){
@@ -295,7 +329,7 @@ export function createQuotePdf(quote,options={}){
   }
   // Mentions supplementaires : conserve les modalites et les conditions
   // legales saisies dans le Manager, sans copier de signature existante.
-  let footerY=Math.min(329,y-37);
+  let footerY=Math.min(invoice?309:321,y-35);
   const more=(q.payment_terms?String(q.payment_terms)+"\n":"")+
     String(q.conditions||"")+"\n"+
     (q.vat_mode==="franchise"?"TVA non applicable, art. 293 B du CGI":"");
@@ -312,20 +346,20 @@ export function createQuotePdf(quote,options={}){
   if(!invoice){
     const payee=String(q.issuer_name||"Structure emettrice")
       .replace(/\s*-\s*Groupe\s+LES\s+KLOSQUES.*$/i,"").trim();
-    text("Ordre du reglement : "+payee,43,footerY,8.4);
+    text("Ordre du règlement : "+payee,43,footerY,8.4);
     footerY-=18;
     if(q.valid_until)footerY=para("Devis valable jusqu'au : "+dateLabel(q.valid_until),43,footerY,495,8.1,11);
   }
   if(q.payment_terms)
     footerY=para("Modalites de paiement : "+String(q.payment_terms),43,footerY-3,500,8.1,11);
-  if(q.conditions)footerY=para("Conditions particulieres : "+q.conditions,56,footerY-6,490,8.1,11);
+  if(q.conditions)footerY=para("Conditions particulières : "+q.conditions,56,footerY-6,490,8.1,11);
   if(q.vat_mode==="franchise")
     footerY=para("TVA non applicable, art. 293 B du CGI",56,footerY-5,490,8.1,11);
   if(invoice){
     footerY=para("Date limite de paiement : "+dateLabel(q.payment_due_date),56,footerY-6,490,8.1,11);
     if(q.client_type==="professionnel"){
-      footerY=para("Penalites de retard : "+String(q.late_penalties||"A preciser"),56,footerY-7,490,8.1,11);
-      footerY=para("Indemnite forfaitaire de recouvrement : 40 euros (si applicable).",
+      footerY=para("Pénalités de retard : "+String(q.late_penalties||"À préciser"),56,footerY-7,490,8.1,11);
+      footerY=para("Indemnité forfaitaire de recouvrement : 40 euros (si applicable).",
         56,footerY-4,490,8.1,11);
     }
   }
