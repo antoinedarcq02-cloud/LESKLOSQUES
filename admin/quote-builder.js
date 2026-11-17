@@ -268,6 +268,7 @@ $('confirmDeleteQuote').addEventListener('click', async () => {
 // Envoi volontaire : devis finalisé, adresse préremplie mais modifiable
 // par le musicien (même sans demande client), puis confirmation explicite.
 let pendingSendQuote = null;
+let quoteRibAvailable=false;
 const sendQuoteDialog = $('sendQuoteDialog');
 const quoteRecipientValid = value => {
   const email=String(value||'').trim();
@@ -278,14 +279,17 @@ function updateQuoteSendRecipient(){
   $('sendQuoteDestination').textContent=recipient
     ? 'Destinataire du devis PDF : '+recipient
     : 'Renseigne une adresse e-mail pour envoyer le devis PDF.';
-  $('confirmSendQuote').disabled=!officialQuoteState.mailReady||!quoteRecipientValid(recipient);
+  $('confirmSendQuote').disabled=!officialQuoteState.mailReady||!quoteRibAvailable||
+    !quoteRecipientValid(recipient);
 }
 $('sendQuoteEmail').addEventListener('input',updateQuoteSendRecipient);
-$('sendOfficialQuote').addEventListener('click',()=>{
+$('sendOfficialQuote').addEventListener('click',async()=>{
   const quote=officialQuoteState.current;
   if(!quote || quote.status!=='finalise')return;
   const request=state.items.find(item=>item.id===quote.booking_id);
   pendingSendQuote=quote.id;
+  quoteRibAvailable=false;
+  $('sendQuoteRibStatus').textContent='Vérification du RIB Happy Live 66…';
   $('sendQuoteInfo').textContent='Vérifie le destinataire avant d’envoyer le devis '+quote.number+' par e-mail.';
   $('sendQuoteEmail').value=quote.data?.client_email||request?.email||'';
   $('sendQuoteMessage').value='';
@@ -293,15 +297,26 @@ $('sendOfficialQuote').addEventListener('click',()=>{
   $('sendQuotePreviously').hidden=!quote.sent_at;
   updateQuoteSendRecipient();
   sendQuoteDialog.showModal();
+  try{
+    const data=await callApi('/api/admin/invoice-rib');
+    if(pendingSendQuote!==quote.id||!sendQuoteDialog.open)return;
+    quoteRibAvailable=data.configured===true;
+    $('sendQuoteRibStatus').textContent=quoteRibAvailable
+      ?'Pièces jointes : le devis PDF et le RIB de l’association Happy Live 66.'
+      :'RIB non configuré : le gestionnaire doit l’ajouter dans Site → RIB à joindre aux devis et factures avant l’envoi.';
+  }catch(error){
+    if(pendingSendQuote===quote.id&&sendQuoteDialog.open)
+      $('sendQuoteRibStatus').textContent='RIB non vérifié : '+error.message;
+  }finally{updateQuoteSendRecipient();}
 });
 $('cancelSendQuote').addEventListener('click',()=>{
   pendingSendQuote=null;
   sendQuoteDialog.close();
 });
-sendQuoteDialog.addEventListener('close',()=>{pendingSendQuote=null;});
+sendQuoteDialog.addEventListener('close',()=>{pendingSendQuote=null;quoteRibAvailable=false;});
 $('confirmSendQuote').addEventListener('click',async()=>{
   const id=pendingSendQuote;
-  if(!Number.isSafeInteger(id)||id<1 || !officialQuoteState.mailReady)return;
+  if(!Number.isSafeInteger(id)||id<1 || !officialQuoteState.mailReady||!quoteRibAvailable)return;
   const recipient=$('sendQuoteEmail').value.trim();
   const personalMessage=$('sendQuoteMessage').value.trim();
   if(personalMessage.length>2000){
@@ -328,8 +343,8 @@ $('confirmSendQuote').addEventListener('click',async()=>{
     if(updated){officialQuoteState.current=updated;updateQuoteLock();}
     await refresh();
     notify(result.recorded
-      ? 'Le service de messagerie a accepté l’envoi du devis PDF à '+result.recipient+'.'
-      : 'Le service de messagerie a accepté l’envoi à '+result.recipient+
+      ? 'Le service de messagerie a accepté le devis PDF et le RIB Happy Live 66 pour '+result.recipient+'.'
+      : 'Le service de messagerie a accepté le devis PDF et le RIB Happy Live 66 pour '+result.recipient+
         ', mais l’historique n’a pas pu être enregistré. Vérifie avant de renvoyer.');
   }catch(error){
     $('sendQuoteInfo').textContent='Envoi non effectué : '+error.message;
