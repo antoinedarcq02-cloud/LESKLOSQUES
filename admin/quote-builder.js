@@ -16,6 +16,8 @@ const officialMoney = cents => (cents / 100).toLocaleString('fr-FR',{style:'curr
 // Un devis n'est indiqué « envoyé » qu'après un envoi d'e-mail journalisé.
 // La finalisation seule n'est jamais une preuve d'envoi.
 function quoteEmailStatus(quote) {
+  if(quote?.status==='brouillon')
+    return {label:'Brouillon',className:'draft'};
   return quote?.sent_at
     ? {label:'Devis envoyé',className:'confirmed'}
     : {label:'En attente d’envoi',className:'pending'};
@@ -31,7 +33,7 @@ function quoteLine(label = '',qty = 1,priceCents = 0) {
   const row = document.createElement('div');
   row.className = 'official-quote-line';
   const desc = document.createElement('input');
-  desc.type = 'text'; desc.maxLength = 220; desc.placeholder = 'Description de la prestation';
+  desc.type = 'text'; desc.maxLength = 220; desc.placeholder = 'Ex. Concert Les Klosques';
   desc.setAttribute('aria-label','Prestation');
   desc.className = 'quote-line-label'; desc.value = label;
   desc.setAttribute('list','klosquesServiceSuggestions');
@@ -41,12 +43,27 @@ function quoteLine(label = '',qty = 1,priceCents = 0) {
   const price = document.createElement('input');
   price.type = 'number'; price.min = '0'; price.max = '1000000'; price.step = '0.01';
   price.setAttribute('aria-label',directQuotePricing()?'Prix TTC en euros':'Prix HT en euros'); price.className = 'quote-line-price'; price.value = priceCents ? (priceCents/100).toFixed(2) : '';
+  price.placeholder='Ex. 600';
   const remove = document.createElement('button');
   remove.type = 'button'; remove.className = 'small-button quote-line-remove';
   remove.setAttribute('aria-label','Retirer cette ligne'); remove.textContent = '✕';
   remove.addEventListener('click',() => { row.remove(); updateOfficialTotals(); });
   for (const el of [desc,quantity,price]) el.addEventListener('input',updateOfficialTotals);
-  row.append(desc,quantity,price,remove);
+  const field=(input,title,className)=>{
+    const wrapper=document.createElement('label');
+    wrapper.className='quote-line-field '+className;
+    const caption=document.createElement('span');
+    caption.className='quote-line-field-title';
+    caption.textContent=title;
+    wrapper.append(caption,input);
+    return wrapper;
+  };
+  row.append(
+    field(desc,'Type de prestation','quote-line-description-field'),
+    field(quantity,'Quantité','quote-line-quantity-field'),
+    field(price,directQuotePricing()?'Prix TTC (€)':'Prix HT (€)','quote-line-price-field'),
+    remove
+  );
   $('quoteLines').append(row);
   updateOfficialTotals();
 }
@@ -153,7 +170,7 @@ function fillQuoteForm(record = null) {
   const direct = directQuotePricing();
   $('quotePriceTypeText').textContent = direct ? 'Prix unitaire TTC' : 'Prix unitaire HT';
   $('quotePricingInfo').textContent = direct
-    ? 'Saisis la description à imprimer, la quantité et le prix unitaire TTC en euros.'
+    ? 'Dans « Type de prestation », indique ce qui est facturé ; dans « Prix TTC (€) », saisis le montant en euros.'
     : 'Ancien devis : les prix sont indiqués HT. Le calcul fiscal d’origine reste conservé.';
   const lines = data.lines?.length ? data.lines :
     [{label:record?'':'Prestation Groupe Les Klosques',qty:1,price_cents:0}];
