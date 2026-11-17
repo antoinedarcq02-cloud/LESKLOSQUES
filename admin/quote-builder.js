@@ -34,6 +34,7 @@ function quoteLine(label = '',qty = 1,priceCents = 0) {
   desc.type = 'text'; desc.maxLength = 220; desc.placeholder = 'Description de la prestation';
   desc.setAttribute('aria-label','Prestation');
   desc.className = 'quote-line-label'; desc.value = label;
+  desc.setAttribute('list','klosquesServiceSuggestions');
   const quantity = document.createElement('input');
   quantity.type = 'number'; quantity.min = '0.01'; quantity.max = '1000'; quantity.step = '0.01';
   quantity.setAttribute('aria-label','Quantité'); quantity.className = 'quote-line-qty'; quantity.value = String(qty);
@@ -134,7 +135,8 @@ function fillQuoteForm(record = null) {
   }
   if (!record) {
     for (const key of officialIssuerFields) {
-      officialQuoteForm.elements.namedItem(key).value = officialQuoteState.issuer[key] || '';
+      officialQuoteForm.elements.namedItem(key).value =
+        officialQuoteState.issuer[key] || HAPPY_LIVE_ISSUER_DEFAULTS[key] || '';
     }
     const now = new Date();
     officialQuoteForm.elements.namedItem('issue_date').value = officialToday(now);
@@ -148,15 +150,20 @@ function fillQuoteForm(record = null) {
   const direct = directQuotePricing();
   $('quotePriceTypeText').textContent = direct ? 'Prix unitaire TTC' : 'Prix unitaire HT';
   $('quotePricingInfo').textContent = direct
-    ? 'Saisis directement les prix TTC proposés au client. Ajoute une ligne pour les frais de déplacement si nécessaire.'
+    ? 'Saisis la description à imprimer, la quantité et le prix unitaire TTC en euros.'
     : 'Ancien devis : les prix sont indiqués HT. Le calcul fiscal d’origine reste conservé.';
-  const lines = data.lines?.length ? data.lines : [{label:'',qty:1,price_cents:0}];
+  const lines = data.lines?.length ? data.lines :
+    [{label:record?'':'Prestation Groupe Les Klosques',qty:1,price_cents:0}];
   for (const line of lines) quoteLine(line.label,line.qty,line.price_cents);
   $('quoteFormTitle').textContent = record ? 'Devis '+record.number : 'Nouveau devis';
   $('quoteNumber').textContent = record
     ? record.number+' · '+(record.status === 'finalise' ? 'Finalisé' : 'Brouillon')
     : 'Un numéro de devis sera attribué lors du premier enregistrement.';
   $('quoteFormPanel').hidden = false;
+  $('quoteIssuerDetails').open=Boolean(record&&
+    officialIssuerFields.some(key=>!data[key]));
+  $('quoteAdditionalDetails').open=Boolean(record&&
+    (data.description||data.conditions||data.event_time));
   $('deleteOfficialQuote').hidden = !record;
   updateOfficialTotals();
   updateQuoteLock();
