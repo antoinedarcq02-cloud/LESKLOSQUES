@@ -430,13 +430,6 @@ async function showOfficialQuotePdf(download=false,selectedQuote=null,actionButt
     notify('Le téléchargement est réservé aux devis finalisés.');
     return;
   }
-  const newTab=download?null:window.open('about:blank','_blank');
-  if(newTab){
-    try{
-      newTab.document.title='Ouverture du devis';
-      newTab.document.body.textContent='Chargement du devis PDF…';
-    }catch{}
-  }
   const preview=$('printOfficialQuote'),save=$('downloadOfficialQuote');
   preview.disabled=save.disabled=true;
   if(actionButton)actionButton.disabled=true;
@@ -456,16 +449,8 @@ async function showOfficialQuotePdf(download=false,selectedQuote=null,actionButt
     openQuotePdfUrls.add(url);
     const name=(quote.number||'DEVIS-BROUILLON')+'.pdf';
     if(download)saveQuotePdfBlob(url,name);
-    else if(newTab&&!newTab.closed){
-      newTab.location.replace(url);
-      try{newTab.opener=null;}catch{}
-    }else{
-      URL.revokeObjectURL(url);
-      openQuotePdfUrls.delete(url);
-      notify('Le navigateur a bloqué l’aperçu. Autorise les fenêtres contextuelles pour visualiser le PDF.');
-    }
+    else showManagerPdfPreview(url,quote.number||'Brouillon de devis','devis');
   }catch(error){
-    if(newTab&&!newTab.closed)newTab.close();
     notify('PDF non ouvert : '+error.message);
   }finally{
     const current=officialQuoteState.current;
