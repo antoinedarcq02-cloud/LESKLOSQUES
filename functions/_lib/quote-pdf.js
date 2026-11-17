@@ -215,15 +215,19 @@ export function createQuotePdf(quote,options={}){
     const address=String(q.issuer_address||"").trim();
     const splitAddress=!address.includes("\n")&&address.match(/^(.+?)\s+(\d{5}\s+.+)$/);
     y=para(splitAddress?(splitAddress[1]+"\n"+splitAddress[2]):address,43,y-1,281,8.1,10.5);
+    // Mentions administratives discrètes, comme dans les PDF originaux.
+    // Le devis de référence utilise 7,1 pt ; la facture les conserve
+    // légèrement plus petites que le nom et l'adresse de l'association.
+    const legalInfoSize=invoice?7.5:7.1;
     if(q.issuer_identifier){
       const id=String(q.issuer_identifier).trim();
       const digits=id.replace(/\s/g,"");
       const siren=/^\d{14}$/.test(digits);
       const normalized=siren?digits.replace(/^(\d{3})(\d{3})(\d{3})(\d{5})$/,"$1 $2 $3 $4"):id;
-      y=para((siren?"SIRET":"Identifiant")+" : "+normalized,43,y-3,280,8.1,11);
+      y=para((siren?"SIRET":"Identifiant")+" : "+normalized,43,y-3,280,legalInfoSize,11);
     }
     if(q.issuer_tax_number)y=para("N° TVA : "+q.issuer_tax_number,43,y-1,280,8.1,11);
-    if(q.issuer_legal)y=para(q.issuer_legal,43,y-1,280,8.1,11);
+    if(q.issuer_legal)y=para(q.issuer_legal,43,y-1,280,legalInfoSize,11);
     // Les e-mails personnels/de contact restent dans Manager et dans les
     // messages d'envoi, pas dans la zone d'adresse de cette maquette.
 
