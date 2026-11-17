@@ -282,11 +282,11 @@ export function createQuotePdf(quote,options={}){
   let firstRow=true;
   for(const row of totals.rows){
     let description=row.label;
-    if(firstRow&&q.event_date&&/^\d{4}-\d\d-\d\d$/.test(q.event_date)&&
+    if(!invoice&&firstRow&&q.event_date&&/^\d{4}-\d\d-\d\d$/.test(q.event_date)&&
        !description.includes(dateLabel(q.event_date)))
       description+=" le "+dateLabel(q.event_date);
     const labelLines=wrap(description,62);
-    if(firstRow&&q.event_location&&
+    if(!invoice&&firstRow&&q.event_location&&
        !description.toLocaleLowerCase("fr-FR").includes(String(q.event_location).toLocaleLowerCase("fr-FR")))
       labelLines.push(...wrap("Lieu : "+q.event_location,62));
     const height=Math.max(invoice?49.9:42.6,12+labelLines.length*11);
@@ -344,9 +344,11 @@ export function createQuotePdf(quote,options={}){
   // Les anciens devis conservent leurs mentions ; les nouveaux ne montrent
   // plus de rubrique de paiement ni de texte "A preciser" artificiel.
   if(!invoice){
-    const payee=String(q.issuer_name||"Structure emettrice")
+    const payee=String(q.issuer_name||"Structure émettrice")
       .replace(/\s*-\s*Groupe\s+LES\s+KLOSQUES.*$/i,"").trim();
-    text("Ordre du règlement : "+payee,43,footerY,8.4);
+    const payeeLabel=/^Association\s+Happy\s+Live\s+66$/i.test(payee)
+      ?"Association HAPPY LIVE 66":payee;
+    text("Ordre du règlement : "+payeeLabel,43,footerY,8.4);
     footerY-=18;
     if(q.valid_until)footerY=para("Devis valable jusqu'au : "+dateLabel(q.valid_until),43,footerY,495,8.1,11);
   }
@@ -356,6 +358,11 @@ export function createQuotePdf(quote,options={}){
   if(q.vat_mode==="franchise")
     footerY=para("TVA non applicable, art. 293 B du CGI",56,footerY-5,490,8.1,11);
   if(invoice){
+    // Sur les factures, la description reste telle que saisie. Si la date
+    // de prestation diffère de celle d'émission, elle reste précisée en bas.
+    if(q.event_date&&q.event_date!==q.issue_date)
+      footerY=para("Date de prestation : "+dateLabel(q.event_date)+
+        (q.event_location?" - "+q.event_location:""),56,footerY-6,490,8.1,11);
     footerY=para("Date limite de paiement : "+dateLabel(q.payment_due_date),56,footerY-6,490,8.1,11);
     if(q.client_type==="professionnel"){
       footerY=para("Pénalités de retard : "+String(q.late_penalties||"À préciser"),56,footerY-7,490,8.1,11);
