@@ -247,7 +247,7 @@ export function createQuotePdf(quote,options={}){
   let firstRow=true;
   for(const row of totals.rows){
     let description=row.label;
-    if(firstRow&&q.event_date&&/^\\d{4}-\\d\\d-\\d\\d$/.test(q.event_date)&&
+    if(firstRow&&q.event_date&&/^\d{4}-\d\d-\d\d$/.test(q.event_date)&&
        !description.includes(dateLabel(q.event_date)))
       description+=" le "+dateLabel(q.event_date);
     const labelLines=wrap(description,62);
