@@ -3,6 +3,7 @@ import { ensureInvoiceTables, publicInvoice, validInvoiceId } from "../../../../
 import { createInvoicePdf, encodePdfBase64 } from "../../../../_lib/invoice-pdf.js";
 import { quoteMailReady } from "../../../../_lib/quote-mail.js";
 import {microsoftMailReady,sendMicrosoftMail} from "../../../../_lib/microsoft-mail.js";
+import {getInvoiceRib} from "../../../../_lib/invoice-rib.js";
 
 const EMAIL=/^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/;
 const REPLY_TO="LesKlosques@hotmail.com";
@@ -18,7 +19,10 @@ async function deliver(env,mail){
       from:{name:"Les Klosques",email:env.QUOTE_FROM_EMAIL},
       to:mail.to,replyTo:REPLY_TO,subject:mail.subject,
       html:mail.html,text:mail.text,
-      attachments:[{content:mail.attachment,filename:mail.filename,type:"application/pdf",disposition:"attachment"}]
+      attachments:mail.attachments.map(file=>({
+        content:file.content,filename:file.filename,
+        type:"application/pdf",disposition:"attachment"
+      }))
     });
     if(!result?.messageId)throw Error("Aucune confirmation du service Cloudflare.");
     return{provider:"cloudflare",id:result.messageId};
@@ -33,7 +37,9 @@ async function deliver(env,mail){
       from:"Les Klosques <"+env.RESEND_FROM_EMAIL+">",
       to:[mail.to],reply_to:REPLY_TO,subject:mail.subject,
       html:mail.html,text:mail.text,
-      attachments:[{content:mail.attachment,filename:mail.filename}]
+      attachments:mail.attachments.map(file=>({
+        content:file.content,filename:file.filename
+      }))
     })
   });
   const body=await response.json().catch(()=>({}));
@@ -91,13 +97,24 @@ export async function onRequestPost(context){
       if(Number.isFinite(stamp)&&Date.now()-stamp<15000)
         return respond({error:"Un envoi vient d'être effectué pour cette facture. Patiente quelques secondes."},429);
     }
+    // Garantir l'envoi en une seule opération des deux PDF.
+    // En cas de RIB absent, bloquer AVANT d'appeler un fournisseur d'e-mail.
+    const rib=await getInvoiceRib(DB);
+    if(!rib)return respond({
+      error:"RIB non configuré : le gestionnaire doit l'ajouter dans Site → RIB des factures avant l'envoi.",
+      rib_missing:true
+    },409);
     const pdf=createInvoicePdf(invoice);
     if(pdf.length>4*1024*1024)return respond({error:"Le PDF dépasse la taille autorisée."},413);
     const filename=invoice.number+".pdf";
+    const attachments=[
+      {filename,content:encodePdfBase64(pdf)},
+      {filename:rib.filename,content:rib.content}
+    ];
     const subject="Votre facture Les Klosques - "+invoice.number;
     const text=[
-      "Bonjour,","","Vous trouverez en pièce jointe votre facture "+invoice.number+
-        " pour notre prestation musicale.",
+      "Bonjour,","","Vous trouverez en pièces jointes votre facture "+invoice.number+
+        " pour notre prestation musicale, ainsi que notre RIB Happy Live 66.",
       "Date de la prestation : "+(invoice.data.event_date||"à préciser"),
       "Échéance de paiement : "+(invoice.data.payment_due_date||"à préciser"),
       "",
@@ -105,8 +122,8 @@ export async function onRequestPost(context){
       "Pour toute question relative à cette facture, répondez simplement à cet e-mail.",
       "Bien cordialement,","Les Klosques",REPLY_TO
     ].join("\n");
-    const html="<p>Bonjour,</p><p>Vous trouverez en pièce jointe votre facture <strong>"+
-      safe(invoice.number)+"</strong> pour notre prestation musicale.</p>"+
+    const html="<p>Bonjour,</p><p>Vous trouverez en pièces jointes votre facture <strong>"+
+      safe(invoice.number)+"</strong> pour notre prestation musicale, ainsi que notre RIB Happy Live 66.</p>"+
       "<p>Date de la prestation : "+safe(invoice.data.event_date)+
       "<br>Échéance de paiement : "+safe(invoice.data.payment_due_date)+"</p>"+
       (personalMessage?"<p>"+safe(personalMessage).replace(/\n/g,"<br>")+"</p>":"")+
@@ -115,8 +132,7 @@ export async function onRequestPost(context){
     let receipt;
     try{
       receipt=await deliver(context.env,{
-        to:recipient,subject,html,text,
-        filename,attachment:encodePdfBase64(pdf)
+        to:recipient,subject,html,text,attachments
       });
     }catch(error){
       console.warn("Échec fournisseur d'envoi facture",error?.message);
@@ -129,7 +145,8 @@ export async function onRequestPost(context){
       recorded=true;
     }catch(error){console.warn("E-mail de facture accepté mais historique non enregistré",error?.message);}
     return respond({accepted:true,sent:true,recorded,number:invoice.number,recipient,
-      message:"Le service de messagerie a accepté la facture et sa pièce jointe PDF."});
+      attachments:[filename,rib.filename],
+      message:"Le service de messagerie a accepté la facture PDF et le RIB PDF."});
   }catch(error){
     console.warn("Préparation envoi facture impossible",error?.message);
     return respond({error:"Impossible de préparer l'envoi de cette facture."},503);
