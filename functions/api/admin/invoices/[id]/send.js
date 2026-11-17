@@ -101,7 +101,7 @@ export async function onRequestPost(context){
     // En cas de RIB absent, bloquer AVANT d'appeler un fournisseur d'e-mail.
     const rib=await getInvoiceRib(DB);
     if(!rib)return respond({
-      error:"RIB non configuré : le gestionnaire doit l'ajouter dans Site → RIB des factures avant l'envoi.",
+      error:"RIB non configuré : le gestionnaire doit l'ajouter dans Site → RIB à joindre aux devis et factures avant l'envoi.",
       rib_missing:true
     },409);
     const pdf=createInvoicePdf(invoice);
