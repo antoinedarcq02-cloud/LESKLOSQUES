@@ -1,6 +1,8 @@
 import { authorize, respond, cleanText, validDate, statuses } from "../../../_lib/admin-auth.js";
 import { syncRequestToGoogle } from "../../../_lib/booking-google-sync.js";
 import {deleteSiteBookingAndQueueGoogle,flushPendingGoogleRemovals} from "../../../_lib/booking-google-removal.js";
+import {ensureQuotesTable} from "../../../_lib/quote-table.js";
+import {ensureInvoiceTables} from "../../../_lib/invoice-core.js";
 
 const EDITABLE = {
   name: 150, email: 254, phone: 50, event_type: 100, event_date: 10,
@@ -89,6 +91,21 @@ export async function onRequestDelete(context) {
     ).bind(id).first();
     if(!booking)
       return respond({error:"Demande introuvable ou suppression impossible pour une fiche concert manuelle."},404);
+    // Conserver le dossier tant qu'il est utilisé par un devis ou une
+    // facture, y compris en brouillon. Une suppression ne doit jamais
+    // rompre la traçabilité des documents commerciaux et comptables.
+    await Promise.all([
+      ensureQuotesTable(context.env.DB),
+      ensureInvoiceTables(context.env.DB)
+    ]);
+    const [linkedQuote,linkedInvoice]=await Promise.all([
+      context.env.DB.prepare("SELECT id FROM official_quotes WHERE booking_id=? LIMIT 1").bind(id).first(),
+      context.env.DB.prepare("SELECT id FROM official_invoices WHERE booking_id=? LIMIT 1").bind(id).first()
+    ]);
+    if(linkedQuote||linkedInvoice)
+      return respond({
+        error:"Impossible de supprimer cette demande : elle est liée à un devis ou à une facture. Conserve le dossier pour assurer la traçabilité comptable."
+      },409);
     await deleteSiteBookingAndQueueGoogle(context.env,booking);
     // Premier essai immédiatement ; si Google refuse, la file persiste et
     // sera retentée automatiquement lors des prochaines consultations d'Agenda.
