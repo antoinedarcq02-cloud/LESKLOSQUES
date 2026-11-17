@@ -363,7 +363,10 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
   gap:10px;flex:none;padding:9px 12px;
   color:#e5d9de;background:#211c22;font-size:.82rem
 }
-.manager-pdf-viewer-tools>span{min-width:0;overflow-wrap:anywhere}
+.manager-pdf-viewer-status{display:flex;align-items:center;gap:9px;min-width:0}
+.manager-pdf-viewer-status span{min-width:0;overflow-wrap:anywhere}
+.manager-pdf-viewer-status button{min-height:36px;padding:6px 10px}
+.manager-pdf-viewer-status button[hidden]{display:none}
 .manager-pdf-zoom{display:flex;flex:none;gap:8px;align-items:center}
 .manager-pdf-zoom output{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
 .manager-pdf-zoom button{min-width:40px;min-height:38px;padding:8px}
