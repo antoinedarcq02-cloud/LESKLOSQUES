@@ -195,12 +195,13 @@ $('passwordForm').addEventListener('submit', async event => {
   finally { btn.disabled = false; }
 });
 function setPage(page) {
+  if (!$('panel-'+page)) page = 'home';
   state.page = page;
   document.querySelectorAll('.page').forEach(el => el.hidden = el.id !== 'panel-'+page);
   document.querySelectorAll('[data-tab]').forEach(el => el.classList.toggle('active', el.dataset.tab === page));
   $('pageTitle').textContent = {
     home:'Tableau de bord',agenda:'Agenda',demandes:'Demandes clients',
-    concerts:'Fiches concerts',devis:'Devis',factures:'Factures',
+    devis:'Devis',factures:'Factures',
     messagerie:'Boîte mail',site:'Gestion du site'
   }[page] || 'Klosques Manager';
   render();
@@ -249,7 +250,7 @@ function itemCard(item) {
       escapeHtml(invoiceLabel)+'</p>' : '') +
     (item.package ? '<p>🎸 '+escapeHtml(item.package)+'</p>' : '') +
     (item.quote_amount_cents != null ? '<p>💶 '+escapeHtml((item.quote_amount_cents/100).toLocaleString('fr-FR',{style:'currency',currency:'EUR'}))+'</p>' : '') +
-    '<p class="small">Ouvrir la fiche →</p></button>';
+    '<p class="small">Ouvrir le dossier →</p></button>';
 }
 function fillList(id, items, empty = 'Aucun dossier à afficher.') {
   $(id).innerHTML = items.length ? items.map(itemCard).join('') : '<p class="empty">'+escapeHtml(empty)+'</p>';
@@ -270,13 +271,10 @@ function render() {
   let requests = items.filter(x => x.source === 'site');
   if ($('requestFilter').value !== 'all') requests = requests.filter(x => x.status === $('requestFilter').value);
   fillList('requestsList', requests, 'Aucune demande reçue depuis le formulaire.');
-  let concerts = items.filter(x => ['option','confirme','termine'].includes(x.status));
-  if ($('concertFilter').value !== 'all') concerts = concerts.filter(x => x.status === $('concertFilter').value);
-  fillList('concertsList',concerts,'Aucun concert enregistré.');
   // La liste des devis numérotés est maintenant gérée par quote-builder.js.
   renderCalendar();
 }
-['requestFilter','concertFilter','agendaMonth'].forEach(id => $(id).addEventListener('change',() => { if(id==='agendaMonth') state.selectedDay=null; render(); }));
+['requestFilter','agendaMonth'].forEach(id => $(id).addEventListener('change',() => { if(id==='agendaMonth') state.selectedDay=null; render(); }));
 function previousCalendarDate(value) {
   const date=new Date(value+'T12:00:00Z');
   date.setUTCDate(date.getUTCDate()-1);
@@ -409,12 +407,11 @@ document.addEventListener('click', event => {
   if (day) { state.selectedDay = state.selectedDay === day.dataset.day ? null : day.dataset.day; renderCalendar(); }
 });
 const bookingDialog = $('bookingDialog'), editor = $('bookingEditor');
-$('newBooking').addEventListener('click',() => openEditor(null));
 $('closeDialog').addEventListener('click',() => bookingDialog.close());
 function openEditor(item) {
   state.current = item || null;
   editor.reset();
-  $('dialogTitle').textContent = item ? 'Fiche concert / demande' : 'Ajouter un concert';
+  $('dialogTitle').textContent = item ? 'Dossier client / concert' : 'Créer un dossier';
   for (const key of quoteKeys) {
     const el = editor.elements.namedItem(key);
     if (el) el.value = item ? String(item[key] ?? '') : (key==='status' ? 'option' : '');
