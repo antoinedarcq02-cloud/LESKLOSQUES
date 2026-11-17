@@ -76,7 +76,9 @@ async function signedIn(account, showWelcome = false) {
   $('externalConnectionsPanel').hidden = account.role !== 'admin';
   $('newGoogleEvent').hidden = false;
   $('newGoogleEvent').disabled = true; // Activé après vérification de la connexion Google.
-  document.querySelectorAll('[data-tab="messagerie"]').forEach(button=>{button.hidden=account.role!=='admin';});
+  // Tous les musiciens consultent la boîte mail ; seul le gestionnaire voit Site.
+  document.querySelectorAll('[data-tab="messagerie"]').forEach(button=>{button.hidden=false;});
+  document.querySelectorAll('[data-tab="site"]').forEach(button=>{button.hidden=account.role!=='admin';});
   $('cancelPasswordChange').hidden = state.mustChangePassword;
   $('passwordExplanation').textContent = state.mustChangePassword
     ? 'Ceci est ton mot de passe provisoire : choisis-en un nouveau, personnel, avant de consulter les dossiers.'
@@ -88,8 +90,8 @@ async function signedIn(account, showWelcome = false) {
   if (showWelcome) await welcomeMusician(account.display_name || account.username);
   showScreen('workspace');
   await refresh();
-  await loadSiteContent();
   if (state.role === 'admin') {
+    await loadSiteContent();
     await loadMembers();
     await loadEmailSettings();
     await loadExternalConnections();
@@ -188,13 +190,17 @@ $('passwordForm').addEventListener('submit', async event => {
     await welcomeMusician($('identity').textContent);
     showScreen('workspace');
     await refresh();
-    await loadSiteContent();
-    if (state.role === 'admin') await loadMembers();
+    if (state.role === 'admin') {
+      await loadSiteContent();
+      await loadMembers();
+    }
     notify('Ton mot de passe a été modifié. Tes anciennes sessions sont désormais invalides.');
   } catch(error) { notify(error.message); }
   finally { btn.disabled = false; }
 });
 function setPage(page) {
+  // La page Site est protégée aussi côté serveur ; pas de navigation directe ici.
+  if (page === 'site' && state.role !== 'admin') page = 'home';
   if (!$('panel-'+page)) page = 'home';
   state.page = page;
   document.querySelectorAll('.page').forEach(el => el.hidden = el.id !== 'panel-'+page);
