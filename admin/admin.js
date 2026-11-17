@@ -89,6 +89,7 @@ async function signedIn(account, showWelcome = false) {
   }
   if (showWelcome) await welcomeMusician(account.display_name || account.username);
   showScreen('workspace');
+  setPage('home');
   await refresh();
   if (state.role === 'admin') {
     await loadSiteContent();
@@ -189,6 +190,7 @@ $('passwordForm').addEventListener('submit', async event => {
     state.mustChangePassword = false;
     await welcomeMusician($('identity').textContent);
     showScreen('workspace');
+    setPage('home');
     await refresh();
     if (state.role === 'admin') {
       await loadSiteContent();
@@ -202,6 +204,21 @@ function setPage(page) {
   // La page Site est protégée aussi côté serveur ; pas de navigation directe ici.
   if (page === 'site' && state.role !== 'admin') page = 'home';
   if (!$('panel-'+page)) page = 'home';
+  const searchLabels = {
+    demandes:{label:'Rechercher une demande',placeholder:'Nom, ville, date ou e-mail du client…'},
+    devis:{label:'Rechercher un devis',placeholder:'Nom du client, date ou numéro de devis…'},
+    factures:{label:'Rechercher une facture',placeholder:'Nom du client, date ou numéro de facture…'}
+  };
+  const searchPage = searchLabels[page];
+  const searchPanel = $('managerSearchPanel');
+  searchPanel.hidden = !searchPage;
+  $('managerSearchInput').value = '';
+  $('managerSearchResults').hidden = true;
+  $('managerSearchResults').replaceChildren();
+  if (searchPage) {
+    $('managerSearchLabel').textContent = searchPage.label;
+    $('managerSearchInput').placeholder = searchPage.placeholder;
+  }
   state.page = page;
   document.querySelectorAll('.page').forEach(el => el.hidden = el.id !== 'panel-'+page);
   document.querySelectorAll('[data-tab]').forEach(el => el.classList.toggle('active', el.dataset.tab === page));
