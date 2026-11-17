@@ -9,6 +9,7 @@
 <link rel="icon" href="/assets/favicon-klosques.png">
 <link rel="stylesheet" href="/admin/admin.css">
 <script src="/admin/admin.js" defer></script>
+<script src="/admin/pdf-preview.js" defer></script>
 <script src="/admin/quote-builder.js" defer></script>
 <script src="/admin/invoice-builder.js" defer></script>
 <script src="/admin/reminders.js" defer></script>
@@ -641,6 +642,15 @@
     <button type="button" class="secondary" id="cancelPayInvoice">Annuler</button>
     <button type="button" class="primary" id="confirmPayInvoice">Confirmer</button>
   </div>
+</dialog>
+<dialog id="managerPdfPreviewDialog" class="manager-pdf-preview" aria-labelledby="managerPdfPreviewTitle">
+  <div class="manager-pdf-toolbar">
+    <button type="button" class="primary" id="managerPdfPreviewReturn">← Retour aux devis / factures</button>
+    <strong id="managerPdfPreviewTitle">Aperçu PDF</strong>
+    <button type="button" class="secondary" id="managerPdfPreviewClose" aria-label="Fermer l’aperçu PDF">Fermer ✕</button>
+  </div>
+  <iframe id="managerPdfPreviewFrame" title="Aperçu du document PDF"></iframe>
+  <p class="manager-pdf-hint">Pour revenir à la liste, utilise le bouton « Retour » ci-dessus.</p>
 </dialog>
 </body>
 </html>
