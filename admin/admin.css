@@ -297,10 +297,12 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
 @media(max-width:730px){
   .manager-quick-search{margin:-6px 0 18px}
   .bottom-nav{overflow-x:visible;justify-content:space-around}
+  .bottom-nav > button[data-tab],.bottom-nav > .more-nav-toggle{display:flex;flex:1 1 0;min-width:0;width:auto;min-height:57px;padding:9px 1px 6px;font-size:.67rem}
+  /* Ces trois rubriques n'apparaissent que dans Plus sur téléphone.
+     La règle de masquage suit la règle générique pour la priorité CSS. */
   .bottom-nav > button[data-tab="concerts"],
   .bottom-nav > button[data-tab="messagerie"],
   .bottom-nav > button[data-tab="site"]{display:none}
-  .bottom-nav > button[data-tab],.bottom-nav > .more-nav-toggle{display:flex;flex:1 1 0;min-width:0;width:auto;min-height:57px;padding:9px 1px 6px;font-size:.67rem}
   .bottom-nav > .more-nav-toggle{display:flex}
   .bottom-nav > .more-nav-toggle[aria-expanded="true"],
   .bottom-nav > .more-nav-toggle.active{color:#ff7180;font-weight:800}
