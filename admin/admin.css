@@ -326,3 +326,15 @@ dialog{width:min(95vw,740px);max-height:92vh;overflow:auto;background:#1c181d;bo
 @media(max-width:620px){
   .official-quote-panel .document-advanced{padding:0 11px 12px}
 }
+
+
+/* Actions PDF directement sous chaque devis ou facture enregistré. */
+.document-list-item{min-width:0;display:flex;flex-direction:column;gap:9px}
+.document-list-item>.booking-card{flex:1;display:block;text-align:left}
+.document-pdf-actions{display:flex;gap:8px;flex-wrap:wrap}
+.document-pdf-actions>.secondary{
+  flex:1 1 145px;min-height:42px;padding:10px 12px;
+  font-size:.87rem;white-space:normal
+}
+.document-pdf-actions>.secondary:disabled{opacity:.55;cursor:wait}
+.document-list-item:focus-within>.booking-card{border-color:#ff8793}
