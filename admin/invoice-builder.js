@@ -40,6 +40,7 @@ function newInvoiceLine(label='',qty=1,priceCents=0){
   name.className='quote-line-label';name.type='text';name.maxLength=220;
   name.placeholder='Ex. Les Klosques, équipe technique ou DJ';
   name.setAttribute('aria-label','Prestation');name.value=label;
+  name.setAttribute('list','klosquesServiceSuggestions');
   const quantity=document.createElement('input');
   quantity.className='quote-line-qty';quantity.type='number';quantity.min='0.01';
   quantity.max='1000';quantity.step='0.01';quantity.setAttribute('aria-label','Quantité');
@@ -134,7 +135,15 @@ function populateInvoiceFromQuote(){
   for(const key of fields)
     if(quote.data[key] && !(key==='vat_mode'&&quote.data[key]==='ttc_sans_ventilation'))
       invoiceForm.elements.namedItem(key).value=quote.data[key];
-  $('invoiceTaxDetails').open=false;
+  // Le devis sélectionné permet un remplissage direct lorsqu'aucune
+  // prestation n'a encore été saisie sur une nouvelle facture.
+  if(!invoiceState.current&&quote.data.lines?.length&&
+     $('invoiceLines').children.length===1&&
+     !$('invoiceLines').querySelector('.quote-line-label')?.value.trim()&&
+     !$('invoiceLines').querySelector('.quote-line-price')?.value){
+    importInvoiceQuoteLines();
+  }
+  $('invoiceTaxDetails').open=Boolean(invoiceForm.elements.namedItem('issuer_tax_number').value);
   updateInvoiceTotal();
 }
 function importInvoiceQuoteLines(){
@@ -200,12 +209,18 @@ function fillInvoice(invoice=null){
   const ttc=invoicePriceMode()==='ttc';
   $('invoicePriceTypeText').textContent=ttc?'Prix unitaire TTC':'Prix unitaire HT';
   $('invoicePricingInfo').textContent=ttc
-    ?'Saisis les prix TTC convenus. Vérifie ensuite les mentions fiscales avant d’émettre la facture.'
-    :'Ancienne facture : les prix de ce document sont exprimés hors taxes.';
-  $('invoiceTaxDetails').open=false;
+    ?'Saisis la description à imprimer, la quantité et le prix unitaire TTC en euros.'
+    :'Ancienne facture : conserve les prix unitaires HT utilisés à sa création.';
+  $('invoiceTaxDetails').open=Boolean(data.issuer_tax_number);
+  $('invoiceIssuerDetails').open=Boolean(invoice&&
+    invoiceIssuerFields.some(key=>key!=='issuer_tax_number'&&!data[key]));
+  $('invoiceAdditionalDetails').open=Boolean(invoice&&
+    (data.description||data.conditions||data.event_time));
+  updateInvoiceProfessionalFields();
   if(!invoice){
     for(const key of ['issuer_name','issuer_address','issuer_identifier','issuer_tax_number','issuer_contact','issuer_legal'])
-      invoiceForm.elements.namedItem(key).value=invoiceState.issuer[key]||'';
+      invoiceForm.elements.namedItem(key).value=
+        invoiceState.issuer[key]||HAPPY_LIVE_ISSUER_DEFAULTS[key]||'';
     const now=new Date();invoiceForm.elements.namedItem('issue_date').value='';
     invoiceForm.elements.namedItem('payment_due_date').value=invoiceDate(new Date(
       now.getFullYear(),now.getMonth(),now.getDate()+30));
@@ -289,6 +304,13 @@ $('closeInvoice').addEventListener('click',()=>{$('invoiceEditorPanel').hidden=t
 $('addInvoiceLine').addEventListener('click',()=>newInvoiceLine());
 $('invoiceBooking').addEventListener('change',populateInvoiceFromBooking);
 $('invoiceQuote').addEventListener('change',populateInvoiceFromQuote);
+function updateInvoiceProfessionalFields(){
+  $('invoiceProfessionalFields').hidden=
+    invoiceForm.elements.namedItem('client_type').value!=='professionnel';
+}
+invoiceForm.elements.namedItem('client_type').addEventListener(
+  'change',updateInvoiceProfessionalFields
+);
 $('importInvoiceQuote').addEventListener('click',importInvoiceQuoteLines);
 invoiceForm.elements.namedItem('vat_mode').addEventListener('change',updateInvoiceTotal);
 $('invoiceList').addEventListener('click',event=>{
@@ -303,9 +325,15 @@ async function saveInvoice(issue=false){
   try{data=collectInvoice();}
   catch(error){notify(error.message);return;}
   if(issue&&data.vat_mode==='non_precise'){
-    $('invoiceTaxDetails').open=true;
-    notify('Avant d’émettre une facture, vérifie son régime de TVA ou la mention d’exonération dans la rubrique fiscale.');
-    $('invoiceTaxDetails').scrollIntoView({block:'center',behavior:'smooth'});
+    notify('Avant d’émettre une facture, choisis son régime de TVA dans la rubrique Dates et TVA.');
+    $('invoiceVatMode').scrollIntoView({block:'center',behavior:'smooth'});
+    $('invoiceVatMode').focus();
+    return;
+  }
+  if(issue&&data.client_type==='professionnel'&&!data.late_penalties){
+    $('invoiceProfessionalFields').hidden=false;
+    notify('Renseigne les pénalités de retard applicables au client professionnel.');
+    invoiceForm.elements.namedItem('late_penalties').focus();
     return;
   }
   if(issue&&!window.confirm(
