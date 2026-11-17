@@ -187,6 +187,13 @@ function lockInvoiceEditor(){
   for(const control of invoiceForm.querySelectorAll('input,textarea,select,button'))
     control.disabled=issued||control.name==='issue_date';
   $('invoiceLocked').hidden=!issued;
+  $('invoiceCorrectionHelp').hidden=!issued;
+  if(issued){
+    const issueDate=invoice.data?.issue_date||invoice.issued_at?.slice(0,10)||'';
+    $('invoiceCorrectionReference').textContent='Référence à conserver : '+
+      (invoice.number||'Facture sans numéro')+
+      (issueDate?' · émise le '+dateLabel(issueDate):'');
+  }
   $('deleteInvoiceDraft').hidden=!invoice||issued;
   $('archiveInvoice').hidden=!issued;
   $('archiveInvoice').textContent=invoice?.archived?'Restaurer la facture':'Archiver la facture';
