@@ -84,7 +84,13 @@
         if(item.source==='site'&&!['option','confirme','termine'].includes(item.status)){
           $('requestFilter').value='all';setPage('demandes');
         }else{
-          $('concertFilter').value='all';setPage('concerts');
+          const month=String(item.event_date||'').slice(0,7);
+          if(/^\d{4}-(0[1-9]|1[0-2])$/.test(month)){
+            $('agendaMonth').value=month;
+            state.selectedDay=item.event_date;
+          }
+          setPage('agenda');
+          loadGoogleCalendar();
         }
         openEditor(item);
       }else if(entry.type==='devis'){
