@@ -87,6 +87,30 @@ function computeManagerReminders(bookings,quotes,invoices,now=new Date()){
       order:1,stamp:Date.parse(due+'T12:00:00Z')
     });
   }
+  // Contrôle administratif de conservation : signaler les anciennes
+  // demandes sans suite apparente, sans automatiser aucune suppression.
+  // La dernière mise à jour dans le Manager n'est pas nécessairement
+  // le dernier échange réel : le gestionnaire doit vérifier manuellement.
+  if(state.role==='admin'){
+    const cutoff=new Date(nowMs);
+    cutoff.setUTCMonth(cutoff.getUTCMonth()-11);
+    const linked=new Set([
+      ...quotes.map(q=>q.booking_id).filter(Boolean),
+      ...invoices.map(i=>i.booking_id).filter(Boolean)
+    ]);
+    for(const booking of bookings){
+      if(booking.source!=='site'||linked.has(booking.id)||
+        !['nouveau','en_discussion','refuse'].includes(booking.status))continue;
+      const updated=reminderTimestamp(booking.updated_at||booking.created_at);
+      if(!Number.isFinite(updated)||updated>=cutoff.getTime())continue;
+      reminders.push({
+        key:'retention:'+booking.id,type:'request',id:booking.id,
+        label:'Ancienne demande à vérifier',name:booking.name||'Organisateur',
+        detail:'Environ 11 mois sans mise à jour : vérifie les échanges et la conservation avant toute suppression.',
+        order:5,stamp:updated
+      });
+    }
+  }
   return reminders.sort((a,b)=>a.order-b.order||a.stamp-b.stamp).slice(0,30);
 }
 function renderManagerReminders(reminders){
