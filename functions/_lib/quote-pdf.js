@@ -191,19 +191,19 @@ export function createQuotePdf(quote,options={}){
       }
       text("Les Klosques",186,711+offset,16.7,true,"0.48 0.08 0.30",true);
     }
-    text(documentLabel,invoice?469:481,invoice?663:681,15,true,"0.82 0.88 0.90");
+    text(documentLabel,invoice?471:481,invoice?663:681,15,true,"0.82 0.88 0.90");
     if(invoice&&quote.status!=="emise")
       text("BROUILLON - NON EMIS",43,657,9,true,"0.67 0.12 0.16");
   }
   function drawFirstHeader(){
     drawLogo();
-    let y=invoice?628:649;
+    let y=invoice?626:649;
     const strapline=isHappy
       ?(invoice?"HAPPY LIVE 66 - CONCERTS - ANIMATIONS":
         "Association HAPPY LIVE 66 - CONCERTS - ANIMATIONS")
       :"LES KLOSQUES - CONCERTS - ANIMATIONS";
     text(strapline,43,y,invoice?8.4:7.45,true,"0.14 0.14 0.14",true);
-    y-=18;
+    y-=invoice?21:18;
     // Nom complet affiché selon les documents de référence, sans modifier
     // le nom légal stocké dans les dossiers.
     const issuerName= /^Association\s+Happy\s+Live\s+66(?:\s*-\s*Groupe\s+LES\s+KLOSQUES)?$/i
@@ -227,16 +227,18 @@ export function createQuotePdf(quote,options={}){
     // Les e-mails personnels/de contact restent dans Manager et dans les
     // messages d'envoi, pas dans la zone d'adresse de cette maquette.
 
-    const dateY=invoice?609:632;
-    text("DATE : "+dateLabel(q.issue_date),377,dateY,8.3,true);
-    text("N° "+documentLabel+" : "+String(quote.number||"NON ATTRIBUE"),377,dateY-11,8.3,true);
+    const dateY=invoice?605:632;
+    const dateX=invoice?380:376;
+    text("DATE : "+dateLabel(q.issue_date),dateX,dateY,8.3,true);
+    text("N° "+documentLabel+" : "+String(quote.number||"NON ATTRIBUE"),dateX,dateY-11,8.3,true);
 
     // Le client est placé à droite, comme dans les exemples.
-    let cy=invoice?543:548;
-    cy=para((invoice?"À : ":"")+String(q.client_name||"Client à préciser"),370,cy,183,8.5,11,true);
-    cy=para(q.client_address||"",370,cy-2,183,8.2,11,true);
+    let cy=invoice?537:548;
+    const clientX=invoice?372:369;
+    cy=para((invoice?"À : ":"")+String(q.client_name||"Client à préciser"),clientX,cy,183,8.5,11,true);
+    cy=para(q.client_address||"",clientX,cy-2,183,8.2,11,true);
     if(invoice&&q.client_identifier)
-      cy=para("SIREN / SIRET : "+q.client_identifier,370,cy-2,183,8.0,10);
+      cy=para("SIREN / SIRET : "+q.client_identifier,clientX,cy-2,183,8.0,10);
 
     // Les blocs longs repoussent le tableau et évitent les chevauchements.
     return Math.min(invoice?466.5:476.2,y-37,cy-30);
@@ -308,7 +310,8 @@ export function createQuotePdf(quote,options={}){
     fillRect(breaks[3],y-height,breaks[4]-breaks[3],height,"0.918 0.918 0.918");
     rect(breaks[3],y-height,breaks[4]-breaks[3],height,"0 0 0",.5);
     const baseline=y-(invoice?12:10);
-    right(label,breaks[3]-1,baseline,emphasis?8:7.7,emphasis);
+    right(label,breaks[3]-1,baseline,
+      invoice?(emphasis?9.4:9):(emphasis?8:7.7),emphasis);
     right(value,breaks[4]-1,baseline,emphasis?8.2:7.8,emphasis);
     y-=height;
   }
