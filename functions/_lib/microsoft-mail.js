@@ -22,7 +22,7 @@ export async function microsoftMailReady(env){
     approval.account_label?.toLowerCase()===allowed;
 }
 
-export async function sendMicrosoftMail(env,{to,subject,html,text,replyTo,attachment,filename,saveToSentItems=true}){
+export async function sendMicrosoftMail(env,{to,subject,html,text,replyTo,attachment,filename,attachments,saveToSentItems=true}){
   if(!await microsoftMailReady(env))
     throw Error("Hotmail doit être connecté et réautorisé pour Mail.Send dans Site → Connexions.");
   if(!validEmail(to)||typeof subject!=="string"||!subject.trim()||subject.length>250)
@@ -36,23 +36,32 @@ export async function sendMicrosoftMail(env,{to,subject,html,text,replyTo,attach
   // aucun style HTML ou lien non nécessaire dans la correspondance client.
   // Les alertes internes et les e-mails de test conservent leur présentation.
   // Cette présentation ne peut pas garantir un classement hors des spams.
-  const documentMail=attachment!==undefined;
+  const documents=attachments===undefined?
+    (attachment===undefined?[]:[{filename,content:attachment}]):attachments;
+  if(!Array.isArray(documents)||documents.length>3)
+    throw Error("Nombre de pièces jointes invalide.");
+  let totalAttachmentSize=0;
+  for(const file of documents){
+    if(!file||typeof file.content!=="string"||file.content.length>6*1024*1024||
+       !/^[A-Za-z0-9+/]*={0,2}$/.test(file.content)||
+       typeof file.filename!=="string"||!file.filename.toLowerCase().endsWith(".pdf")||
+       file.filename.length>100)throw Error("Pièce jointe PDF invalide.");
+    totalAttachmentSize+=file.content.length;
+  }
+  if(totalAttachmentSize>7*1024*1024)
+    throw Error("Pièces jointes PDF trop volumineuses.");
+  const documentMail=documents.length>0;
   const message={
     subject,
     body:{contentType:documentMail?"Text":"HTML",content:documentMail?text:html},
     toRecipients:[{emailAddress:{address:to}}],
     ...(replyTo?{replyTo:[{emailAddress:{address:replyTo}}]}:{})
   };
-  if(attachment!==undefined){
-    if(typeof attachment!=="string"||attachment.length>6*1024*1024||
-       !/^[A-Za-z0-9+/]*={0,2}$/.test(attachment)||
-       typeof filename!=="string"||!filename.toLowerCase().endsWith(".pdf")||
-       filename.length>100)
-      throw Error("Pièce jointe PDF invalide.");
-    message.attachments=[{
+  if(documents.length){
+    message.attachments=documents.map(file=>({
       "@odata.type":"#microsoft.graph.fileAttachment",
-      name:filename,contentType:"application/pdf",contentBytes:attachment
-    }];
+      name:file.filename,contentType:"application/pdf",contentBytes:file.content
+    }));
   }
   const token=await providerAccessToken(env,"microsoft");
   const response=await fetch("https://graph.microsoft.com/v1.0/me/sendMail",{
