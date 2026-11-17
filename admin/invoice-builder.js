@@ -38,7 +38,7 @@ function newInvoiceLine(label='',qty=1,priceCents=0){
   row.className='official-quote-line invoice-line';
   const name=document.createElement('input');
   name.className='quote-line-label';name.type='text';name.maxLength=220;
-  name.placeholder='Ex. Les Klosques, équipe technique ou DJ';
+  name.placeholder='Ex. Concert Les Klosques';
   name.setAttribute('aria-label','Prestation');name.value=label;
   name.setAttribute('list','klosquesServiceSuggestions');
   const quantity=document.createElement('input');
@@ -49,12 +49,27 @@ function newInvoiceLine(label='',qty=1,priceCents=0){
   price.className='quote-line-price';price.type='number';price.min='0';price.max='1000000';
   price.step='0.01';price.setAttribute('aria-label',invoicePriceMode()==='ttc'?'Prix unitaire TTC en euros':'Prix unitaire HT en euros');
   price.value=priceCents?(priceCents/100).toFixed(2):'';
+  price.placeholder='Ex. 600';
   const remove=document.createElement('button');
   remove.type='button';remove.className='small-button quote-line-remove';remove.textContent='✕';
   remove.setAttribute('aria-label','Supprimer cette ligne');
   for(const field of [name,quantity,price])field.addEventListener('input',updateInvoiceTotal);
   remove.addEventListener('click',()=>{row.remove();updateInvoiceTotal();});
-  row.append(name,quantity,price,remove);
+  const field=(input,title,className)=>{
+    const wrapper=document.createElement('label');
+    wrapper.className='quote-line-field '+className;
+    const caption=document.createElement('span');
+    caption.className='quote-line-field-title';
+    caption.textContent=title;
+    wrapper.append(caption,input);
+    return wrapper;
+  };
+  row.append(
+    field(name,'Type de prestation','quote-line-description-field'),
+    field(quantity,'Quantité','quote-line-quantity-field'),
+    field(price,invoicePriceMode()==='ttc'?'Prix TTC (€)':'Prix HT (€)','quote-line-price-field'),
+    remove
+  );
   $('invoiceLines').append(row);updateInvoiceTotal();
 }
 function collectInvoice(){
@@ -211,7 +226,7 @@ function fillInvoice(invoice=null){
   const ttc=invoicePriceMode()==='ttc';
   $('invoicePriceTypeText').textContent=ttc?'Prix unitaire TTC':'Prix unitaire HT';
   $('invoicePricingInfo').textContent=ttc
-    ?'Saisis la description à imprimer, la quantité et le prix unitaire TTC en euros.'
+    ?'Dans « Type de prestation », indique ce qui est facturé ; dans « Prix TTC (€) », saisis le montant en euros.'
     :'Ancienne facture : conserve les prix unitaires HT utilisés à sa création.';
   $('invoiceTaxDetails').open=Boolean(data.issuer_tax_number);
   $('invoiceIssuerDetails').open=Boolean(invoice&&
