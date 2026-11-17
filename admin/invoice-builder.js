@@ -184,8 +184,10 @@ function lockInvoiceEditor(){
   // navigation directe vers un nouvel onglet perd le cookie de session.
   // L'aperçu et le téléchargement passent donc par fetch() dans le Manager.
   const preview=$('previewInvoice'),download=$('printInvoice');
-  preview.hidden=download.hidden=!invoice;
-  preview.disabled=download.disabled=!invoice;
+  preview.hidden=!invoice;
+  download.hidden=!issued;
+  preview.disabled=!invoice;
+  download.disabled=!issued;
   $('sendInvoice').hidden=!issued;
   $('markInvoicePaid').hidden=!issued;
   $('markInvoicePaid').textContent=invoice?.paid?'Marquer comme non réglée':'Marquer comme payée';
@@ -250,18 +252,25 @@ function renderInvoices(){
     const safe=escapeHtml,t=invoiceAmounts(inv.data);
     const label=inv.archived?'Archivée · '+invoiceStatusLabel(inv):invoiceStatusLabel(inv);
     const category=inv.paid?'confirmed':inv.status==='emise'?'pending':'';
-    return '<button type="button" class="booking-card" data-invoice-id="'+safe(inv.id)+'">'+
+    const issued=inv.status==='emise';
+    return '<article class="document-list-item" data-document-invoice="'+safe(inv.id)+'">'+
+      '<button type="button" class="booking-card" data-invoice-id="'+safe(inv.id)+'">'+
       '<div class="card-top"><span class="date">'+safe(inv.number||'Brouillon non numéroté')+'</span>'+
       '<span class="tag '+category+'">'+safe(label)+'</span></div>'+
       '<h3>'+safe(inv.data.client_name||'Client à préciser')+'</h3>'+
       '<p>'+safe(inv.data.event_date?dateLabel(inv.data.event_date):'Date à préciser')+'</p>'+
       '<p>'+safe(t.pending&&!t.direct?'Montant TTC à préciser':'Total TTC : '+invoiceMoney(t.ttc))+'</p>'+
       (inv.sent_at?'<p class="small quote-email-sent">E-mail envoyé le '+safe(inv.sent_at)+'</p>':'')+
-      '<p class="small">Ouvrir la facture →</p></button>';
+      '<p class="small">'+(issued?'Consulter la facture →':'Modifier le brouillon →')+'</p></button>'+
+      '<div class="document-pdf-actions" aria-label="PDF de la facture '+safe(inv.number||'brouillon')+'">'+
+      '<button type="button" class="secondary" data-invoice-pdf-preview="'+safe(inv.id)+'" aria-label="Visualiser le PDF de la facture '+safe(inv.number||'brouillon')+'">Visualiser le PDF</button>'+
+      (issued?'<button type="button" class="secondary" data-invoice-pdf-download="'+safe(inv.id)+'" aria-label="Télécharger le PDF de la facture '+safe(inv.number||'brouillon')+'">Télécharger le PDF</button>':'')+
+      '</div></article>';
   }).join(''):showArchived
     ?'<p class="empty">Aucune facture archivée.</p>'
     :'<p class="empty">Aucune facture en cours. Clique sur « Nouvelle facture ».</p>';
 }
+
 async function loadInvoices(){
   if(!state.logged)return;
   try{
@@ -314,6 +323,14 @@ invoiceForm.elements.namedItem('client_type').addEventListener(
 $('importInvoiceQuote').addEventListener('click',importInvoiceQuoteLines);
 invoiceForm.elements.namedItem('vat_mode').addEventListener('change',updateInvoiceTotal);
 $('invoiceList').addEventListener('click',event=>{
+  const pdfButton=event.target.closest('[data-invoice-pdf-preview],[data-invoice-pdf-download]');
+  if(pdfButton){
+    const download=pdfButton.hasAttribute('data-invoice-pdf-download');
+    const id=download?pdfButton.dataset.invoicePdfDownload:pdfButton.dataset.invoicePdfPreview;
+    const invoice=invoiceState.invoices.find(i=>i.id===id);
+    if(invoice)showInvoicePdf(download,invoice,pdfButton);
+    return;
+  }
   const card=event.target.closest('[data-invoice-id]');
   if(!card)return;
   const invoice=invoiceState.invoices.find(i=>i.id===card.dataset.invoiceId);
@@ -351,9 +368,20 @@ async function saveInvoice(issue=false){
     });
     await loadInvoices();
     await refresh();
-    fillInvoice(response.invoice);
-    notify(issue?'Facture émise : '+response.invoice.number+'. Le numéro et le contenu sont désormais verrouillés.'
-      :'Brouillon de facture enregistré.');
+    // Fermer les champs après la sauvegarde et remettre en évidence
+    // la carte avec les boutons PDF immédiatement accessibles.
+    $('invoiceEditorPanel').hidden=true;
+    invoiceState.current=null;
+    $('invoiceVisibility').value='current';
+    renderInvoices();
+    const selected=Array.from($('invoiceList').querySelectorAll('[data-invoice-id]'))
+      .find(el=>el.dataset.invoiceId===String(response.invoice.id));
+    if(selected){
+      selected.focus({preventScroll:true});
+      selected.scrollIntoView({block:'center',behavior:'smooth'});
+    }
+    notify(issue?'Facture émise : visualise ou télécharge son PDF sous la facture.'
+      :'Brouillon enregistré : visualise son PDF sous la facture ou rouvre-le pour le modifier.');
   }catch(error){notify(error.message);}
   finally{save.disabled=false;final.disabled=false;}
 }
@@ -378,10 +406,14 @@ function downloadInvoicePdfBlob(url,filename){
     invoicePdfPreviewUrls.delete(url);
   },60000);
 }
-async function showInvoicePdf(download=false){
-  const invoice=invoiceState.current;
+async function showInvoicePdf(download=false,selectedInvoice=null,actionButton=null){
+  const invoice=selectedInvoice||invoiceState.current;
   if(!invoice?.id){
     notify('Enregistre le brouillon avant de visualiser la facture.');
+    return;
+  }
+  if(download&&invoice.status!=='emise'){
+    notify('Le téléchargement est réservé aux factures émises.');
     return;
   }
   // Ouvrir l'onglet pendant le clic pour ne pas déclencher le bloqueur
@@ -395,6 +427,7 @@ async function showInvoicePdf(download=false){
   }
   const previewButton=$('previewInvoice'),downloadButton=$('printInvoice');
   previewButton.disabled=true;downloadButton.disabled=true;
+  if(actionButton)actionButton.disabled=true;
   try{
     const response=await fetch(
       '/api/admin/invoices/'+encodeURIComponent(invoice.id)+'/pdf',
@@ -420,15 +453,18 @@ async function showInvoicePdf(download=false){
       newTab.location.replace(url);
       try{newTab.opener=null;}catch{}
     }else{
-      downloadInvoicePdfBlob(url,filename);
-      notify('Ton navigateur a bloqué l’aperçu. Le PDF a été téléchargé à la place.');
+      URL.revokeObjectURL(url);
+      invoicePdfPreviewUrls.delete(url);
+      notify('Le navigateur a bloqué l’aperçu. Autorise les fenêtres contextuelles pour visualiser le PDF.');
     }
   }catch(error){
     if(newTab&&!newTab.closed)newTab.close();
     notify('PDF non ouvert : '+error.message);
   }finally{
-    const ready=Boolean(invoiceState.current?.id);
-    previewButton.disabled=downloadButton.disabled=!ready;
+    const current=invoiceState.current;
+    previewButton.disabled=!current?.id;
+    downloadButton.disabled=!current?.id||current.status!=='emise';
+    if(actionButton&&actionButton.isConnected)actionButton.disabled=false;
   }
 }
 $('previewInvoice').addEventListener('click',()=>showInvoicePdf(false));
