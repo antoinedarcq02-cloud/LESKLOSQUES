@@ -86,7 +86,7 @@ export async function sendNewBookingEmails(env,bookingId,booking){
     ["Organisateur",client],["E-mail",booking.email],["Téléphone",booking.phone],
     ["Type d'événement",booking.eventType],["Date",booking.date],
     ["Lieu",booking.location],["Formule souhaitée",booking.package],
-    ["Précisions",booking.message||"Aucune"]
+    ["Message du client",booking.message||"Aucun message"]
   ];
   const groupText=fields.map(([k,v])=>k+" : "+safeText(v)).join("\n");
   const groupHtml=fields.map(([k,v])=>"<p><strong>"+safeHtml(k)+" :</strong> "+safeHtml(v)+"</p>").join("");
